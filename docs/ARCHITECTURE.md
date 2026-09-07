@@ -209,12 +209,30 @@ Standard two-column layout: Form (left, 66vw) and List (right, 29vw).
 ```flowchart TD
     CV[CrudView] --> L[Left Column: 66vw]
     CV --> R[Right Column: 29vw]
-    L --> T[Title: h1]
+    L --> T[Title Band]
+    T --> H[Title: h1]
+    T --> CTX[Context slot: dom.Component]
     L --> F[Form: dom.Component]
     L --> B[CRUD Bar: Buttons]
     R --> LIST[List: SignalNodes]
     R --> S[Search: local filter]
 ```
+
+### The `Context` slot — scope, not search
+
+`crudview.Config.Context dom.Component` is a control rendered in the **title band**
+(below the `h1`), for a context/scope selector — "which professional / which área"
+(its ancestor is the legacy Pa100T professional dropdown that re-scoped the whole
+screen). It rides `rightpanel.RightPanel.HeadControls`, the band that already
+existed for that exact purpose.
+
+Deliberately, `Context` is **not auto-wired to the list filter** even when it
+satisfies `widget.Filterable`: `Filter` (e.g. a calendar) and `Context` (a doctor)
+write into the same single-term `Presenter.Filter(term)`, so together they could
+not represent "doctor X + day Y". Changing the context **re-scopes the data** — the
+module that composes the `Context` calls its presenter + `CrudView.Reload()` —
+while `Filter` remains the term filter. `crudview` only renders the slot; wiring
+is the consumer's, by design.
 
 ### Data Flow (`view.Presenter`)
 

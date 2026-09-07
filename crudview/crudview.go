@@ -100,6 +100,15 @@ type CrudView struct {
 	// would never fire.
 	Filter Component
 
+	// Context is a control rendered in the title band (below the H1), for a
+	// context/scope selector: "which professional / which área". nil paints no
+	// band. Set by New from Config.Context.
+	//
+	// Deliberately NOT auto-wired to the list filter: changing the context
+	// re-scopes the data (the composing module calls its presenter +
+	// Reload), it does not write a search term. crudview only renders it.
+	Context Component
+
 	// List builds the row-rendering widget, given the Selected signal and the
 	// OnSelect/OnDelete callbacks CrudView owns — Init calls it once. Set by
 	// New from Config.List; nil there resolves to a targetlist.TargetList
@@ -690,8 +699,9 @@ func (v *CrudView) Render() *Element {
 	}
 
 	v.panel = &rightpanel.RightPanel{
-		Title:   v.Title,
-		Article: boxContent,
+		Title:        v.Title,
+		Article:      boxContent,
+		HeadControls: v.Context,
 	}
 
 	if hasSource {
