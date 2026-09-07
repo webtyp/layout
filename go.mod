@@ -3,7 +3,7 @@ module webtyp.com/layout
 go 1.25.2
 
 require (
-	webtyp.com/components v0.6.16
+	webtyp.com/components v0.6.17
 	webtyp.com/css v0.4.21
 	webtyp.com/date v0.0.6
 	webtyp.com/dom v0.13.10
