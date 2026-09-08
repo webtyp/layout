@@ -1,10 +1,11 @@
 ---
 PLAN: "feat(crudview): OnAfterReload hook — consumer personalizes the list widget after every load"
-TAG: v0.2.21
+TAG: v0.2.23
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 7064163444445900914
+PR: https://github.com/webtyp/layout/pull/34
 ---
 
 # PLAN — `crudview.Config.OnAfterReload` (Etapa G del `DEMO_AGENDA_MASTER_PLAN`)

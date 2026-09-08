@@ -135,6 +135,17 @@ type CrudView struct {
 	OnUpdated func(ids []string, err error)
 	OnCancel  func()
 
+	// OnAfterReload se invoca al final de Reload(), justo después de que la lista
+	// se re-llena con los items del presenter (list.SetItems). Recibe el list
+	// concreto ya pintado, para que el consumidor acomode detalles que el widget no
+	// puede derivar — p. ej. type-assert a *targetdate.TargetDate / *targethour.
+	// TargetHour y setear sus campos (FreeSlots). nil = hook ausente.
+	//
+	// Un solo argumento a propósito: items[] no viajan (list.Items() /
+	// Presenter.Items() ya los dan); lo único que NO se puede conseguir de otro
+	// lado es el list concrete que Config.List construyó.
+	OnAfterReload func(list ListView)
+
 	// internal
 	form          *form.Form             // typed handle set by New; nil when standalone
 	list          ListView               // owns the row rendering + ⋮ menu
@@ -329,6 +340,9 @@ func (v *CrudView) Reload() error {
 		return err
 	}
 	v.filter()
+	if v.OnAfterReload != nil && v.list != nil {
+		v.OnAfterReload(v.list)
+	}
 	return nil
 }
 
