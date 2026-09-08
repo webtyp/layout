@@ -39,7 +39,6 @@ func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 	checks := []struct {
 		label, want string
 	}{
-		{"root id", "id='users'"},
 		{"wrapper class", "class='rp'"},
 		{"main class", "class='rp__main'"},
 		{"header class", "class='rp__header'"},
@@ -94,33 +93,5 @@ func TestRightPanel_AsideRendersForFooterAlone(t *testing.T) {
 		if !strings.Contains(html, want) {
 			t.Errorf("expected %q in HTML with only AsideFooter set:\n%s", want, html)
 		}
-	}
-}
-
-func TestRightPanel_PanelIDsAreStamped(t *testing.T) {
-	panel := &rightpanel.RightPanel{
-		Module: stubModule{"users"},
-		Title:  "Users",
-		Aside:  &stubComponent{"<ul></ul>"},
-	}
-
-	html := panel.Render().String()
-
-	for _, want := range []string{"id='users.main'", "id='users.aside'"} {
-		if !strings.Contains(html, want) {
-			t.Errorf("expected %q in HTML:\n%s", want, html)
-		}
-	}
-}
-
-func TestRightPanel_RenderHTML_NoModuleHasGeneratedID(t *testing.T) {
-	panel := &rightpanel.RightPanel{Title: "No ID"}
-	html := panel.Render().String()
-
-	if !strings.HasPrefix(html, "<div id=") {
-		t.Errorf("expected the wrapper to have a generated id even when Module is nil, got:\n%s", html)
-	}
-	if strings.HasPrefix(html, "<div id='rp") {
-		t.Errorf("expected a generated id not the class prefix, got:\n%s", html)
 	}
 }

@@ -2,7 +2,6 @@
 
 package rightpanel
 
-
 import (
 	"webtyp.com/css"
 	"webtyp.com/widget/style"

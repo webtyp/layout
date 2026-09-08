@@ -151,12 +151,12 @@ type Platform struct {
 	DefaultID string
 
 	// internal state
-	active               *SignalString
-	menuOpen             *SignalBool
-	notifications        *SignalNodes // desktop toasts (header msg-slot)
-	notificationsMobile  *SignalNodes // mobile toasts (msg-stack under the hamburger)
-	navIcon              *SignalNodes
-	navStowed            *SignalBool
+	active              *SignalString
+	menuOpen            *SignalBool
+	notifications       *SignalNodes // desktop toasts (header msg-slot)
+	notificationsMobile *SignalNodes // mobile toasts (msg-stack under the hamburger)
+	navIcon             *SignalNodes
+	navStowed           *SignalBool
 
 	rawNotifications []notification
 	mu               sync.Mutex
@@ -387,6 +387,8 @@ func (p *Platform) Render() *Element {
 		header.Child(p.brand())
 	}
 
+	// Chassis singleton: one per page by construction, so a stable global id is
+	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
 	msgSlot := Div().Set(clsMsgSlot.AsAttr()).ID("pd-msg-slot").
 		BindChildren(p.notifications)
 	// Because elementToHTML/SSR doesn't process "children" bindings, initial nodes must be manually added
@@ -425,6 +427,8 @@ func (p *Platform) Render() *Element {
 	// button and the block, not inside it.
 	msgStack := Div().Set(clsMsgStack.AsAttr())
 
+	// Chassis singleton: one per page by construction, so a stable global id is
+	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
 	hamburger := Button().Set(clsHamburger.AsAttr()).
 		Attr("aria-label", "Menu").
 		// Open aquí significa "el cromo está desplegado": el botón se pinta
@@ -471,7 +475,7 @@ func (p *Platform) Render() *Element {
 			continue
 		}
 		panel := Section().Set(clsPanel.AsAttr()).
-			ID(id).
+			Key(id).
 			Attr("data-id", id).
 			BindStateFunc(widget.Current, func() bool { return p.active.Get() == id })
 
@@ -596,7 +600,6 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 
 		id := n.ID
 		nodes = append(nodes, Div().Set(clsMsg.AsAttr()).
-			ID(id+suffix).
 			Key(id+suffix).
 			Attr("role", role).
 			Text(n.Msg).

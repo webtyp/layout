@@ -126,7 +126,7 @@ func TestPlatform_Render_DefaultModule(t *testing.T) {
 
 	html := p.Render().String()
 	// webtyp/dom uses single quotes for attributes and boolean attributes are empty keys
-	if !contains(html, "id='mod2' class='pd__panel' data-id='mod2' data-current='true'") {
+	if !contains(html, "class='pd__panel' data-id='mod2' data-current='true'") {
 		t.Errorf("expected mod2 to be active, got HTML: %s", html)
 	}
 }
@@ -143,10 +143,10 @@ func TestPlatform_Activate(t *testing.T) {
 	p.Activate("mod2")
 
 	html := p.Render().String()
-	if !contains(html, "id='mod2' class='pd__panel' data-id='mod2' data-current='true'") {
+	if !contains(html, "class='pd__panel' data-id='mod2' data-current='true'") {
 		t.Errorf("expected mod2 to be active after Activate('mod2'), got HTML: %s", html)
 	}
-	if contains(html, "id='mod1' class='pd__panel' data-id='mod1' data-current='true'") {
+	if contains(html, "class='pd__panel' data-id='mod1' data-current='true'") {
 		t.Errorf("expected mod1 to NOT be active")
 	}
 }
@@ -181,24 +181,16 @@ func TestPlatform_CanView(t *testing.T) {
 
 	html := p.Render().String()
 
-	// Nav rail should only have mod2
+	// Nav rail and stage should only have mod2
 	if contains(html, "data-id='mod1'") {
-		t.Error("expected mod1 link NOT to be rendered")
+		t.Error("expected mod1 NOT to be rendered")
 	}
 	if !contains(html, "data-id='mod2'") {
-		t.Error("expected mod2 link to be rendered")
-	}
-
-	// Stage should only have mod2 panel
-	if contains(html, "id='mod1'") {
-		t.Error("expected mod1 panel NOT to be rendered")
-	}
-	if !contains(html, "id='mod2'") {
-		t.Error("expected mod2 panel to be rendered")
+		t.Error("expected mod2 to be rendered")
 	}
 
 	// mod2 should be active (fallback)
-	if !contains(html, "id='mod2' class='pd__panel' data-id='mod2' data-current='true'") {
+	if !contains(html, "class='pd__panel' data-id='mod2' data-current='true'") {
 		t.Error("expected mod2 to be active")
 	}
 

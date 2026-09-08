@@ -67,7 +67,7 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 type RightPanel struct {
 	Element
 
-	// Module provides the ID for the root wrapper element.
+	// Module identifies the component.
 	Module layout.Module
 
 	// Title is rendered as <h1> in the header.
@@ -92,16 +92,21 @@ type RightPanel struct {
 	// content (e.g. a primary action button). It keeps its size while the
 	// content between it and AsideControls takes the slack.
 	AsideFooter Component
+
+	// element handles for scroll-snap targets
+	wrapper *Element
+	main    *Element
+	aside   *Element
 }
 
 // Render builds the layout element tree.
 // Implements ViewRenderer.
 func (r *RightPanel) Render() *Element {
 	// ── root wrapper ─────────────────────────────────────────────────────────
-	wrapper := Div().Set(clsWrapper.AsAttr()).ID(r.panelID())
+	wrapper := Div().Set(clsWrapper.AsAttr()).Key("strip")
 
 	// ── main section ─────────────────────────────────────────────────────────
-	main := Section().Set(clsMain.AsAttr()).ID(r.MainPanelID())
+	main := Section().Set(clsMain.AsAttr()).Key("main")
 
 	// header row: title + Head slot + HeadControls slot
 	header := Div().Set(clsHeader.AsAttr())
@@ -130,8 +135,9 @@ func (r *RightPanel) Render() *Element {
 	wrapper.Child(main)
 
 	// ── aside panel ──────────────────────────────────────────────────────────
+	var aside *Element
 	if r.AsideControls != nil || r.Aside != nil || r.AsideFooter != nil {
-		aside := Aside().Set(clsAside.AsAttr()).ID(r.AsidePanelID())
+		aside = Aside().Set(clsAside.AsAttr()).Key("aside")
 
 		if r.AsideControls != nil {
 			aside.Child(Div().Set(clsAsideHeader.AsAttr()).Child(r.AsideControls))
@@ -146,14 +152,12 @@ func (r *RightPanel) Render() *Element {
 		wrapper.Child(aside)
 	}
 
+	r.wrapper = wrapper
+	r.main = main
+	r.aside = aside
+
 	return wrapper
 }
-
-// MainPanelID and AsidePanelID identify the two scroll-snap targets of the
-// mobile strip. A host that drives the snap (see ShowMain/ShowAside) does not
-// need them; they are exported because a host may want to link to a panel.
-func (r *RightPanel) MainPanelID() string  { return r.panelID() + ".main" }
-func (r *RightPanel) AsidePanelID() string { return r.panelID() + ".aside" }
 
 // ShowMain brings the main panel into view; ShowAside brings the aside back.
 //
@@ -162,24 +166,18 @@ func (r *RightPanel) AsidePanelID() string { return r.panelID() + ".aside" }
 // caller had in mind. Side by side there is nothing to scroll here, so an
 // unguarded call reached the platform's module deck instead and slid the whole
 // application to the next module.
-func (r *RightPanel) ShowMain()  { r.showPanel(r.MainPanelID()) }
-func (r *RightPanel) ShowAside() { r.showPanel(r.AsidePanelID()) }
+func (r *RightPanel) ShowMain()  { r.showPanel(r.main) }
+func (r *RightPanel) ShowAside() { r.showPanel(r.aside) }
 
-func (r *RightPanel) showPanel(id string) {
-	strip, ok := Get(r.panelID())
+func (r *RightPanel) showPanel(target *Element) {
+	if r.wrapper == nil || target == nil {
+		return
+	}
+	strip, ok := r.wrapper.Ref()
 	if !ok || !strip.ScrollsX() {
 		return
 	}
-	if el, ok := Get(id); ok {
+	if el, ok := target.Ref(); ok {
 		el.ScrollIntoView()
 	}
-}
-
-// panelID is the id stamped on the wrapper element: the module's name when one
-// is set, the element's own generated id otherwise.
-func (r *RightPanel) panelID() string {
-	if r.Module != nil {
-		return r.Module.ModelName()
-	}
-	return r.GetID()
 }
