@@ -13,7 +13,7 @@ require (
 	webtyp.com/image v0.1.3
 	webtyp.com/input v0.0.6
 	webtyp.com/model v0.1.8
-	webtyp.com/svg v0.3.5
+	webtyp.com/svg v0.3.7
 	webtyp.com/time v0.5.5
 	webtyp.com/view v0.5.2
 	webtyp.com/widget v0.6.24
