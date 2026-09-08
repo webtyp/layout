@@ -10,12 +10,6 @@ import (
 	"webtyp.com/html"
 )
 
-type mockModule struct {
-	id string
-}
-
-func (m *mockModule) ModelName() string { return m.id }
-
 // ruleBlock returns the declaration block of the LAST rule whose selector
 // contains want, or "" when absent. The primitives layer is emitted before the
 // widgets layer and groups edge cases (e.g. ".rp, .rp__header, .rp__title {
@@ -47,7 +41,6 @@ func ruleBlock(cssStr, want string) string {
 // keep an interior radius.
 func TestRightPanel_EdgeAsserts(t *testing.T) {
 	r := &RightPanel{
-		Module:        &mockModule{id: "test-module"},
 		Title:         "Test Title",
 		Head:          html.Div(),
 		HeadControls:  html.Div(),
@@ -82,7 +75,6 @@ func TestRightPanel_EdgeAsserts(t *testing.T) {
 
 func TestRightPanel_StylesheetAsserts(t *testing.T) {
 	r := &RightPanel{
-		Module:        &mockModule{id: "test-module"},
 		Title:         "Test Title",
 		Head:          html.Div(),
 		HeadControls:  html.Div(),
@@ -191,7 +183,6 @@ func TestRightPanel_StylesheetAsserts(t *testing.T) {
 // components/targetlist/css.go's mobile PartList rule.
 func TestAsideKeepsGutterOnMobile(t *testing.T) {
 	r := &RightPanel{
-		Module:        &mockModule{id: "test-module"},
 		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),
@@ -238,7 +229,6 @@ func TestAsideKeepsGutterOnMobile(t *testing.T) {
 // msg-stack keeps. Flush (SpaceNone) strands tap targets at the edge.
 func TestFooterKeepsOffFrameOnMobile(t *testing.T) {
 	r := &RightPanel{
-		Module:        &mockModule{id: "test-module"},
 		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),
@@ -268,7 +258,6 @@ func TestFooterKeepsOffFrameOnMobile(t *testing.T) {
 
 func TestRightPanel_FlowIsSplitRootStackedMain(t *testing.T) {
 	r := &RightPanel{
-		Module:        &mockModule{id: "test-module"},
 		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),

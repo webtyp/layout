@@ -1,7 +1,6 @@
 package rightpanel
 
 import (
-	"webtyp.com/layout"
 	"webtyp.com/widget"
 
 	. "webtyp.com/dom"
@@ -55,7 +54,6 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 // Usage:
 //
 //	panel := &rightpanel.RightPanel{
-//	    Module:        myModel,          // implements ModelName() string
 //	    Title:         "Users",
 //	    HeadControls:  mySelectSearch,
 //	    Article:       myTable,
@@ -66,9 +64,6 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 //	panel.Render()
 type RightPanel struct {
 	Element
-
-	// Module identifies the component.
-	Module layout.Module
 
 	// Title is rendered as <h1> in the header.
 	Title string

@@ -8,11 +8,6 @@ import (
 	"webtyp.com/layout/rightpanel"
 )
 
-// stubModule implements Module for tests.
-type stubModule struct{ name string }
-
-func (s stubModule) ModelName() string { return s.name }
-
 // stubComponent implements dom.Component for tests.
 type stubComponent struct{ html string }
 
@@ -23,7 +18,6 @@ func (s *stubComponent) Children() []dom.Component { return nil }
 
 func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Module:        stubModule{"users"},
 		Title:         "Users",
 		Head:          &stubComponent{"<span>badge</span>"},
 		HeadControls:  &stubComponent{"<select></select>"},
@@ -67,7 +61,6 @@ func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 
 func TestRightPanel_RenderHTML_AsideOmittedWhenNil(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Module:  stubModule{"orders"},
 		Title:   "Orders",
 		Article: &stubComponent{"<table></table>"},
 		// No AsideControls, no Aside, no AsideFooter
@@ -82,7 +75,6 @@ func TestRightPanel_RenderHTML_AsideOmittedWhenNil(t *testing.T) {
 
 func TestRightPanel_AsideRendersForFooterAlone(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Module:      stubModule{"checkout"},
 		Title:       "Checkout",
 		AsideFooter: &stubComponent{"<button>Buy</button>"},
 	}
