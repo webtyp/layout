@@ -5,6 +5,7 @@ package crudview
 import (
 	"testing"
 
+	"webtyp.com/dom"
 	. "webtyp.com/fmt"
 	"webtyp.com/fmt/lang"
 	. "webtyp.com/html"
@@ -134,5 +135,88 @@ func TestCrudView_DeleteConfirm_Language(t *testing.T) {
 		if !Contains(html, want) {
 			t.Errorf("expected ES dialog text %q, got: %s", want, html)
 		}
+	}
+}
+
+type stubList struct {
+	items    []view.Item
+	selected *dom.SignalString
+}
+
+func (s *stubList) GetID() string                      { return "" }
+func (s *stubList) SetID(id string)                    {}
+func (s *stubList) String() string                     { return "" }
+func (s *stubList) Render() *dom.Element               { return nil }
+func (s *stubList) Children() []dom.Component          { return nil }
+func (s *stubList) SetItems(items []view.Item)        { s.items = items }
+func (s *stubList) Items() []view.Item                { return s.items }
+func (s *stubList) Count() int                        { return len(s.items) }
+func (s *stubList) SetSelectMode(on bool)             {}
+func (s *stubList) SetDanger(on bool)                 {}
+func (s *stubList) CheckedIDs() []string              { return nil }
+func (s *stubList) OnCheckedChange(fn func(n int))    {}
+
+func TestOnAfterReload_FiresWithList(t *testing.T) {
+	fb := fakeListBackend()
+	p := view.New(fb, &Device{})
+
+	var capturedList ListView
+	sList := &stubList{}
+
+	v := &CrudView{
+		Title:     "OnAfterReload Test",
+		Presenter: p,
+		List: func(selected *dom.SignalString, onSelect func(view.Item)) ListView {
+			sList.selected = selected
+			return sList
+		},
+		OnAfterReload: func(list ListView) {
+			capturedList = list
+		},
+	}
+	v.Init(&mockCtx{})
+
+	if capturedList != ListView(sList) {
+		t.Errorf("expected capturedList to be sList, got %v", capturedList)
+	}
+}
+
+func TestOnAfterReload_AfterSetItems(t *testing.T) {
+	fb := fakeListBackend()
+	p := view.New(fb, &Device{})
+
+	var countInHook int
+	sList := &stubList{}
+
+	v := &CrudView{
+		Title:     "OnAfterReload Test",
+		Presenter: p,
+		List: func(selected *dom.SignalString, onSelect func(view.Item)) ListView {
+			sList.selected = selected
+			return sList
+		},
+		OnAfterReload: func(list ListView) {
+			countInHook = len(list.Items())
+		},
+	}
+	v.Init(&mockCtx{})
+
+	if countInHook != len(fb.Rows) {
+		t.Errorf("expected countInHook == %d, got %d", len(fb.Rows), countInHook)
+	}
+}
+
+func TestOnAfterReload_NilNoop(t *testing.T) {
+	fb := &conformance.FakeLister{}
+	p := view.New(fb, &Device{})
+
+	v := &CrudView{
+		Title:     "OnAfterReload Nil Test",
+		Presenter: p,
+	}
+	v.Init(&mockCtx{})
+
+	if err := v.Reload(); err != nil {
+		t.Fatalf("unexpected error on Reload: %v", err)
 	}
 }

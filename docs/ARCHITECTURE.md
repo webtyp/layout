@@ -270,6 +270,7 @@ The high-level pattern for constructing a CRUD view is `crudview.New(Config)`. T
 - Saves are validated and synced via `form.SyncValues` before shipping to `Presenter.Save`.
 - `OnSave`/`OnDelete` are only wired when `Presenter.CanSave()`/`CanDelete()` are true.
 - Empty search string placeholders default to `"Search…"`, but can be customized via `Presenter.SearchPlaceholder()`.
+- The `OnAfterReload func(list ListView)` hook runs at the end of `Reload()`, right after the list widget has been repopulated via `filter()`. It passes only the concrete `ListView` instance constructed by `Config.List`, adhering to the minimal API surface principle (items do not need to be passed separately as they are accessible directly via `list.Items()`).
 
 #### Principle: Standard-shaped tests
 

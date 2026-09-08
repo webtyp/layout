@@ -45,6 +45,17 @@ type Config struct {
 	// ListView) factory instead when the data wants a leading date/time
 	// badge (view.Item's LeadTop/Main/Bottom) rather than a plain label.
 	List func(selected *dom.SignalString, onSelect func(view.Item)) ListView
+
+	// OnAfterReload se invoca al final de Reload(), justo después de que la lista
+	// se re-llena con los items del presenter (list.SetItems). Recibe el list
+	// concreto ya pintado, para que el consumidor acomode detalles que el widget no
+	// puede derivar — p. ej. type-assert a *targetdate.TargetDate / *targethour.
+	// TargetHour y setear sus campos (FreeSlots). nil = hook ausente.
+	//
+	// Un solo argumento a propósito: items[] no viajan (list.Items() /
+	// Presenter.Items() ya los dan); lo único que NO se puede conseguir de otro
+	// lado es el list concrete que Config.List construyó.
+	OnAfterReload func(list ListView)
 }
 
 // New builds the renderer around an already-constructed Presenter. It generates the form from
@@ -82,7 +93,8 @@ func New(cfg Config) (*CrudView, error) {
 		// List is passed through as-is, nil included: Init resolves the
 		// same targetlist.TargetList default that a nil List would get
 		// here, so there is exactly one place that decision lives.
-		List: cfg.List,
+		List:          cfg.List,
+		OnAfterReload: cfg.OnAfterReload,
 	}
 
 	// Auto-save: every field commit (blur/change) persists immediately — see
