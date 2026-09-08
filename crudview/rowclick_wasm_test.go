@@ -40,13 +40,13 @@ func TestRowClick_WritesDataSelected(t *testing.T) {
 		t.Fatalf("Render: %v", err)
 	}
 
-	row1 := doc.Call("getElementById", "tl-1")
-	if row1.IsNull() {
-		t.Fatal("row #tl-1 not mounted")
+	row1 := doc.Call("querySelector", "[data-row='tl-1']")
+	if row1.IsNull() || row1.IsUndefined() {
+		t.Fatal("row [data-row='tl-1'] not mounted")
 	}
-	row2 := doc.Call("getElementById", "tl-2")
-	if row2.IsNull() {
-		t.Fatal("row #tl-2 not mounted")
+	row2 := doc.Call("querySelector", "[data-row='tl-2']")
+	if row2.IsNull() || row2.IsUndefined() {
+		t.Fatal("row [data-row='tl-2'] not mounted")
 	}
 
 	if got := row1.Call("getAttribute", "data-selected").String(); got != "<null>" {

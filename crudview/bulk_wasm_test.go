@@ -58,13 +58,21 @@ func mountBulk(t *testing.T, withUpdate bool) (*CrudView, view.Lister, js.Value)
 	return v, backend, doc
 }
 
-func clickRow(t *testing.T, doc js.Value, id string) {
+// findRow locates a targetlist row by the key it was built with. Rows carry
+// data-row for exactly this: since components v0.6.19 the row's id is assigned
+// by dom (Key + Ref), so a test cannot know it — data-row is the stable handle.
+func findRow(t *testing.T, doc js.Value, key string) js.Value {
 	t.Helper()
-	row := doc.Call("getElementById", id)
-	if row.IsNull() {
-		t.Fatalf("row %s not mounted", id)
+	row := doc.Call("querySelector", "[data-row='"+key+"']")
+	if row.IsNull() || row.IsUndefined() {
+		t.Fatalf("row %s not mounted", key)
 	}
-	row.Call("click")
+	return row
+}
+
+func clickRow(t *testing.T, doc js.Value, key string) {
+	t.Helper()
+	findRow(t, doc, key).Call("click")
 }
 
 func TestBulkDelete_ShipsEveryCheckedIDInOneCall(t *testing.T) {
@@ -198,13 +206,9 @@ func clickFooterButton(t *testing.T, doc js.Value, name string) {
 	btn.Call("click")
 }
 
-func rowAttr(t *testing.T, doc js.Value, id, attr string) string {
+func rowAttr(t *testing.T, doc js.Value, key, attr string) string {
 	t.Helper()
-	row := doc.Call("getElementById", id)
-	if row.IsNull() {
-		t.Fatalf("row %s not mounted", id)
-	}
-	v := row.Call("getAttribute", attr)
+	v := findRow(t, doc, key).Call("getAttribute", attr)
 	if v.IsNull() {
 		return ""
 	}
