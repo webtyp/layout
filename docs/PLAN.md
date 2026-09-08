@@ -1,6 +1,6 @@
 ---
 PLAN: "feat(crudview): OnAfterReload hook — consumer personalizes the list widget after every load"
-TAG: v0.2.21
+TAG: v0.2.23
 EXECUTOR: jules
 REVIEWER: none
 STATUS: review
