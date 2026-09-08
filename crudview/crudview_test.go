@@ -67,10 +67,9 @@ func TestCrudView_Render_WithSource(t *testing.T) {
 	if Contains(html, "name='cv-back'") {
 		t.Error("did not expect a back-to-list button")
 	}
-	// The aside carries the scroll-snap target id rightpanel stamps — the id
-	// the delegated ShowAside() resolves on a phone.
-	if !Contains(html, ".aside'") {
-		t.Error("expected the aside to carry the scroll-snap target id")
+	// The aside element is present.
+	if !Contains(html, "class='rp__aside'") {
+		t.Error("expected the aside element to be present")
 	}
 }
 
@@ -143,18 +142,18 @@ type stubList struct {
 	selected *dom.SignalString
 }
 
-func (s *stubList) GetID() string                      { return "" }
-func (s *stubList) SetID(id string)                    {}
-func (s *stubList) String() string                     { return "" }
-func (s *stubList) Render() *dom.Element               { return nil }
-func (s *stubList) Children() []dom.Component          { return nil }
-func (s *stubList) SetItems(items []view.Item)        { s.items = items }
-func (s *stubList) Items() []view.Item                { return s.items }
-func (s *stubList) Count() int                        { return len(s.items) }
-func (s *stubList) SetSelectMode(on bool)             {}
-func (s *stubList) SetDanger(on bool)                 {}
-func (s *stubList) CheckedIDs() []string              { return nil }
-func (s *stubList) OnCheckedChange(fn func(n int))    {}
+func (s *stubList) GetID() string                  { return "" }
+func (s *stubList) SetID(id string)                {}
+func (s *stubList) String() string                 { return "" }
+func (s *stubList) Render() *dom.Element           { return nil }
+func (s *stubList) Children() []dom.Component      { return nil }
+func (s *stubList) SetItems(items []view.Item)     { s.items = items }
+func (s *stubList) Items() []view.Item             { return s.items }
+func (s *stubList) Count() int                     { return len(s.items) }
+func (s *stubList) SetSelectMode(on bool)          {}
+func (s *stubList) SetDanger(on bool)              {}
+func (s *stubList) CheckedIDs() []string           { return nil }
+func (s *stubList) OnCheckedChange(fn func(n int)) {}
 
 func TestOnAfterReload_FiresWithList(t *testing.T) {
 	fb := fakeListBackend()

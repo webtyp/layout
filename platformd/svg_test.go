@@ -3,9 +3,9 @@
 package platformd_test
 
 import (
-	"webtyp.com/layout/platformd"
 	"strings"
 	"testing"
+	"webtyp.com/layout/platformd"
 )
 
 func TestPlatform_IconSvg_HasRequiredIcons(t *testing.T) {
