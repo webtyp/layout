@@ -3,6 +3,8 @@ PLAN: "feat(crudview): OnAfterReload hook — consumer personalizes the list wid
 TAG: v0.2.21
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 7064163444445900914
 ---
 
 # PLAN — `crudview.Config.OnAfterReload` (Etapa G del `DEMO_AGENDA_MASTER_PLAN`)
