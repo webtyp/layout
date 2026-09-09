@@ -3,7 +3,7 @@ module webtyp.com/layout
 go 1.25.2
 
 require (
-	webtyp.com/components v0.6.23
+	webtyp.com/components v0.6.24
 	webtyp.com/css v0.4.22
 	webtyp.com/date v0.0.6
 	webtyp.com/dom v0.13.12
@@ -16,7 +16,7 @@ require (
 	webtyp.com/svg v0.3.9
 	webtyp.com/time v0.5.5
 	webtyp.com/view v0.5.2
-	webtyp.com/widget v0.6.25
+	webtyp.com/widget v0.6.26
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
@@ -28,7 +28,7 @@ require (
 	webtyp.com/context v0.0.23 // indirect
 	webtyp.com/fetch v0.1.28 // indirect
 	webtyp.com/font v0.0.5 // indirect
-	webtyp.com/icons v0.0.3
+	webtyp.com/icons v0.0.7
 	webtyp.com/js v0.0.10 // indirect
 	webtyp.com/json v0.5.25 // indirect
 	webtyp.com/router v0.1.36 // indirect
