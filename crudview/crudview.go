@@ -259,10 +259,10 @@ func (v *CrudView) renderDeleteConfirm() *Element {
 	})
 
 	cancel := Button().Set(clsDelConfirmBtn.AsAttr()).Text(lang.Translate("Cancel").String()).
-		On("click", func(Event) { v.confirmDelete.Close() })
+		OnClick(func(Event) { v.confirmDelete.Close() })
 
 	confirm := Button().Set(clsDelConfirmBtn.AsAttr(), clsDelConfirmBtnDanger.AsAttr()).Text(lang.Translate("Delete").String()).
-		On("click", func(Event) { v.confirmDeleteAction() })
+		OnClick(func(Event) { v.confirmDeleteAction() })
 
 	actions := Div().Set(clsDelConfirmActions.AsAttr()).Child(cancel, confirm)
 
@@ -752,7 +752,7 @@ func (v *CrudView) Render() *Element {
 				iconCrudCancel.Render(string(NameCrudView.Class("action-cancel"))).
 					BindStateFunc(widget.Open, func() bool { return v.mode.Get() != string(modeNormal) || v.active() }),
 			)
-		toggle.On("click", func(Event) {
+		toggle.OnClick(func(Event) {
 			if v.mode.Get() != string(modeNormal) {
 				v.setMode(modeNormal)
 			} else {
@@ -802,7 +802,7 @@ func (v *CrudView) Render() *Element {
 				// already shows how many are marked, right above the list —
 				// a second count bubble on this button duplicated it.
 				Child(trash.Ref.Render(string(clsBtnCrudDeleteIcon)))
-			btnDelete.On("click", func(Event) { v.deleteEntryAction() })
+			btnDelete.OnClick(func(Event) { v.deleteEntryAction() })
 			footer.Child(btnDelete)
 		}
 
@@ -837,7 +837,7 @@ func (v *CrudView) Render() *Element {
 				})).
 				// No count badge here either — see btnDelete above.
 				Child(pencil.Ref.Render(string(clsBtnCrudEditIcon)))
-			btnEdit.On("click", func(Event) {
+			btnEdit.OnClick(func(Event) {
 				if v.mode.Get() == string(modeNormal) {
 					if !v.active() {
 						v.setMode(modeEditing)

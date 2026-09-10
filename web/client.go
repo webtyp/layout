@@ -46,7 +46,7 @@ func (a *App) Init(_ Ctx) {
 func (a *App) Render() *Element {
 	return Div().Child(
 		H1().Text("Hello from webtyp!"),
-		Button().Text("Click me").Class("btn").On("click", func(e Event) {
+		Button().Text("Click me").Class("btn").OnClick(func(e Event) {
 			a.clicks++
 			a.count.Set(Sprint(a.clicks)) // signal update patches only the text node
 		}),

@@ -353,7 +353,7 @@ func (p *Platform) brand() *Element {
 		slot.Child(IconBrand.Render(string(clsBrandMark)))
 	}
 	slot.Child(Span().Set(clsBrandName.AsAttr()).Text(p.Brand.BrandName()))
-	slot.On("click", func(Event) { p.goHome() })
+	slot.OnClick(func(Event) { p.goHome() })
 	return slot
 }
 
@@ -438,7 +438,7 @@ func (p *Platform) Render() *Element {
 		BindStateFunc(widget.Open, func() bool { return !p.navStowed.Get() && !p.menuOpen.Get() }).
 		BindChildren(p.navIcon).
 		ID("pd-hamburger-btn")
-	hamburger.On("click", func(Event) {
+	hamburger.OnClick(func(Event) {
 		p.menuOpen.Toggle()
 	})
 
@@ -457,7 +457,7 @@ func (p *Platform) Render() *Element {
 	// ── nav overlay backdrop (mobile) ────────────────────────────────────────
 	overlay := Div().Set(clsNavOverlay.AsAttr()).
 		BindStateFunc(widget.Open, func() bool { return p.menuOpen.Get() })
-	overlay.On("click", func(Event) {
+	overlay.OnClick(func(Event) {
 		p.menuOpen.Set(false)
 	})
 	root.Child(overlay)
@@ -603,11 +603,11 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 			Key(id+suffix).
 			Attr("role", role).
 			Text(n.Msg).
-			On("click", func(Event) { p.dismiss(id) }).
-			On("mouseenter", func(Event) { p.pauseToast(id) }).
-			On("mouseleave", func(Event) { p.resumeToast(id) }).
-			On("focusin", func(Event) { p.pauseToast(id) }).
-			On("focusout", func(Event) { p.resumeToast(id) }))
+			OnClick(func(Event) { p.dismiss(id) }).
+			OnMouseEnter(func(Event) { p.pauseToast(id) }).
+			OnMouseLeave(func(Event) { p.resumeToast(id) }).
+			OnFocusIn(func(Event) { p.pauseToast(id) }).
+			OnFocusOut(func(Event) { p.resumeToast(id) }))
 	}
 	return nodes
 }
