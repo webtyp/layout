@@ -5,7 +5,9 @@ Shell layout with hash-based routing, nav rail, header, and notifications.
 ## Usage
 
     p := &platformd.Platform{
-        AppName: "My App",
+        AppName:     "My App",
+        IdleTimeout: 30 * 60,
+        OnIdle:      logoutAndReload,
         Modules: []platformd.Module{
             {
                 ID:      "home",
