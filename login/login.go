@@ -35,12 +35,13 @@ var (
 // how tall the form above it grows, which a mark living inside the card would
 // not survive.
 //
-// The backdrop is Page — the same neutral surface every other screen sits
-// on — not Primary: a brand color saturated enough to read well on a button
-// rarely survives being stretched across an entire viewport, and the token
-// system already reserves Primary for bounded controls (see widget/style's
-// own Surface.resolve()). The card itself, plus an optional LogoMark, carry
-// the brand instead of the backdrop.
+// The backdrop is Primary, not Page: unlike every other screen, this one has
+// no authenticated chrome around it to carry the brand, so the full-bleed
+// gradient does — ColorPrimary's own default (see webtyp.com/css's
+// brandRoot/ColorPrimaryGradient), which every app gets for free until it
+// overrides those tokens. The elevated card stays a neutral, opaque surface
+// (As(Inset)) so the actual credentials form still reads as the thing you
+// interact with, not the backdrop.
 //
 // It owns none of the form's fields or validation — Form is built by the
 // composition root exactly like Platform.Modules are, so this package never

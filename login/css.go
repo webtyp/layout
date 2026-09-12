@@ -13,7 +13,17 @@ func (l *Login) RenderCSS() *css.Stylesheet {
 		Root(
 			style.Cover(),
 			style.CenterContent(),
-			style.As(style.Page),
+			// As(Primary), not Page: this is the one screen with no
+			// authenticated chrome around it to carry the brand, so the
+			// backdrop itself does — ColorPrimary's own default gradient
+			// (see webtyp.com/css's brandRoot/ColorPrimaryGradient), softened
+			// by Veil()'s translucent ColorSurface wash + blur below so it
+			// reads as ambient color, not a flat saturated fill the earlier
+			// version of this file specifically avoided. Veil's wash paints
+			// AFTER this and wins the background-color property, but never
+			// touches background-image, so the gradient still shows through
+			// it, blurred.
+			style.As(style.Primary),
 			style.Pad(style.Space4),
 			style.Backdrop(style.Viewport),
 			style.Veil(),
