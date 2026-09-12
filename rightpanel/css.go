@@ -56,9 +56,21 @@ func (r *RightPanel) RenderSheet() *style.Sheet {
 			style.ControlBox(),
 			style.KeepSize(),
 		).
+		// No Center(): the header's own PadInline above is the indent, and it
+		// applies to BOTH rows of the header. Center() added a second, rival
+		// one — a 65ch cap with auto margins — that only engages once the row
+		// is wider than the measure. So the title's alignment depended on
+		// whether the panel happened to have an aside: with one, main is ~2/3
+		// of the frame, narrower than 65ch, and the cap was inert; without
+		// one, main takes the full width, the cap engaged, and the title
+		// floated ~130px in while HeadControls right below it stayed flush at
+		// the padding. One header, two width policies, and the visible result
+		// changed with an unrelated structural fact.
+		//
+		// A title row is not prose either: the readable measure is what a LINE
+		// of running text wants, and a heading beside its controls is a band.
 		Part(partTitleRow,
 			style.Row(style.Space2),
-			style.Center(),
 		).
 		// The heading is TEXT on Root's Primary surface — it takes only the
 		// inherited on-primary ink (Root is style.As(style.Primary), and color
