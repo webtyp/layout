@@ -30,6 +30,14 @@ func (l *Login) RenderCSS() *css.Stylesheet {
 		// reading as cramped. Compact caps it at a single column of controls
 		// — Readable's 65ch is a measure for prose and made the card wider
 		// than most of the screens it fronts.
+		//
+		// No Backdrop/Veil here: those take the element out of flow
+		// (position: absolute; inset: 0), which is what a full-coverage
+		// scrim needs but breaks two-axis centering for a Width-constrained
+		// card — Root's own CenterContent() already centers this card on
+		// both axes as long as it stays a normal flex child. A translucent
+		// card look, if wanted later, needs Root's veil color mixed into
+		// this Part's own background instead of Backdrop(Parent).
 		Part(PartCard,
 			style.Stack(style.Space6),
 			style.Width(style.Compact),
@@ -37,8 +45,6 @@ func (l *Login) RenderCSS() *css.Stylesheet {
 			style.Round(style.RadiusLg),
 			style.Raise(style.Floating),
 			style.Pad(style.Space6),
-			style.Backdrop(style.Parent),
-			style.Veil(),
 		).
 		// Space1, against the card's Space6: title and subtitle are one block
 		// that happens to be set in two sizes, and spacing them like siblings

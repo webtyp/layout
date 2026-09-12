@@ -30,6 +30,25 @@ func TestLogin_RootUsesPageNotPrimary(t *testing.T) {
 	}
 }
 
+// The card used to carry Backdrop(Parent), which emits `position: absolute;
+// inset: 0;` — that takes it out of Root's flex flow, so Root's own
+// CenterContent() (display:flex; align-items:center; justify-content:center)
+// had nothing left to center: the Width(Compact) card collapsed to the
+// top-left corner instead of sitting in the middle of the screen. Guards
+// against that regression coming back via a future Part(PartCard, ...) edit.
+func TestLogin_CardStaysInFlowForRootToCenter(t *testing.T) {
+	sheet := (&Login{Title: "App"}).RenderCSS().String()
+
+	cardBlocks := loginRuleBlocks(sheet, ".login__card {")
+	if len(cardBlocks) == 0 {
+		t.Fatalf("expected a `.login__card {` rule, got:\n%s", sheet)
+	}
+	joined := strings.Join(cardBlocks, "\n---\n")
+	if strings.Contains(joined, "position: absolute") {
+		t.Errorf("login__card must stay a normal flex child of .login (no position: absolute) so Root's CenterContent() can center it, card rule:\n%s", joined)
+	}
+}
+
 // loginRuleBlocks returns the declaration body of every rule whose selector
 // line is exactly `sel` (standalone, not grouped or a __part), across layers.
 func loginRuleBlocks(cssStr, sel string) []string {
