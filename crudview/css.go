@@ -220,15 +220,20 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		Part(widget.Part("delconfirm-actions"),
 			style.Row(style.Space1),
 		).
+		// Button(), not a hand-composed As+Round+Pad: these two were the last
+		// place in this sheet that spelled a button out by hand, and they drifted
+		// exactly the way Button's doc warns about — RadiusSm and Space1 where
+		// every other button in the app uses the surface's own radius and the
+		// control box, so the confirm modal read as if it came from a different
+		// product. Panel also dragged an outline in (it is a panel surface, and
+		// panels carry a border); Secondary is the same fill with no border,
+		// which is what a button wants. Danger keeps the destructive colour and
+		// now gets the press/focus treatment derived from it instead of none.
 		Part(widget.Part("delconfirm-btn"),
-			style.As(style.Panel),
-			style.Round(style.RadiusSm),
-			style.Pad(style.Space1),
+			style.Button(style.Secondary),
 		).
 		Part(widget.Part("delconfirm-btn-danger"),
-			style.As(style.Danger),
-			style.Round(style.RadiusSm),
-			style.Pad(style.Space1),
+			style.Button(style.Danger),
 		).
 		When(widget.Open, widget.Part("action-new"),
 			style.RevealedBy(widget.Open),
