@@ -150,10 +150,10 @@ type Platform struct {
 	// If empty, the first module is used.
 	DefaultID string
 
-	// IdleTimeout is the number of seconds without user activity inside the
-	// platform before OnIdle fires once. Activity is the pointer entering the
-	// shell, a click or tap, a key press, focus moving inside, or a document
-	// scroll — see armIdle. 0 — the default — disables the idle lock entirely:
+	// IdleTimeout is the number of seconds without user activity anywhere on
+	// the page before OnIdle fires once. Activity is whatever
+	// dom.OnUserActivity reports (pointer movement/press, keypress, wheel,
+	// scroll) — see Init. 0 — the default — disables the idle lock entirely:
 	// nothing is armed, no listener changes behavior.
 	IdleTimeout int
 
@@ -172,7 +172,6 @@ type Platform struct {
 	navIcon             *SignalNodes
 	navStowed           *SignalBool
 	idleTimer           time.Timer
-	idleArmed           bool
 
 	rawNotifications []notification
 	mu               sync.Mutex
@@ -260,10 +259,21 @@ func (p *Platform) Init(ctx Ctx) {
 
 	// El scroll no burbujea: en captura sobre el documento es la única forma de que
 	// el chasis vea el desplazamiento de un contenedor que pertenece a otro paquete.
+	// (No llama a p.activity() aquí: dom.OnUserActivity, armado más abajo, ya
+	// escucha "scroll" por su cuenta — llamarlo dos veces sería la misma señal
+	// de presencia contada por partida doble.)
 	OnScrollCapture(func(top float64) {
 		p.onScroll(top)
-		p.activity()
 	})
+
+	// La presencia es un hecho del documento, no del subárbol de esta shell:
+	// dom.OnUserActivity ve el movimiento del puntero, teclas, wheel y scroll
+	// en cualquier parte de la página. Se registra una sola vez — Init corre
+	// una sola vez por componente — así que no hace falta un flag "ya armado".
+	if p.IdleTimeout > 0 {
+		OnUserActivity(p.activity)
+		p.activity() // abrir la app cuenta como presencia
+	}
 
 	hash := GetHash()
 	if hash != "" && len(hash) > 0 && hash[0] == '#' {
@@ -334,20 +344,6 @@ func (p *Platform) activity() {
 		p.OnIdle()
 	})
 	p.mu.Unlock()
-}
-
-// armIdle attaches the presence listeners to the platform root. Called
-// once from Render (idleArmed guards re-renders).
-func (p *Platform) armIdle(root *Element) {
-	if p.IdleTimeout <= 0 || p.idleArmed {
-		return
-	}
-	p.idleArmed = true
-	root.OnMouseEnter(func(Event) { p.activity() })
-	root.OnKeyDown(func(KeyEvent) { p.activity() })
-	root.OnFocusIn(func(Event) { p.activity() })
-	root.OnClick(func(Event) { p.activity() })
-	p.activity() // opening the app counts as presence
 }
 
 // onScroll guarda el botón de menú mientras el usuario baja y lo devuelve en
@@ -621,8 +617,6 @@ func (p *Platform) Render() *Element {
 	// cascade breaks the tie by DOM order — a toast must paint above the
 	// drawer's veil, not under it.
 	root.Child(msgStack)
-
-	p.armIdle(root)
 
 	return root
 }

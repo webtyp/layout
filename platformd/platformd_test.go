@@ -403,8 +403,7 @@ func TestPlatform_IdleLock_FiresOnce(t *testing.T) {
 			firedCount.Add(1)
 		},
 	}
-	p.Init(NilCtx())
-	_ = p.Render() // arms idle timer via activity()
+	p.Init(NilCtx()) // arms the idle timer via dom.OnUserActivity + activity()
 
 	if got := firedCount.Load(); got != 0 {
 		t.Fatalf("expected OnIdle not to have fired immediately, got %d", got)

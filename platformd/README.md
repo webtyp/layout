@@ -36,18 +36,19 @@ A module is anything satisfying `platformd.UIModule` — `ModelName()` is its id
 | `Modules` | `[]UIModule` | Registered modules, in nav-rail order. |
 | `CanView` | `func(resource string) bool` | Filters which modules the shell presents. `nil` shows all. |
 | `DefaultID` | `string` | `ModelName()` of the module shown initially. Empty = the first viewable one. |
-| `IdleTimeout` | `int` | Seconds without activity inside the platform before `OnIdle` fires once. `0` (default) disables the idle lock. |
+| `IdleTimeout` | `int` | Seconds without activity anywhere on the page before `OnIdle` fires once. `0` (default) disables the idle lock. |
 | `OnIdle` | `func()` | Runs when `IdleTimeout` elapses. Required when `IdleTimeout > 0` — `Init` panics otherwise. |
 
 ### The idle lock
 
-With `IdleTimeout > 0`, the shell arms a timer on its root and rearms it on
-every presence signal: pointer entering the shell, click or tap, key press,
-focus moving inside, and document scroll (the capture-phase listener `Init`
-already wires). When the period elapses with none of those, `OnIdle` fires
-**once** — the platform does not re-arm itself; the next activity starts a
-fresh period. Detecting idleness is the shell's job; the consequence
-(logout, reload) is the app's.
+With `IdleTimeout > 0`, `Init` registers `webtyp.com/dom.OnUserActivity` and
+rearms a timer on every pulse it reports — pointer movement/press, keypress,
+wheel, or scroll, anywhere on the page (`dom` listens on the document, not on
+the shell's own subtree — see that function's doc comment for why an
+element-level listener cannot do this reliably). When the period elapses with
+no pulse, `OnIdle` fires **once** — the platform does not re-arm itself; the
+next activity starts a fresh period. Detecting idleness is the shell's job;
+the consequence (logout, reload) is the app's.
 
 ## Icons
 
