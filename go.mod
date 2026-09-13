@@ -11,7 +11,7 @@ require (
 	webtyp.com/form v0.4.13
 	webtyp.com/html v0.0.24
 	webtyp.com/image v0.1.3
-	webtyp.com/input v0.0.6
+	webtyp.com/input v0.0.9
 	webtyp.com/model v0.1.9
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.5
