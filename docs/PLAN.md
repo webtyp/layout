@@ -2,8 +2,9 @@
 PLAN: "feat(platformd): IdleTimeout + OnIdle — close the session when the user walks away"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 6417421674963655552
+PR: https://github.com/webtyp/layout/pull/36
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
