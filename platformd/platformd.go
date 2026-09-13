@@ -151,9 +151,10 @@ type Platform struct {
 	DefaultID string
 
 	// IdleTimeout is the number of seconds without user activity inside the
-	// platform (mouse, keyboard, touch, or document scroll) before OnIdle fires
-	// once. 0 — the default — disables the idle lock entirely: nothing is
-	// armed, no listener changes behavior.
+	// platform before OnIdle fires once. Activity is the pointer entering the
+	// shell, a click or tap, a key press, focus moving inside, or a document
+	// scroll — see armIdle. 0 — the default — disables the idle lock entirely:
+	// nothing is armed, no listener changes behavior.
 	IdleTimeout int
 
 	// OnIdle is called when IdleTimeout seconds pass without activity. Required
