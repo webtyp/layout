@@ -38,5 +38,5 @@ webtyp.com/time v0.5.5 h1:G7/eAGXJWVHBJqx7lO4K/Zy1FzNXqkW9X6AAhbTmj6E=
 webtyp.com/time v0.5.5/go.mod h1:V6ew493Rk+an2mV77vVjytPAbtlsELVZ4O4wGqu4tUI=
 webtyp.com/view v0.5.2 h1:UmFH3Jxay8qpFea26cre+lGtn/3/3cuxOVn4C8A9vYg=
 webtyp.com/view v0.5.2/go.mod h1:kuAGl/4RoyrX57F0HfHFMUgtFfC4PpAU20DUj43gU4E=
-webtyp.com/widget v0.6.29 h1:hvNgKXiIx6obUdXcn/DgPYC3ZL0xEE+bxRUpPM3LRYs=
-webtyp.com/widget v0.6.29/go.mod h1:vcf+uuV5gXNji31NhQ4xW3fDji70Ui4XikjW1VV32eQ=
+webtyp.com/widget v0.6.30 h1:CstDzI005vsTHJpdYBaqmuB/7Oq5emubljFLlI+n0xo=
+webtyp.com/widget v0.6.30/go.mod h1:vcf+uuV5gXNji31NhQ4xW3fDji70Ui4XikjW1VV32eQ=

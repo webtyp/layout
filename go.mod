@@ -15,7 +15,7 @@ require (
 	webtyp.com/svg v0.3.9
 	webtyp.com/time v0.5.5
 	webtyp.com/view v0.5.2
-	webtyp.com/widget v0.6.29
+	webtyp.com/widget v0.6.30
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
