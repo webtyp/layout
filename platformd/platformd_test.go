@@ -3,6 +3,7 @@
 package platformd
 
 import (
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -390,32 +391,36 @@ func TestPlatform_IdleLock_PanicOnNilOnIdle(t *testing.T) {
 }
 
 func TestPlatform_IdleLock_FiresOnce(t *testing.T) {
-	firedCount := 0
+	// firedCount is written from OnIdle, which runs on the timer's own
+	// goroutine (time.AfterFunc), while the test reads it from the main
+	// goroutine — time.Sleep gives no happens-before guarantee between the
+	// two, so the counter needs atomic access, not a plain int.
+	var firedCount atomic.Int32
 	p := &Platform{
 		Element:     *Div(),
 		IdleTimeout: 1, // 1 second timeout
 		OnIdle: func() {
-			firedCount++
+			firedCount.Add(1)
 		},
 	}
 	p.Init(NilCtx())
 	_ = p.Render() // arms idle timer via activity()
 
-	if firedCount != 0 {
-		t.Fatalf("expected OnIdle not to have fired immediately, got %d", firedCount)
+	if got := firedCount.Load(); got != 0 {
+		t.Fatalf("expected OnIdle not to have fired immediately, got %d", got)
 	}
 
 	time.Sleep(1500 * time.Millisecond)
 
-	if firedCount != 1 {
-		t.Errorf("expected OnIdle to fire once within 1.5s, got %d", firedCount)
+	if got := firedCount.Load(); got != 1 {
+		t.Errorf("expected OnIdle to fire once within 1.5s, got %d", got)
 	}
 
 	// Wait another second to ensure it does not fire a second time without activity
 	time.Sleep(1200 * time.Millisecond)
 
-	if firedCount != 1 {
-		t.Errorf("expected OnIdle NOT to fire a second time without new activity, got %d", firedCount)
+	if got := firedCount.Load(); got != 1 {
+		t.Errorf("expected OnIdle NOT to fire a second time without new activity, got %d", got)
 	}
 }
 

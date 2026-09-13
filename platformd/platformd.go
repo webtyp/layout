@@ -313,17 +313,27 @@ func (p *Platform) activeIcon() svg.Icon {
 }
 
 // activity rearms the idle timer; called from every presence signal.
+//
+// idleTimer is guarded by p.mu: the AfterFunc callback below runs on its own
+// goroutine (the stdlib backend lane; WASM is single-threaded, but the type
+// is shared code) and writes idleTimer to nil concurrently with whatever
+// goroutine calls activity() next — exactly the race p.mu was already
+// documented, on lastScrollTop, as existing for.
 func (p *Platform) activity() {
 	if p.IdleTimeout <= 0 {
 		return
 	}
+	p.mu.Lock()
 	if p.idleTimer != nil {
 		p.idleTimer.Stop()
 	}
 	p.idleTimer = time.AfterFunc(p.IdleTimeout*1000, func() {
+		p.mu.Lock()
 		p.idleTimer = nil
+		p.mu.Unlock()
 		p.OnIdle()
 	})
+	p.mu.Unlock()
 }
 
 // armIdle attaches the presence listeners to the platform root. Called
