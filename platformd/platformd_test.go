@@ -355,6 +355,70 @@ func TestPlatform_Notify_PauseResume(t *testing.T) {
 	}
 }
 
+func TestPlatform_IdleLock_DisabledByDefault(t *testing.T) {
+	p := &Platform{Element: *Div()}
+	// Should not panic when IdleTimeout is 0 and OnIdle is nil
+	p.Init(NilCtx())
+	if p.idleTimer != nil {
+		t.Error("expected idleTimer to be nil when IdleTimeout is 0")
+	}
+}
+
+func TestPlatform_IdleLock_PanicOnNilOnIdle(t *testing.T) {
+	p := &Platform{
+		Element:     *Div(),
+		IdleTimeout: 30,
+		OnIdle:      nil,
+	}
+
+	defer func() {
+		r := recover()
+		if r == nil {
+			t.Fatal("expected panic when IdleTimeout > 0 and OnIdle is nil")
+		}
+		errMsg, ok := r.(string)
+		if !ok {
+			t.Fatalf("expected string panic message, got %v", r)
+		}
+		want := "platformd: IdleTimeout requires OnIdle"
+		if errMsg != want {
+			t.Errorf("expected panic message %q, got %q", want, errMsg)
+		}
+	}()
+
+	p.Init(NilCtx())
+}
+
+func TestPlatform_IdleLock_FiresOnce(t *testing.T) {
+	firedCount := 0
+	p := &Platform{
+		Element:     *Div(),
+		IdleTimeout: 1, // 1 second timeout
+		OnIdle: func() {
+			firedCount++
+		},
+	}
+	p.Init(NilCtx())
+	_ = p.Render() // arms idle timer via activity()
+
+	if firedCount != 0 {
+		t.Fatalf("expected OnIdle not to have fired immediately, got %d", firedCount)
+	}
+
+	time.Sleep(1500 * time.Millisecond)
+
+	if firedCount != 1 {
+		t.Errorf("expected OnIdle to fire once within 1.5s, got %d", firedCount)
+	}
+
+	// Wait another second to ensure it does not fire a second time without activity
+	time.Sleep(1200 * time.Millisecond)
+
+	if firedCount != 1 {
+		t.Errorf("expected OnIdle NOT to fire a second time without new activity, got %d", firedCount)
+	}
+}
+
 func autoMillis(msg string) int {
 	return Auto().millis(msg)
 }
