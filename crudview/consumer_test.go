@@ -73,20 +73,20 @@ type listSaveDeleteBackend struct {
 	deleted []string
 }
 
-func (b *listSaveDeleteBackend) List() ([]model.Model, error) {
+func (b *listSaveDeleteBackend) List(done func([]model.Model, error)) {
 	out := make([]model.Model, len(b.rows))
 	copy(out, b.rows)
-	return out, nil
+	done(out, nil)
 }
 
-func (b *listSaveDeleteBackend) Save(recs ...model.Model) error {
+func (b *listSaveDeleteBackend) Save(recs []model.Model, done func(error)) {
 	b.saved = append(b.saved, recs...)
-	return nil
+	done(nil)
 }
 
-func (b *listSaveDeleteBackend) Delete(ids ...string) error {
+func (b *listSaveDeleteBackend) Delete(ids []string, done func(error)) {
 	b.deleted = append(b.deleted, ids...)
-	return nil
+	done(nil)
 }
 
 // deviceNoWidgetsModel is a model without widgets
@@ -128,7 +128,7 @@ func (f *fakeNoWidgetsPresenter) SearchPlaceholder() string      { return "Searc
 func (f *fakeNoWidgetsPresenter) Record() model.Model            { return f.record }
 func (f *fakeNoWidgetsPresenter) Items() []view.Item             { return nil }
 func (f *fakeNoWidgetsPresenter) Filter(term string) []view.Item { return nil }
-func (f *fakeNoWidgetsPresenter) Reload() error                  { return nil }
+func (f *fakeNoWidgetsPresenter) Reload(done func(error))             { done(nil) }
 func (f *fakeNoWidgetsPresenter) Selected() string               { return "" }
 func (f *fakeNoWidgetsPresenter) Select(id string) model.Model   { return nil }
 func (f *fakeNoWidgetsPresenter) Deselect()                      {}
@@ -467,9 +467,10 @@ func TestConsumer_ListErrorPropagated(t *testing.T) {
 	}
 	v.Init(&fakeCtx{})
 
-	receivedErr := v.Reload()
+	var receivedErr error
+	v.Reload(func(err error) { receivedErr = err })
 	if receivedErr == nil {
-		t.Error("expected Reload to return the presenter error, but got nil")
+		t.Error("expected Reload to deliver the presenter error, but got nil")
 	} else if receivedErr.Error() != expectedErr.Error() {
 		t.Errorf("expected error '%s', got '%s'", expectedErr.Error(), receivedErr.Error())
 	}
@@ -496,7 +497,7 @@ func TestConsumer_SearchFiltering(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	v.Init(&fakeCtx{})
-	_ = v.Reload() // fetch and populate items
+	v.Reload(nil) // fetch and populate items
 
 	// 1. Initial state (no search term) - expect all 3 items
 	if v.list.Count() != 3 {

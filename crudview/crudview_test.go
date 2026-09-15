@@ -215,7 +215,9 @@ func TestOnAfterReload_NilNoop(t *testing.T) {
 	}
 	v.Init(&mockCtx{})
 
-	if err := v.Reload(); err != nil {
-		t.Fatalf("unexpected error on Reload: %v", err)
+	var rerr error
+	v.Reload(func(err error) { rerr = err })
+	if rerr != nil {
+		t.Fatalf("unexpected error on Reload: %v", rerr)
 	}
 }

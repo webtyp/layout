@@ -340,14 +340,14 @@ type noSaveBackend struct {
 	rows []model.Model
 }
 
-func (b *noSaveBackend) List() ([]model.Model, error) {
+func (b *noSaveBackend) List(done func([]model.Model, error)) {
 	out := make([]model.Model, len(b.rows))
 	copy(out, b.rows)
-	return out, nil
+	done(out, nil)
 }
 
-func (b *noSaveBackend) Delete(ids ...string) error {
-	return nil
+func (b *noSaveBackend) Delete(ids []string, done func(error)) {
+	done(nil)
 }
 
 // buttonOpenTag returns the opening <button ...> tag for the named control.

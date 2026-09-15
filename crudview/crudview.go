@@ -14,6 +14,7 @@ import (
 	"webtyp.com/icons/trash"
 	"webtyp.com/icons/undo"
 	"webtyp.com/layout/rightpanel"
+	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/widget"
 )
@@ -237,9 +238,11 @@ func (v *CrudView) Init(ctx Ctx) {
 	}
 
 	if v.Presenter != nil {
-		if err := v.Reload(); err != nil {
-			Log(err.Error())
-		}
+		v.Reload(func(err error) {
+			if err != nil {
+				Log(err.Error())
+			}
+		})
 	}
 }
 
@@ -304,23 +307,27 @@ func (v *CrudView) deleteRequest(id string) {
 	v.confirmDelete.Open()
 }
 
-// confirmDeleteAction: the modal's "Eliminar" button. Deletes the record(s)
-// pending confirmation and closes the modal.
+// confirmDeleteAction: the modal's "Eliminar" button. Closes the modal and
+// asks the deleter to remove the record(s) pending confirmation. The outcome
+// arrives asynchronously through the deleter's done callback: only then does
+// the mode return to normal and the list reload. The modal closes immediately
+// so a slow transport cannot leave the user staring at a dead dialog.
 func (v *CrudView) confirmDeleteAction() {
 	if v.mode.Get() == string(modeDeleting) {
 		if deleter, ok := v.Presenter.(view.Deleter); ok && v.list != nil {
 			ids := v.list.CheckedIDs()
 			if len(ids) > 0 {
-				err := deleter.Delete(ids...)
-				if err == nil {
-					v.setMode(modeNormal)
-					_ = v.Reload()
-				} else {
-					Log(err.Error())
-				}
-				if v.OnDeleted != nil {
-					v.OnDeleted(ids, err)
-				}
+				deleter.Delete(ids, func(err error) {
+					if err != nil {
+						Log(err.Error())
+					} else {
+						v.setMode(modeNormal)
+						v.Reload(nil)
+					}
+					if v.OnDeleted != nil {
+						v.OnDeleted(ids, err)
+					}
+				})
 			}
 		}
 	} else {
@@ -332,18 +339,29 @@ func (v *CrudView) confirmDeleteAction() {
 	v.confirmDelete.Close()
 }
 
-func (v *CrudView) Reload() error {
+// Reload asks the presenter for the records and, when they arrive, repopulates
+// the list and enforces the list-detail invariant (filter() drops a selection
+// the fresh list no longer shows). The result is asynchronous: done runs once,
+// after the list is painted, and is optional — nil is a no-op.
+func (v *CrudView) Reload(done func(error)) {
+	if done == nil {
+		done = func(error) {}
+	}
 	if v.Presenter == nil {
-		return nil
+		done(nil)
+		return
 	}
-	if err := v.Presenter.Reload(); err != nil {
-		return err
-	}
-	v.filter()
-	if v.OnAfterReload != nil && v.list != nil {
-		v.OnAfterReload(v.list)
-	}
-	return nil
+	v.Presenter.Reload(func(err error) {
+		if err != nil {
+			done(err)
+			return
+		}
+		v.filter()
+		if v.OnAfterReload != nil && v.list != nil {
+			v.OnAfterReload(v.list)
+		}
+		done(nil)
+	})
 }
 
 // selectAction: card click / driver Select. Selecting an existing row loads it
@@ -497,35 +515,55 @@ func (v *CrudView) toggleAction() {
 // through a field without changing it must never persist or fire OnSaved
 // (a host's "Guardado" toast on an untouched field would be pure noise, and
 // on mobile — where the module fills the screen — actively in the way).
+//
+// The outcome is asynchronous: validation and sync errors are reported through
+// OnSaved immediately, while a transport error arrives when the saver's done
+// callback runs. Only a successful save marks the form pristine, resets a
+// new-record draft and reloads the list.
 func (v *CrudView) saveAction(saver view.Saver) {
 	if !v.form.IsDirty() {
 		return
 	}
-	err := v.form.Validate()
-	if err == nil {
-		record := v.Presenter.Record()
-		if err = v.form.SyncValues(record); err == nil {
-			if err = saver.Save(record); err == nil {
-				v.form.MarkPristine() // a later untouched commit isn't dirty again
-				if v.composing.Get() {
-					// A new-record draft just saved successfully: the draft is
-					// done, return to the "+" ready state. Not undoAction — that
-					// fires OnCancel ("Cancelado"), wrong after a real save; this
-					// is a silent reset, same shape as undoAction minus the
-					// callback. Only for composing: editing an EXISTING record
-					// (selected≠"", composing=false) must NOT reset here, or
-					// every auto-save on blur would kick the user out of the
-					// record they're still editing.
-					v.composing.Set(false)
-					v.selected.Set("")
-					v.canDelete.Set(false)
-					v.Presenter.Deselect()
-					v.form.Reset()
-				}
-				_ = v.Reload()
-			}
-		}
+	record := v.Presenter.Record()
+	if err := v.form.Validate(); err != nil {
+		v.reportSave(err)
+		return
 	}
+	if err := v.form.SyncValues(record); err != nil {
+		v.reportSave(err)
+		return
+	}
+	saver.Save([]model.Model{record}, func(err error) {
+		if err != nil {
+			v.reportSave(err)
+			return
+		}
+		v.form.MarkPristine() // a later untouched commit isn't dirty again
+		if v.composing.Get() {
+			// A new-record draft just saved successfully: the draft is
+			// done, return to the "+" ready state. Not undoAction — that
+			// fires OnCancel ("Cancelado"), wrong after a real save; this
+			// is a silent reset, same shape as undoAction minus the
+			// callback. Only for composing: editing an EXISTING record
+			// (selected≠"", composing=false) must NOT reset here, or
+			// every auto-save on blur would kick the user out of the
+			// record they're still editing.
+			v.composing.Set(false)
+			v.selected.Set("")
+			v.canDelete.Set(false)
+			v.Presenter.Deselect()
+			v.form.Reset()
+		}
+		v.Reload(nil)
+		v.reportSave(nil)
+	})
+}
+
+// reportSave funnels every save outcome through one place: a non-nil err is
+// logged and handed to OnSaved; nil reports success. Called exactly once per
+// save attempt — from the synchronous validation path or the async done
+// callback.
+func (v *CrudView) reportSave(err error) {
 	if err != nil {
 		Log(err.Error())
 	}
@@ -559,19 +597,22 @@ func (v *CrudView) autoSaveAction() {
 	}
 }
 
-// deleteAction: delete button / driver Delete. Only reachable when deleter != nil.
+// deleteAction: delete button / driver Delete. Only reachable when deleter !=
+// nil. The outcome arrives asynchronously through done: only a successful
+// delete clears the selection and reloads the list; OnDeleted fires either way.
 func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
-	err := deleter.Delete(id)
-	if err == nil {
-		v.selected.Set("")
-		v.canDelete.Set(false)
-		_ = v.Reload()
-	} else {
-		Log(err.Error())
-	}
-	if v.OnDeleted != nil {
-		v.OnDeleted([]string{id}, err)
-	}
+	deleter.Delete([]string{id}, func(err error) {
+		if err != nil {
+			Log(err.Error())
+		} else {
+			v.selected.Set("")
+			v.canDelete.Set(false)
+			v.Reload(nil)
+		}
+		if v.OnDeleted != nil {
+			v.OnDeleted([]string{id}, err)
+		}
+	})
 }
 
 // filter repopulates the list for the current term and then enforces the one
@@ -664,17 +705,18 @@ func (v *CrudView) bulkEditAction() {
 		Log(err.Error())
 		return
 	}
-	err := updater.Update(ids, record, fields)
-	if err == nil {
-		v.setMode(modeNormal)
-		v.form.Reset()
-		_ = v.Reload()
-	} else {
-		Log(err.Error())
-	}
-	if v.OnUpdated != nil {
-		v.OnUpdated(ids, err)
-	}
+	updater.Update(ids, record, fields, func(err error) {
+		if err != nil {
+			Log(err.Error())
+		} else {
+			v.setMode(modeNormal)
+			v.form.Reset()
+			v.Reload(nil)
+		}
+		if v.OnUpdated != nil {
+			v.OnUpdated(ids, err)
+		}
+	})
 }
 
 // dropSelectionOutOfScope clears the selection when the freshly filtered list

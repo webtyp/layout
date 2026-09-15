@@ -24,7 +24,7 @@ func TestCrudView_Wasm_Flow(t *testing.T) {
 		Presenter: p,
 	}
 	v.Init(&mockCtxWasm{})
-	_ = v.Reload()
+	v.Reload(nil)
 
 	if len(v.Presenter.Items()) != 2 {
 		t.Errorf("expected 2 items, got %d", len(v.Presenter.Items()))

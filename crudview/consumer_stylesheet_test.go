@@ -238,7 +238,7 @@ func TestConsumer_StylesheetAsserts(t *testing.T) {
 		Filter:    html.Div(),
 	}
 	v.Init(&fakeCtx{})
-	_ = v.Reload()
+	v.Reload(nil)
 	v.composing.Set(true) // Ensure data-open renders as true
 
 	cssStr := v.RenderCSS().String()

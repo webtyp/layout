@@ -230,7 +230,7 @@ Deliberately, `Context` is **not auto-wired to the list filter** even when it
 satisfies `widget.Filterable`: `Filter` (e.g. a calendar) and `Context` (a doctor)
 write into the same single-term `Presenter.Filter(term)`, so together they could
 not represent "doctor X + day Y". Changing the context **re-scopes the data** — the
-module that composes the `Context` calls its presenter + `CrudView.Reload()` —
+module that composes the `Context` calls its presenter + `CrudView.Reload(done)` —
 while `Filter` remains the term filter. `crudview` only renders the slot; wiring
 is the consumer's, by design.
 
@@ -241,14 +241,19 @@ A domain module builds a `view.Presenter` (via `view.New(caller, record, listOp,
 opts...)`, importing `view`+`model`+`router`, never `layout`) and hands it to `crudview.New(Config{
 Presenter: p})`.
 
-1. `Init` (or a save/delete callback) calls `Presenter.Reload()`, which invokes the list op and
-   decodes into `Presenter.Items()` synchronously.
-2. `filter()` reads straight from `Presenter.Items()` (no local `allItems` copy).
-3. `items` (SignalNodes) is updated, triggering a DOM patch.
+Every `view` read and write is **asynchronous**: the result arrives through a `done`
+callback (`view` never blocks, never uses a channel — see the CALLBACK_LISTERS master
+plan). `crudview` is the renderer that paints from inside those callbacks:
 
-Save/Delete follow the same shape: `crudview` syncs form values into `Presenter.Record()`, then
-calls `Presenter.Save(record)` / `Presenter.Delete(id)` — both synchronous, both returning `error`
-directly.
+1. `Init` (or a save/delete callback) calls `Reload(done)`, which asks `Presenter.Reload(done)`;
+   when the records arrive, `filter()` reads straight from `Presenter.Items()` (no local
+   `allItems` copy) and the list repaints.
+2. Save/Delete/Update follow the same shape: `crudview` syncs form values into
+   `Presenter.Record()`, then calls `Presenter.Save([...], done)` /
+   `Presenter.Delete([...], done)` / `Presenter.Update([...], done)`. The outcome — success
+   or error — arrives through the callback, and only a successful write reloads the list.
+   The user-facing hooks (`OnSaved`, `OnDeleted`, `OnUpdated`) fire exactly once, with the
+   `error` the callback delivered.
 
 ### Signal Fields
 

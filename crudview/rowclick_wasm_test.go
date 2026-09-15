@@ -35,7 +35,7 @@ func TestRowClick_WritesDataSelected(t *testing.T) {
 	v := &CrudView{Title: "Wasm Test", Presenter: p}
 	v.Init(&mockCtxWasm{})
 	v.SetID("cv")
-	_ = v.Reload()
+	v.Reload(nil)
 	if err := Render("cv-root", v); err != nil {
 		t.Fatalf("Render: %v", err)
 	}

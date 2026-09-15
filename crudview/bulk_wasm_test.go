@@ -48,7 +48,7 @@ func mountBulk(t *testing.T, withUpdate bool) (*CrudView, view.Lister, js.Value)
 	}
 	v.Init(&mockCtxWasm{})
 	v.SetID("cvb")
-	_ = v.Reload()
+	v.Reload(nil)
 	if err := Render("cv-bulk-root", v); err != nil {
 		t.Fatalf("Render: %v", err)
 	}

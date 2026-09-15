@@ -29,7 +29,7 @@ func TestViewConformance(t *testing.T) {
 			}
 
 			return conformance.Driver{
-				Mount:    func() { _ = v.Reload() },
+				Mount:    func() { v.Reload(nil) },
 				Labels:   func() []string { return cardLabels(v) },
 				Select:   func(id string) { v.selectAction(view.Item{ID: id}) },
 				SetField: func(name, value string) { v.form.SetValues(name, value) },
