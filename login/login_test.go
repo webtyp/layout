@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	. "webtyp.com/dom"
 	. "webtyp.com/html"
 )
 
@@ -15,6 +16,90 @@ func TestLogin_RendersTitleAndForm(t *testing.T) {
 		if !strings.Contains(html, want) {
 			t.Errorf("markup missing %q\n%s", want, html)
 		}
+	}
+}
+
+func TestLogin_MessageNilSlotNotRendered(t *testing.T) {
+	html := (&Login{Title: "App"}).Render().String()
+	if strings.Contains(html, "login__message") {
+		t.Errorf("expected no login__message slot when Message is nil\n%s", html)
+	}
+}
+
+func TestLogin_MessageEmptySignalRenderedHidden(t *testing.T) {
+	msg := NewString("")
+	html := (&Login{Title: "App", Message: msg}).Render().String()
+
+	if !strings.Contains(html, "login__message") {
+		t.Fatalf("expected login__message slot to be in DOM tree when Message signal is provided\n%s", html)
+	}
+	if !strings.Contains(html, "display:none") && !strings.Contains(html, "hidden") {
+		t.Errorf("expected login__message slot to be hidden when signal value is empty\n%s", html)
+	}
+}
+
+func TestLogin_MessageNonEmptySignalRenderedVisible(t *testing.T) {
+	msg := NewString("Acceso denegado")
+	html := (&Login{Title: "App", Message: msg}).Render().String()
+
+	if !strings.Contains(html, "login__message") {
+		t.Fatalf("expected login__message slot to be rendered\n%s", html)
+	}
+	if !strings.Contains(html, "Acceso denegado") {
+		t.Errorf("expected message text 'Acceso denegado' in markup\n%s", html)
+	}
+	if strings.Contains(html, "display:none") {
+		t.Errorf("expected message slot to be visible (no display:none)\n%s", html)
+	}
+}
+
+func TestLogin_MessageSlotPrecedesForm(t *testing.T) {
+	msg := NewString("Error")
+	form := Div().Attr("id", "the-form")
+	html := (&Login{Title: "App", Message: msg, Form: form}).Render().String()
+
+	msgIdx := strings.Index(html, "login__message")
+	formIdx := strings.Index(html, "the-form")
+
+	if msgIdx == -1 || formIdx == -1 {
+		t.Fatalf("expected both login__message and form in markup\n%s", html)
+	}
+	if msgIdx >= formIdx {
+		t.Errorf("expected login__message (%d) to appear before form (%d)\n%s", msgIdx, formIdx, html)
+	}
+}
+
+func TestLogin_MessageSlotCarriesRoleAlert(t *testing.T) {
+	msg := NewString("Error")
+	html := (&Login{Title: "App", Message: msg}).Render().String()
+
+	if !strings.Contains(html, "role='alert'") && !strings.Contains(html, `role="alert"`) {
+		t.Errorf("expected login__message slot to carry role=\"alert\"\n%s", html)
+	}
+}
+
+func TestLogin_ConsumerShapeAsyncErrorUpdate(t *testing.T) {
+	msg := NewString("")
+	form := Div().Attr("id", "the-form")
+	l := &Login{
+		Title:   "App",
+		Message: msg,
+		Form:    form,
+	}
+
+	elem := l.Render()
+	htmlBefore := elem.String()
+
+	if strings.Contains(htmlBefore, "Credenciales inválidas") {
+		t.Errorf("expected no error text initially, got:\n%s", htmlBefore)
+	}
+
+	// Simulate async server response setting error message after render
+	msg.Set("Credenciales inválidas")
+
+	htmlAfter := elem.String()
+	if !strings.Contains(htmlAfter, "Credenciales inválidas") {
+		t.Errorf("expected updated message 'Credenciales inválidas' after msg.Set, got:\n%s", htmlAfter)
 	}
 }
 

@@ -8,7 +8,7 @@ import (
 
 // NameLogin is the widget identity; it produces the class prefix "login" and
 // the part classes "login__card", "login__header", "login__title",
-// "login__subtitle", "login__mark".
+// "login__subtitle", "login__mark", "login__message".
 const NameLogin = widget.Name("login")
 
 const (
@@ -17,6 +17,7 @@ const (
 	PartTitle    = widget.Part("title")    // the app's own name, leading the card
 	PartSubtitle = widget.Part("subtitle") // the one line of orientation under it
 	PartMark     = widget.Part("mark")     // the corner brand mark, independent of the card
+	PartMessage  = widget.Part("message")  // el resultado del último intento de envío
 )
 
 var (
@@ -26,6 +27,7 @@ var (
 	clsTitle    = NameLogin.Class(PartTitle)
 	clsSubtitle = NameLogin.Class(PartSubtitle)
 	clsMark     = NameLogin.Class(PartMark)
+	clsMessage  = NameLogin.Class(PartMessage)
 )
 
 // Login is the pre-authentication screen: an elevated card (title, subtitle,
@@ -63,6 +65,18 @@ type Login struct {
 	// Form is the actual login form, built and validated by the caller.
 	Form Component
 
+	// Message es el resultado del último intento de envío: vacío mientras no
+	// haya ninguno, el texto a mostrar cuando el servidor rechaza. Es una
+	// señal y no un string porque llega DESPUÉS del render — la respuesta del
+	// servidor es asíncrona y el árbol ya está montado.
+	//
+	// Opcional: nil no renderiza la ranura en absoluto. Una pantalla cuyo
+	// formulario no puede fallar no paga por un nodo que nunca se llena.
+	//
+	// Este paquete no decide el texto. Quién falló y por qué lo sabe la app;
+	// aquí solo se muestra.
+	Message *SignalString
+
 	// LogoMark is a data-URI or URL for the corner brand mark, mirroring
 	// platformd.Brand.BrandMark's own contract (a string, not an svg.Icon:
 	// a crest or seal is a full-color image, not a currentColor glyph this
@@ -88,10 +102,24 @@ func (l *Login) Render() *Element {
 		header.Child(P().Set(clsSubtitle.AsAttr()).Text(l.Subtitle))
 	}
 
-	root := Div().Set(clsLogin.AsAttr())
-	root.Child(
-		Div().Set(clsCard.AsAttr()).Child(header, l.Form),
-	)
+	card := Div().Set(clsCard.AsAttr()).Child(header)
 
+	// Sin señal no hay ranura: nada que mostrar, ningún nodo que mantener.
+	if l.Message != nil {
+		// role="alert" hace que el lector de pantalla lo anuncie cuando
+		// aparece, que es justo el momento en que importa. Show mantiene el
+		// nodo montado y solo alterna display, así que el anuncio se dispara
+		// por el cambio de contenido: el texto entra en un nodo que el
+		// usuario no estaba leyendo.
+		msg := Div().Set(clsMessage.AsAttr()).
+			Attr("role", "alert").
+			BindText(l.Message)
+		card.Child(Show(DeriveBool(func() bool { return l.Message.Get() != "" }), msg))
+	}
+
+	card.Child(l.Form)
+
+	root := Div().Set(clsLogin.AsAttr())
+	root.Child(card)
 	return root
 }
