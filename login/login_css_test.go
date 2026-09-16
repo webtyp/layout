@@ -68,6 +68,15 @@ func TestLogin_CardStaysInFlowForRootToCenter(t *testing.T) {
 	}
 }
 
+func TestLogin_MessageRuleExistsInStylesheet(t *testing.T) {
+	sheet := (&Login{Title: "App"}).RenderCSS().String()
+
+	msgBlocks := loginRuleBlocks(sheet, ".login__message {")
+	if len(msgBlocks) == 0 {
+		t.Fatalf("expected a `.login__message {` rule in stylesheet, got:\n%s", sheet)
+	}
+}
+
 // loginRuleBlocks returns the declaration body of every rule whose selector
 // line is exactly `sel` (standalone, not grouped or a __part), across layers.
 func loginRuleBlocks(cssStr, sel string) []string {

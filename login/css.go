@@ -78,5 +78,15 @@ func (l *Login) RenderCSS() *css.Stylesheet {
 			style.FontSize(style.TextBase),
 			style.Glyph(style.Primary),
 		).
+		// DangerWash, no Danger: un error de login es una nota dentro de la
+		// tarjeta, no un bloque de alarma que compita con el formulario que
+		// la persona tiene que volver a usar. El wash tiñe el fondo y deja
+		// el texto legible sobre la superficie Inset de la tarjeta.
+		Part(PartMessage,
+			style.As(style.DangerWash),
+			style.Pad(style.Space3),
+			style.Round(style.RadiusMd),
+			style.FontSize(style.TextSm),
+		).
 		Stylesheet()
 }
