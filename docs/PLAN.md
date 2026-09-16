@@ -2,6 +2,8 @@
 PLAN: "feat(login): ranura de mensaje de error tipada — la app deja de recurrir a alert()"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 7245618011008545200
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
