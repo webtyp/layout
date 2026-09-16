@@ -55,12 +55,15 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		// ControlBox floor lands the bar at exactly 50px on every
 		// breakpoint — no mobile bump (the old IconLg overrides inflated the
 		// bar to 64 on phones, matching nothing).
+		// Button() carries the surface, the control box and the radius, so the
+		// As+Round+Pad+ControlBox quartet this rule used to spell out is gone —
+		// it was the hand-composition Button's doc warns about, and it is why the
+		// confirm modal below could drift to a different radius without anything
+		// noticing. Grow() stays: it is this footer's own decision that the bar
+		// fills the row, not part of what a button is.
 		Part(widget.Part("action"),
-			style.As(style.Primary),
-			style.Round(style.RadiusMd),
-			style.Pad(style.Space2),
+			style.Button(style.Primary),
 			style.Grow(),
-			style.ControlBox(),
 			style.CenterContent(),
 		).
 		// Same box as action, same surface: delete reads as the footer's
@@ -79,22 +82,16 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		// (action, above, needs no flow: it is never display:none, so its
 		// CenterContent flex always stands.)
 		Part(widget.Part("action-delete"),
-			style.As(style.Primary),
-			style.Round(style.RadiusMd),
-			style.Pad(style.Space2),
+			style.Button(style.Primary),
 			style.Grow(),
-			style.ControlBox(),
 			style.Row(style.SpaceNone),
 			style.CenterContent(),
 			style.Anchor(),
 			style.RevealedBy(widget.Open),
 		).
 		Part(widget.Part("action-edit"),
-			style.As(style.Primary),
-			style.Round(style.RadiusMd),
-			style.Pad(style.Space2),
+			style.Button(style.Primary),
 			style.Grow(),
-			style.ControlBox(),
 			style.Row(style.SpaceNone),
 			style.CenterContent(),
 			style.Anchor(),
