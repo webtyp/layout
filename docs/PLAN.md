@@ -2,6 +2,8 @@
 PLAN: "fix: CrudView.Reload has no way for a host to observe a load failure, unlike Save/Delete"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 13080487632149820541
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
