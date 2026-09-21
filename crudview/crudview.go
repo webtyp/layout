@@ -147,6 +147,13 @@ type CrudView struct {
 	// lado es el list concrete que Config.List construyó.
 	OnAfterReload func(list ListView)
 
+	// OnLoadError reports a Reload failure — the List-side sibling of OnSaved/
+	// OnDeleted. nil (the default) disables it silently, same as every other
+	// On* hook here; Reload always Logs the error regardless, so this is an
+	// ADDITIONAL host-visible signal, not a replacement for the dev-console
+	// trail.
+	OnLoadError func(err error)
+
 	// internal
 	form          *form.Form             // typed handle set by New; nil when standalone
 	list          ListView               // owns the row rendering + ⋮ menu
@@ -238,11 +245,7 @@ func (v *CrudView) Init(ctx Ctx) {
 	}
 
 	if v.Presenter != nil {
-		v.Reload(func(err error) {
-			if err != nil {
-				Log(err.Error())
-			}
-		})
+		v.Reload(nil)
 	}
 }
 
@@ -353,6 +356,10 @@ func (v *CrudView) Reload(done func(error)) {
 	}
 	v.Presenter.Reload(func(err error) {
 		if err != nil {
+			Log(err.Error())
+			if v.OnLoadError != nil {
+				v.OnLoadError(err)
+			}
 			done(err)
 			return
 		}
