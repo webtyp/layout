@@ -2,8 +2,9 @@
 PLAN: "feat(crudview): Config.NewRecord — a new draft can start from a seeded record"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 13786302461332605150
+PR: https://github.com/webtyp/layout/pull/39
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
