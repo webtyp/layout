@@ -116,6 +116,10 @@ type CrudView struct {
 	// factory, same "ergonomic default, not a decision imposed" as Filter.
 	List func(selected *SignalString, onSelect func(view.Item)) ListView
 
+	// NewRecord returns the record a NEW draft starts from — the "+" button's
+	// seed. nil (the default) starts from an empty form.
+	NewRecord func() model.Model
+
 	// Additive user hooks — called AFTER the built-in behavior. Assigning them
 	// can never disable list→form fill, save or delete wiring.
 	OnSelect func(it view.Item)
@@ -412,7 +416,11 @@ func (v *CrudView) newAction() {
 	}
 	v.Presenter.Deselect()
 	if v.form != nil {
-		v.form.Reset()
+		if v.NewRecord != nil {
+			_ = v.form.LoadValues(v.NewRecord())
+		} else {
+			v.form.Reset()
+		}
 		v.form.Focus()
 	}
 	v.composing.Set(true)
