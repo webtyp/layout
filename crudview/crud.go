@@ -56,6 +56,14 @@ type Config struct {
 	// Presenter.Items() ya los dan); lo único que NO se puede conseguir de otro
 	// lado es el list concrete que Config.List construyó.
 	OnAfterReload func(list ListView)
+
+	// NewRecord returns the record a NEW draft starts from — the "+" button's
+	// seed. nil (the default) starts from an empty form, which is what a screen
+	// with nothing to pre-fill wants.
+	//
+	// Called once per "+", and it must return a FRESH record every time: a
+	// shared instance would carry the previous draft's edits into the next one.
+	NewRecord func() model.Model
 }
 
 // New builds the renderer around an already-constructed Presenter. It generates the form from
@@ -90,6 +98,7 @@ func New(cfg Config) (*CrudView, error) {
 		Presenter: cfg.Presenter,
 		Filter:    filter,
 		Context:   cfg.Context,
+		NewRecord: cfg.NewRecord,
 		// List is passed through as-is, nil included: Init resolves the
 		// same targetlist.TargetList default that a nil List would get
 		// here, so there is exactly one place that decision lives.

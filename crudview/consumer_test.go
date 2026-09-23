@@ -665,3 +665,103 @@ func TestConsumer_NewFlipsToggleActive(t *testing.T) {
 		t.Error("expected selecting a row to flip active() to true")
 	}
 }
+
+// Case 14: Config.NewRecord seeds the form when "+" (newAction) is triggered.
+func TestConsumer_NewRecord_SeedsForm(t *testing.T) {
+	fb := &conformance.FakeLister{}
+	p := view.New(fb, &Device{})
+
+	cfg := Config{
+		ParentID:  "my-id",
+		Presenter: p,
+		IDs:       testIDs,
+		NewRecord: func() model.Model {
+			return &Device{Name: "Seeded Patient", Ip: "10.0.0.99"}
+		},
+	}
+	v, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v.Init(&fakeCtx{})
+
+	v.newAction()
+
+	f := v.form
+	nameInput := f.Input("name")
+	ipInput := f.Input("ip")
+
+	if len(nameInput.GetValues()) == 0 || nameInput.GetValues()[0] != "Seeded Patient" {
+		t.Errorf("expected name input to be 'Seeded Patient', got %v", nameInput.GetValues())
+	}
+	if len(ipInput.GetValues()) == 0 || ipInput.GetValues()[0] != "10.0.0.99" {
+		t.Errorf("expected ip input to be '10.0.0.99', got %v", ipInput.GetValues())
+	}
+}
+
+// Case 15: Config without NewRecord keeps default empty form behavior on newAction.
+func TestConsumer_NewRecord_NilDefault(t *testing.T) {
+	fb := &conformance.FakeLister{}
+	p := view.New(fb, &Device{})
+
+	cfg := Config{
+		ParentID:  "my-id",
+		Presenter: p,
+		IDs:       testIDs,
+		NewRecord: nil,
+	}
+	v, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v.Init(&fakeCtx{})
+
+	f := v.form
+	f.SetValues("name", "Previous Unsaved Entry")
+
+	v.newAction()
+
+	nameInput := f.Input("name")
+	if len(nameInput.GetValues()) != 0 && nameInput.GetValues()[0] != "" {
+		t.Errorf("expected empty name input when NewRecord is nil, got %v", nameInput.GetValues())
+	}
+}
+
+// Case 16: NewRecord called multiple times returns fresh record instances,
+// preventing previous draft edits from leaking into subsequent drafts.
+func TestConsumer_NewRecord_ReturnsFreshInstance(t *testing.T) {
+	fb := &conformance.FakeLister{}
+	p := view.New(fb, &Device{})
+
+	n := 0
+	cfg := Config{
+		ParentID:  "my-id",
+		Presenter: p,
+		IDs:       testIDs,
+		NewRecord: func() model.Model {
+			n++
+			return &Device{Name: fmt.Sprintf("Draft %d", n), Ip: "192.168.0.1"}
+		},
+	}
+	v, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v.Init(&fakeCtx{})
+
+	// First draft
+	v.newAction()
+	f := v.form
+	if f.Input("name").GetValues()[0] != "Draft 1" {
+		t.Errorf("expected 'Draft 1', got %v", f.Input("name").GetValues())
+	}
+
+	// User edits the first draft
+	f.SetValues("name", "Draft 1 Edited")
+
+	// Second draft
+	v.newAction()
+	if f.Input("name").GetValues()[0] != "Draft 2" {
+		t.Errorf("expected 'Draft 2' for fresh draft, got %v", f.Input("name").GetValues())
+	}
+}
