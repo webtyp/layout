@@ -32,7 +32,15 @@ func TestViewConformance(t *testing.T) {
 				Mount:    func() { v.Reload(nil) },
 				Labels:   func() []string { return cardLabels(v) },
 				Select:   func(id string) { v.selectAction(view.Item{ID: id}) },
-				SetField: func(name, value string) { v.form.SetValues(name, value) },
+				SetField: func(name, value string) {
+					// A driver that "sets" a field the form never rendered
+					// (e.g. the hidden PK) would pass while proving nothing —
+					// fail loudly instead.
+					if v.form.Input(name) == nil {
+						t.Fatalf("SetField: form has no input %q (hidden PK?)", name)
+					}
+					v.form.SetValues(name, value)
+				},
 				Save: func() {
 					if s, ok := p.(view.Saver); ok {
 						v.saveAction(s)

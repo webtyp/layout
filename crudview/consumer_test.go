@@ -1,6 +1,7 @@
 package crudview
 
 import (
+	"strings"
 	"testing"
 
 	"webtyp.com/fmt"
@@ -133,6 +134,30 @@ func (f *fakeNoWidgetsPresenter) Selected() string               { return "" }
 func (f *fakeNoWidgetsPresenter) Select(id string) model.Model   { return nil }
 func (f *fakeNoWidgetsPresenter) Deselect()                      {}
 
+// fieldErrorText extracts the text inside a crudview form field's error span
+// from the rendered form, or "" when the span is empty. The form id is
+// ParentID + "." + struct name — Device declares no FormName, so "my-id.form".
+func fieldErrorText(t *testing.T, v *CrudView, field string) string {
+	t.Helper()
+	html := v.form.Render().String()
+	marker := "id='my-id.form." + field + ".error'"
+	idx := strings.Index(html, marker)
+	if idx == -1 {
+		t.Fatalf("error span for %q not found in:\n%s", field, html)
+	}
+	rest := html[idx:]
+	endAttrs := strings.Index(rest, ">")
+	if endAttrs == -1 {
+		t.Fatalf("malformed error span for %q", field)
+	}
+	content := rest[endAttrs+1:]
+	end := strings.Index(content, "</span>")
+	if end == -1 {
+		t.Fatalf("unclosed error span for %q", field)
+	}
+	return content[:end]
+}
+
 // Case 1: New with a model without widgets fails
 func TestConsumer_NewNoWidgets(t *testing.T) {
 	p := &fakeNoWidgetsPresenter{record: &DeviceNoWidgets{}}
@@ -223,11 +248,9 @@ func TestConsumer_SelectPopulatesForm(t *testing.T) {
 
 	v.selectAction(view.Item{ID: "12"})
 
-	// Check form values. "id" is a PK — form.New hides it by default now
-	// (see form.New's ShowField comment), so it is never one of f.Inputs
-	// and there is nothing id-specific left to assert here directly: the
-	// name/ip checks below only pass for device "12"'s actual record, which
-	// is proof enough that selectAction resolved and loaded the right one.
+	// "id" is a hidden PK — asserting through the form means checking the
+	// record the save actually ships, not an input that was never rendered.
+	// Editing the loaded row and saving must persist under the SELECTED id.
 	f := v.form
 	nameInput := f.Input("name")
 	ipInput := f.Input("ip")
@@ -237,6 +260,23 @@ func TestConsumer_SelectPopulatesForm(t *testing.T) {
 	}
 	if len(ipInput.GetValues()) == 0 || ipInput.GetValues()[0] != "192.168.1.1" {
 		t.Errorf("expected ip input to be '192.168.1.1', got %v", ipInput.GetValues())
+	}
+
+	f.SetValues("name", "Device One Edited")
+	saver, ok := p.(view.Saver)
+	if !ok {
+		t.Fatal("expected view.Presenter to implement view.Saver")
+	}
+	v.saveAction(saver)
+	if len(fb.SavedRecords) != 1 {
+		t.Fatalf("expected 1 saved record after editing the selected row, got %d", len(fb.SavedRecords))
+	}
+	dev, ok := fb.SavedRecords[0].(*Device)
+	if !ok {
+		t.Fatalf("expected *Device saved record, got %T", fb.SavedRecords[0])
+	}
+	if dev.Id != "12" {
+		t.Errorf("expected the edit to keep the selected id '12', got %q", dev.Id)
 	}
 
 	// Nil record on Fill should reset the form
@@ -263,7 +303,6 @@ func TestConsumer_SaveWithFormData(t *testing.T) {
 	v.Init(&fakeCtx{})
 
 	f := v.form
-	f.SetValues("id", "12")
 	f.SetValues("name", "New Name")
 	f.SetValues("ip", "10.0.0.1")
 
@@ -294,6 +333,11 @@ func TestConsumer_SaveWithFormData(t *testing.T) {
 	if !ok {
 		t.Fatalf("expected *Device saved record, got %T", fb.SavedRecords[0])
 	}
+	// A new-record draft carries no loaded id, so the save mints one — an
+	// empty id here would mean the record reached the backend keyless.
+	if dev.Id == "" {
+		t.Error("expected the new record to ship a minted id, got empty")
+	}
 	if dev.Name != "New Name" {
 		t.Errorf("expected saved device name 'New Name', got %q", dev.Name)
 	}
@@ -319,8 +363,10 @@ func TestConsumer_SaveInvalidForm(t *testing.T) {
 	v.Init(&fakeCtx{})
 
 	f := v.form
-	f.SetValues("id", "12")
-	f.SetValues("name", "") // empty name violates NotNull
+	// "-" is outside input.Text()'s charset: present and invalid, so the
+	// save must fail AND the field must show it — an error the form reports
+	// but never paints is a silent failure.
+	f.SetValues("name", "Bad-Name")
 	f.SetValues("ip", "10.0.0.1")
 
 	var saveDoneCalled bool
@@ -344,6 +390,9 @@ func TestConsumer_SaveInvalidForm(t *testing.T) {
 	}
 	if len(fb.SavedRecords) != 0 {
 		t.Error("Save was called on fake backend but form was invalid")
+	}
+	if got := fieldErrorText(t, v, "name"); got == "" {
+		t.Error("expected the invalid 'name' field to be painted, got an empty error span")
 	}
 }
 
