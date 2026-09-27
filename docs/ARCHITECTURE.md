@@ -10,6 +10,8 @@
     │                   # mobile master-detail strip. Owns every layout primitive.
     ├── crudview/       # CRUD controller: state machine + orchestration.
     │                   # Renders NO frame — composes rightpanel.
+    ├── chatview/       # Chat view: inbox, presence list, thread & compose bar.
+    │                   # Renders NO frame — composes rightpanel.
     ├── login/          # Pre-authentication screen: card on a brand backdrop.
     └── landing/        # Public multi-page website: typed sections in call
                         # order, explicit anchors, RenderPages() per URL.
@@ -280,3 +282,28 @@ The high-level pattern for constructing a CRUD view is `crudview.New(Config)`. T
 #### Principle: Standard-shaped tests
 
 As a policy established in this layer (C4), no public high-level API should be published without a consumer-shaped test (like `crudview/consumer_test.go`) validating the entire integration of forms, models, and transport logic within this library.
+
+---
+
+## Chat Layout (`chatview`)
+
+`chatview` arranges four chat components (`inboxlist`, `presencelist`, `bubblethread`, `composebar`) by composing `rightpanel.RightPanel`:
+- **`Aside`**: a `decktabs.DeckTabs` holding two tabs ("Conversations" and "People").
+- **`Article`**: a header with the open room's title, `bubblethread.BubbleThread`, and `composebar.ComposeBar`.
+
+### Data Flow (`Source`)
+
+Like `crudview`, `chatview` is a pure layout renderer: it never talks to network/transport callers directly. Data operations are delegated asynchronously to a `Source` interface:
+
+```go
+type Source interface {
+	Rooms(done func(rows []inboxlist.Row, err error))
+	Messages(roomID string, done func(bubbles []bubblethread.Bubble, err error))
+	Send(roomID, body string, done func(sent bubblethread.Bubble, err error))
+	MarkRead(roomID string, done func(err error))
+	People(done func(people []presencelist.Person, err error))
+	OpenDirect(personID string, done func(roomID string, err error))
+}
+```
+
+Every `Source` method is asynchronous and calls `done` exactly once upon completion. `chatview` handles selection, reading state, tab switching, and error propagation via `OnError`.

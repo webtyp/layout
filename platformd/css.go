@@ -247,6 +247,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// a rounded corner never butts the rail's welded edge. Mobile drops the
 		// radius (below): there the rows are flush with a DividerBelow seam.
 		Part(widget.Part("nav-link"),
+			style.Anchor(),
 			style.Row(style.Space1),
 			style.Pad(style.Space2),
 			style.Width(style.Full),

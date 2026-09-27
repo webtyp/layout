@@ -25,6 +25,24 @@ A module is anything satisfying `platformd.UIModule` — `ModelName()` is its id
     p.Init(ctx)
     dom.Append("body", p)
 
+## Module capabilities
+
+Modules can optionally implement capabilities detected by `platformd`:
+
+- **`Badged`**: a count the nav rail draws over the module's entry (`Badge() *countbadge.CountBadge`).
+- **`UsesNotifier`**: the chassis hands itself (`Notifier`) over once in `Init` before any module renders (`UseNotifier(n platformd.Notifier)`).
+
+```go
+type chatModule struct {
+	platformd.UIModule
+	badge *countbadge.CountBadge
+	notify platformd.Notifier
+}
+
+func (m *chatModule) Badge() *countbadge.CountBadge { return m.badge }
+func (m *chatModule) UseNotifier(n platformd.Notifier) { m.notify = n }
+```
+
 ## Fields
 
 | Field | Type | Purpose |
