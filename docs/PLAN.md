@@ -3,8 +3,9 @@ PLAN: "feat(layout): chatview; platformd rail badge and notifier capabilities"
 TAG: v0.3.0
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 17993292133308483666
+PR: https://github.com/webtyp/layout/pull/40
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.

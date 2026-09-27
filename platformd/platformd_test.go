@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"webtyp.com/components/countbadge"
 	. "webtyp.com/dom"
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
@@ -420,6 +421,79 @@ func TestPlatform_IdleLock_FiresOnce(t *testing.T) {
 
 	if got := firedCount.Load(); got != 1 {
 		t.Errorf("expected OnIdle NOT to fire a second time without new activity, got %d", got)
+	}
+}
+
+type notifierModule struct {
+	mockModule
+	notifier  Notifier
+	usesCount int
+}
+
+func (m *notifierModule) UseNotifier(n Notifier) {
+	m.notifier = n
+	m.usesCount++
+}
+
+type badgedModule struct {
+	mockModule
+	badge *countbadge.CountBadge
+}
+
+func (m *badgedModule) Badge() *countbadge.CountBadge {
+	return m.badge
+}
+
+func TestPlatform_UsesNotifier(t *testing.T) {
+	mod := &notifierModule{
+		mockModule: mockModule{id: "mod1", label: "Module 1"},
+	}
+	p := &Platform{
+		Modules: []UIModule{mod},
+	}
+
+	p.Init(NilCtx())
+
+	if mod.usesCount != 1 {
+		t.Errorf("expected UseNotifier to be called exactly once, got %d", mod.usesCount)
+	}
+	if mod.notifier == nil {
+		t.Fatal("expected notifier to be passed to module")
+	}
+
+	// Module uses notifier to send a notification
+	mod.notifier.Notify(Msg.Info, "hello from module", Persistent())
+
+	html := p.Render().String()
+	if !contains(html, "hello from module") {
+		t.Errorf("expected chassis to display notification from module, got: %s", html)
+	}
+}
+
+func TestPlatform_Badged(t *testing.T) {
+	badge := &countbadge.CountBadge{
+		Count:   NewString("7"),
+		Visible: NewBool(true),
+	}
+
+	modBadged := &badgedModule{
+		mockModule: mockModule{id: "badged_mod", label: "Badged Module"},
+		badge:      badge,
+	}
+	modPlain := &mockModule{id: "plain_mod", label: "Plain Module"}
+
+	p := &Platform{
+		Modules: []UIModule{modBadged, modPlain},
+	}
+	p.Init(NilCtx())
+
+	html := p.Render().String()
+
+	if !contains(html, "countbadge") {
+		t.Errorf("expected HTML to contain countbadge for badged module, got: %s", html)
+	}
+	if !contains(html, "7") {
+		t.Errorf("expected HTML to contain badge count '7', got: %s", html)
 	}
 }
 

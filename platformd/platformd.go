@@ -247,6 +247,12 @@ func (p *Platform) Init(ctx Ctx) {
 	p.navIcon = NewNodes()
 	p.navStowed = NewBool(false)
 
+	for _, m := range p.Modules {
+		if u, ok := m.(UsesNotifier); ok {
+			u.UseNotifier(p)
+		}
+	}
+
 	if p.IdleTimeout > 0 && p.OnIdle == nil {
 		panic("platformd: IdleTimeout requires OnIdle")
 	}
@@ -560,6 +566,11 @@ func (p *Platform) Render() *Element {
 			link.Child(icon.Render(string(ClsNavIcon)))
 		}
 		link.Child(Span().Set(clsLinkText.AsAttr()).Text(m.Label()))
+		if b, ok := m.(Badged); ok {
+			if badge := b.Badge(); badge != nil {
+				link.Child(badge.Render())
+			}
+		}
 
 		navbar.Child(Li().Set(clsNavItem.AsAttr()).Child(link))
 	}
