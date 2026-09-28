@@ -68,16 +68,18 @@ func New(cfg Config) (*ChatView, error) {
 		return nil, Err("chatview.New: MaxBodyLength must be greater than zero")
 	}
 
+	// The unread signals exist from New: the rail badge (platformd.Badged) is
+	// wired when the module is built, before the chassis calls Init.
 	v := &ChatView{
 		source:        cfg.Source,
 		maxBodyLength: cfg.MaxBodyLength,
+		unreadCount:   NewString("0"),
+		unreadVisible: NewBool(false),
 	}
 	return v, nil
 }
 
 func (v *ChatView) Init(ctx Ctx) {
-	v.unreadCount = NewString("0")
-	v.unreadVisible = NewBool(false)
 	v.activeTab = NewString("conversations")
 	v.headerTitle = NewString("")
 	v.composeDisabled = NewBool(true)

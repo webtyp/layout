@@ -264,3 +264,26 @@ func contains(s, substr string) bool {
 	}
 	return false
 }
+
+// The rail badge is wired when the module is built — before the chassis ever
+// calls Init (see README "Integration with platformd.Badged"). Unread must hand
+// out the live signals from New, and Init must keep those same signals, or the
+// badge binds to nil / to signals nobody updates.
+func TestUnread_BeforeInit_SameSignalsAfterInit(t *testing.T) {
+	src := &fakeSource{roomsData: []inboxlist.Row{{ID: "r1", Title: "Room 1", Unread: 2}}}
+	v, err := New(Config{Source: src, MaxBodyLength: 2000})
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	count, visible := v.Unread()
+	if count == nil || visible == nil {
+		t.Fatal("Unread() before Init returned nil signals: a badge wired at construction binds to nothing")
+	}
+	v.Init(nil)
+	if got := count.Get(); got != "2" {
+		t.Errorf("badge count after Init = %q, want 2 (Init replaced the signals the badge holds)", got)
+	}
+	if !visible.Get() {
+		t.Error("badge visible after Init = false, want true")
+	}
+}
