@@ -346,6 +346,16 @@ func (v *CrudView) confirmDeleteAction() {
 	v.confirmDelete.Close()
 }
 
+// SetOptions sets the choices of the form's select, radio group or datalist
+// named fieldName — the field's schema name, e.g. "floor_id". Call it when the
+// choices arrive (usually from a Caller, after the view is on screen): the
+// live control repaints. A no-op in standalone mode, where there is no form.
+func (v *CrudView) SetOptions(fieldName string, opts ...fmt.KeyValue) {
+	if v.form != nil {
+		v.form.SetOptions(fieldName, opts...)
+	}
+}
+
 // Reload asks the presenter for the records and, when they arrive, repopulates
 // the list and enforces the list-detail invariant (filter() drops a selection
 // the fresh list no longer shows). The result is asynchronous: done runs once,
