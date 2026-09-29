@@ -2,7 +2,7 @@
 
 > Documento de decisión, en español por pedido explícito. Evalúa `crudview` y
 > `rightpanel` contra
-> [CONSTRUCTION_HARNESS.md](https://github.com/webtyp/app-releases/blob/main/docs/CONSTRUCTION_HARNESS.md),
+> [`api-design` skill](https://github.com/webtyp/devskills/blob/main/skills/api-design/SKILL.md),
 > que es la autoridad del ecosistema.
 
 ---
