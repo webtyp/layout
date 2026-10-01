@@ -30,7 +30,7 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/icons v0.0.7
 	webtyp.com/js v0.0.11 // indirect
-	webtyp.com/json v0.5.25 // indirect
+	webtyp.com/json v0.5.27 // indirect
 	webtyp.com/router v0.3.0 // indirect
 )
 
