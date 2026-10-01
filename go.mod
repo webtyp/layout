@@ -26,10 +26,9 @@ require (
 require (
 	webtyp.com/color v0.1.2 // indirect
 	webtyp.com/context v0.0.23 // indirect
-	webtyp.com/fetch v0.1.28 // indirect
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/icons v0.0.7
-	webtyp.com/js v0.0.11 // indirect
+	webtyp.com/js v0.1.0 // indirect
 	webtyp.com/json v0.5.27 // indirect
 	webtyp.com/router v0.3.0 // indirect
 )
