@@ -6,7 +6,7 @@ require (
 	webtyp.com/components v0.8.0
 	webtyp.com/css v0.4.24
 	webtyp.com/date v0.0.7
-	webtyp.com/dom v0.13.17
+	webtyp.com/dom v0.13.18
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.19
 	webtyp.com/html v0.0.24
