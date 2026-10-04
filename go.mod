@@ -30,7 +30,7 @@ require (
 	webtyp.com/icons v0.0.7
 	webtyp.com/js v0.1.1 // indirect
 	webtyp.com/json v0.5.27 // indirect
-	webtyp.com/router v0.3.0 // indirect
+	webtyp.com/router v0.3.2 // indirect
 )
 
 // TEMP: local until FloatingChrome consume + Filled cue + CueSibling ship in webtyp/widget.
