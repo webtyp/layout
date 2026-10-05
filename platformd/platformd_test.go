@@ -25,6 +25,7 @@ func (m *mockModule) ModelName() string { return m.id }
 func (m *mockModule) Label() string     { return m.label }
 func (m *mockModule) Icon() svg.Icon    { return m.icon }
 func (m *mockModule) View() Component   { return m.view }
+func (m *mockModule) Activate()         {}
 
 func TestPlatform_Render(t *testing.T) {
 	p := &Platform{
@@ -509,6 +510,37 @@ func TestRenderCSS_NonEmpty(t *testing.T) {
 	}
 	if !contains(css, ".pd") {
 		t.Errorf("expected CSS to contain .pd")
+	}
+}
+
+type activatingModule struct {
+	mockModule
+	activated bool
+}
+
+func (m *activatingModule) Activate() {
+	m.activated = true
+}
+
+func TestPlatform_ActivateCallsModuleActivate(t *testing.T) {
+	mod1 := &activatingModule{mockModule: mockModule{id: "mod1", label: "Mod 1"}}
+	mod2 := &activatingModule{mockModule: mockModule{id: "mod2", label: "Mod 2"}}
+	p := &Platform{
+		Modules:   []UIModule{mod1, mod2},
+		DefaultID: "mod1",
+	}
+	p.Init(NilCtx())
+
+	if !mod1.activated {
+		t.Errorf("expected default module mod1 to be activated on Init")
+	}
+	if mod2.activated {
+		t.Errorf("expected inactive module mod2 to not be activated yet")
+	}
+
+	p.Activate("mod2")
+	if !mod2.activated {
+		t.Errorf("expected module mod2 to be activated after p.Activate")
 	}
 }
 

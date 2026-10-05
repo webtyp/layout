@@ -37,6 +37,7 @@ func setupBulkTest(t *testing.T, withUpdate bool) (*CrudView, view.Lister) {
 		t.Fatalf("unexpected error creating view: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	// Ensure real targetlist.TargetList and form.New are used by the view
 	if _, ok := v.list.(*targetlist.TargetList); !ok {
@@ -295,6 +296,7 @@ func TestCreateActionGatedOnSaver(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	vNoSave.Init(&fakeCtx{})
+	vNoSave.Activate()
 	v = vNoSave
 
 	if _, ok := v.Presenter.(view.Saver); ok {

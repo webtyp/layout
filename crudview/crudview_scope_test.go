@@ -29,6 +29,7 @@ func newTestCrudView(t *testing.T) *CrudView {
 		t.Fatalf("newTestCrudView: New: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 	return v
 }
 

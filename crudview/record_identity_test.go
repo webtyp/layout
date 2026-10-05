@@ -74,6 +74,7 @@ func newIdentityView(t *testing.T, backend *memoryBackend) *CrudView {
 		t.Fatalf("crudview.New: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 	return v
 }
 

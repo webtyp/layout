@@ -58,6 +58,7 @@ type UIModule interface {
 	Label() string   // text in the nav rail
 	Icon() svg.Icon  // chassis renders via the sprite
 	View() Component // module content (often a *rightpanel.RightPanel)
+	Activate()       // called by chassis when the module is activated (on-demand loading)
 }
 
 func (p *Platform) WidgetName() widget.Name { return NamePlatform }
@@ -786,6 +787,13 @@ func (p *Platform) Activate(moduleID string) {
 
 	p.active.Set(moduleID)
 	p.menuOpen.Set(false)
+
+	for _, m := range p.Modules {
+		if m.ModelName() == moduleID {
+			m.Activate()
+			break
+		}
+	}
 
 	// El botón de menú lleva el estado de la navegación: en móvil no hay cabecera
 	// ni rail visible, así que su glifo es lo único que dice en qué sección estás.

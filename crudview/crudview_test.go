@@ -174,6 +174,7 @@ func TestOnAfterReload_FiresWithList(t *testing.T) {
 		},
 	}
 	v.Init(&mockCtx{})
+	v.Activate()
 
 	if capturedList != ListView(sList) {
 		t.Errorf("expected capturedList to be sList, got %v", capturedList)
@@ -199,6 +200,7 @@ func TestOnAfterReload_AfterSetItems(t *testing.T) {
 		},
 	}
 	v.Init(&mockCtx{})
+	v.Activate()
 
 	if countInHook != len(fb.Rows) {
 		t.Errorf("expected countInHook == %d, got %d", len(fb.Rows), countInHook)

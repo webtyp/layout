@@ -106,6 +106,7 @@ func TestCrudView_FilterableDrivesTheList(t *testing.T) {
 	f := &fakeFilter{}
 	v := &CrudView{Title: "CRUD", Presenter: p, Filter: f}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	if f.sink == nil {
 		t.Fatal("expected Init to wire the filter control to the list")

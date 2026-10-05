@@ -43,6 +43,7 @@ func TestCrudView_Reload_ReportsErrorViaOnLoadError(t *testing.T) {
 		},
 	}
 	v.Init(&mockCtx{})
+	v.Activate()
 
 	if gotErr == nil {
 		t.Fatal("OnLoadError was never called even though the Presenter's List failed on Init's " +

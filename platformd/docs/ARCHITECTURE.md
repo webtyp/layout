@@ -6,11 +6,46 @@ The platform consumes modules via the `UIModule` interface:
 
 ```go
 type UIModule interface {
-    ModelName() string // from layout.Module, used as ID/route
-    Label() string     // navigation text
-    Icon() svg.Icon    // navigation icon (paints with ClsNavIcon)
-    View() Component   // main content
+    layout.Module    // ModelName() string — ID/route
+    Label() string   // navigation text
+    Icon() svg.Icon  // navigation icon (paints with ClsNavIcon)
+    View() Component // main content
+    Activate()       // called by chassis when the module is activated (on-demand loading)
 }
+```
+
+### On-Demand Module Activation (Lazy Loading)
+
+Previously, all modules in an application eager-loaded their datasets on startup via `Init()` calls. This resulted in an explosion of server requests (`/mcp` calls) on initial page load, fetching data for modules the user might never visit.
+
+With the `Activate()` contract:
+1. `UIModule.Activate()` is invoked only when the chassis switches to that module (initial route or user navigation).
+2. `CrudView.Activate()` triggers `Reload(nil)` on first activation and memoizes the load state (`v.loaded = true`). Subsequent activations avoid re-querying the server unless an explicit reload is requested.
+3. Modules not yet visited perform zero network requests.
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Platform as platformd.Platform
+    participant Module as UIModule (e.g. crudview)
+    participant Server as Backend / Server
+
+    User->>Platform: Open App (initial route)
+    Platform->>Platform: Init() & Render() DOM tree
+    Note over Platform,Module: Modules rendered in DOM without eager fetch
+    Platform->>Platform: Activate(defaultID)
+    Platform->>Module: Activate()
+    Module->>Server: Presenter.Reload() / fetch data
+    Server-->>Module: Records
+    Module->>Module: Render list items
+
+    User->>Platform: Click Nav to other module
+    Platform->>Platform: Activate(newID)
+    Platform->>Module: Activate() (first time)
+    Module->>Server: Presenter.Reload() / fetch data
+    Server-->>Module: Records
+    Module->>Module: Render list items
 ```
 
 ## Theme Agnostic
@@ -21,7 +56,7 @@ type UIModule interface {
 
 - Uses hash-based routing (`#slug`).
 - `DefaultID` on `Platform` determines the initial module if no hash is present.
-- `Activate(id)` is the single entry point for module switching.
+- `Activate(id)` is the single entry point for module switching and invokes `m.Activate()`.
 
 ---
 

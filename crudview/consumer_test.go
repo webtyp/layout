@@ -191,8 +191,12 @@ func TestConsumer_ListOp(t *testing.T) {
 	}
 	v.Init(&fakeCtx{})
 
+	if fb.Calls != 0 {
+		t.Errorf("expected Presenter NOT to be reloaded on Init (lazy activation)")
+	}
+	v.Activate()
 	if fb.Calls == 0 {
-		t.Errorf("expected Presenter to be reloaded on Init")
+		t.Errorf("expected Presenter to be reloaded on Activate")
 	}
 }
 
@@ -216,6 +220,7 @@ func TestConsumer_ListRendersCards(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	if len(v.Presenter.Items()) != 2 {
 		t.Errorf("expected 2 items, got %d", len(v.Presenter.Items()))
@@ -245,6 +250,7 @@ func TestConsumer_SelectPopulatesForm(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	v.selectAction(view.Item{ID: "12"})
 
@@ -415,6 +421,7 @@ func TestConsumer_DeleteSelected(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	// Select the loaded device so the presenter indexes and registers selection
 	v.selectAction(view.Item{ID: "123"})
@@ -647,6 +654,7 @@ func TestConsumer_DeleteRequiresConfirmation(t *testing.T) {
 		t.Fatalf("unexpected error: %v", err)
 	}
 	v.Init(&fakeCtx{})
+	v.Activate()
 
 	// deleteRequest (⋮ -> Eliminar) only opens the modal — no delete yet.
 	v.deleteRequest("12")

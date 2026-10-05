@@ -186,6 +186,7 @@ type CrudView struct {
 	// SET by one delta, so a lone row would just be a worse single edit
 	// (which the form already does — master plan §4).
 	hasMultiRows *SignalBool
+	loaded       bool
 }
 
 // active reports whether the toggle button should show "↺" (cancel/undo):
@@ -197,7 +198,26 @@ func (v *CrudView) active() bool {
 	return v.selected.Get() != "" || v.composing.Get()
 }
 
+type noopCtx struct{}
+
+func (noopCtx) OnCleanup(func()) {}
+
+// Activate loads the presenter records on first activation (lazy load).
+// Safe to call multiple times; subsequent calls are no-ops.
+func (v *CrudView) Activate() {
+	if v.selected == nil {
+		v.Init(noopCtx{})
+	}
+	if !v.loaded && v.Presenter != nil {
+		v.loaded = true
+		v.Reload(nil)
+	}
+}
+
 func (v *CrudView) Init(ctx Ctx) {
+	if v.selected != nil {
+		return
+	}
 	v.selected = NewString("")
 	v.search = NewString("")
 	v.canDelete = NewBool(false)
@@ -246,10 +266,6 @@ func (v *CrudView) Init(ctx Ctx) {
 		Title:     lang.Translate("Confirm").String(),
 		HideClose: true,
 		Content:   v.renderDeleteConfirm(),
-	}
-
-	if v.Presenter != nil {
-		v.Reload(nil)
 	}
 }
 
