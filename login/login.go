@@ -113,8 +113,14 @@ func (l *Login) Render() *Element {
 		// usuario no estaba leyendo.
 		msg := Div().Set(clsMessage.AsAttr()).
 			Attr("role", "alert").
+			BindAttrFunc("style", func() string {
+				if l.Message.Get() == "" {
+					return "display:none"
+				}
+				return ""
+			}).
 			BindText(l.Message)
-		card.Child(Show(DeriveBool(func() bool { return l.Message.Get() != "" }), msg))
+		card.Child(msg)
 	}
 
 	card.Child(l.Form)
