@@ -22,7 +22,7 @@ require (
 
 require (
 	webtyp.com/escape v0.1.0 // indirect
-	webtyp.com/lang v0.1.2 // indirect
+	webtyp.com/lang v0.1.3 // indirect
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
