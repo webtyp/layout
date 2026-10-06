@@ -5,6 +5,7 @@ package platformd
 import (
 	"strings"
 	"testing"
+	"webtyp.com/msgtype"
 
 	"webtyp.com/css"
 	"webtyp.com/dom"
@@ -322,10 +323,10 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	// Queue notifications of all types so the class-parity check below sees
 	// every toast shape that Notify can produce. Persistent: no timers
 	// armed, nothing can fire mid-test.
-	p.Notify(Msg.Info, "info msg", Persistent())
-	p.Notify(Msg.Success, "success msg", Persistent())
-	p.Notify(Msg.Warning, "warning msg", Persistent())
-	p.Notify(Msg.Error, "error msg", Persistent())
+	p.Notify(msgtype.Info, "info msg", Persistent())
+	p.Notify(msgtype.Success, "success msg", Persistent())
+	p.Notify(msgtype.Warning, "warning msg", Persistent())
+	p.Notify(msgtype.Error, "error msg", Persistent())
 
 	// Set menuOpen to true so that data-open attribute renders in markup
 	p.menuOpen.Set(true)
@@ -494,10 +495,10 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 func TestMessageColorHasOnlyOneSource(t *testing.T) {
 	p := &Platform{}
 	p.Init(NilCtx())
-	p.Notify(Msg.Info, "i", Persistent())
-	p.Notify(Msg.Success, "s", Persistent())
-	p.Notify(Msg.Warning, "w", Persistent())
-	p.Notify(Msg.Error, "e", Persistent())
+	p.Notify(msgtype.Info, "i", Persistent())
+	p.Notify(msgtype.Success, "s", Persistent())
+	p.Notify(msgtype.Warning, "w", Persistent())
+	p.Notify(msgtype.Error, "e", Persistent())
 
 	cssStr := p.RenderCSS().String()
 

@@ -6,6 +6,7 @@ import (
 	"sync/atomic"
 	"testing"
 	"time"
+	"webtyp.com/msgtype"
 
 	"webtyp.com/components/countbadge"
 	. "webtyp.com/dom"
@@ -207,7 +208,7 @@ func TestPlatform_CanView(t *testing.T) {
 func TestPlatform_Notify_Renders(t *testing.T) {
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
-	p.Notify(Msg.Error, "boom", Persistent())
+	p.Notify(msgtype.Error, "boom", Persistent())
 
 	html := p.Render().String()
 	t.Logf("HTML: %s", html)
@@ -236,10 +237,10 @@ func TestPlatform_Notify_A11yRoles(t *testing.T) {
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
 
-	p.Notify(Msg.Info, "informational", Persistent())
-	p.Notify(Msg.Success, "ok", Persistent())
-	p.Notify(Msg.Warning, "careful", Persistent())
-	p.Notify(Msg.Error, "broken", Persistent())
+	p.Notify(msgtype.Info, "informational", Persistent())
+	p.Notify(msgtype.Success, "ok", Persistent())
+	p.Notify(msgtype.Warning, "careful", Persistent())
+	p.Notify(msgtype.Error, "broken", Persistent())
 
 	nodes := p.notifications.Get()
 	if len(nodes) != 4 {
@@ -266,7 +267,7 @@ func TestPlatform_Notify_A11yRoles(t *testing.T) {
 func TestPlatform_Notify_Dismiss(t *testing.T) {
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
-	p.Notify(Msg.Info, "hi", For(10)) // 10ms
+	p.Notify(msgtype.Info, "hi", For(10)) // 10ms
 
 	if p.notificationCount() != 1 {
 		t.Fatalf("expected 1 notification, got %d", p.notificationCount())
@@ -286,7 +287,7 @@ func TestPlatform_Notify_ManualDismiss(t *testing.T) {
 	// the timer was never armed, so nothing can fire it later.
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
-	p.Notify(Msg.Info, "stay", Persistent())
+	p.Notify(msgtype.Info, "stay", Persistent())
 
 	if p.notificationCount() != 1 {
 		t.Fatalf("expected 1 notification, got %d", p.notificationCount())
@@ -319,7 +320,7 @@ func TestPlatform_Notify_AutoDuration(t *testing.T) {
 		t.Errorf("long message must be capped at 8000ms, got %d", got)
 	}
 
-	p.Notify(Msg.Success, "Guardado", Auto())
+	p.Notify(msgtype.Success, "Guardado", Auto())
 	if n := p.notifications.Get(); len(n) != 1 {
 		t.Fatalf("expected 1 notification, got %d", len(n))
 	}
@@ -333,7 +334,7 @@ func TestPlatform_Notify_PauseResume(t *testing.T) {
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
 
-	p.Notify(Msg.Info, "linger", For(60))
+	p.Notify(msgtype.Info, "linger", For(60))
 	id := p.rawNotifications[0].ID
 	p.pauseToast(id)
 	time.Sleep(150 * time.Millisecond) // well past the original 60ms window
@@ -344,7 +345,7 @@ func TestPlatform_Notify_PauseResume(t *testing.T) {
 	// A pause inside the window is a true pause: resume re-arms with the
 	// remaining time, so the toast still goes away shortly after. The linger
 	// toast above stays by design, so exactly one must remain at the end.
-	p.Notify(Msg.Info, "resume", For(100))
+	p.Notify(msgtype.Info, "resume", For(100))
 	id = p.rawNotifications[1].ID
 	p.pauseToast(id)
 	time.Sleep(30 * time.Millisecond)
@@ -463,7 +464,7 @@ func TestPlatform_UsesNotifier(t *testing.T) {
 	}
 
 	// Module uses notifier to send a notification
-	mod.notifier.Notify(Msg.Info, "hello from module", Persistent())
+	mod.notifier.Notify(msgtype.Info, "hello from module", Persistent())
 
 	html := p.Render().String()
 	if !contains(html, "hello from module") {

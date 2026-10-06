@@ -2,7 +2,7 @@ package platformd
 
 import (
 	"webtyp.com/components/countbadge"
-	. "webtyp.com/fmt"
+	"webtyp.com/msgtype"
 )
 
 // Badged is an optional capability of a UIModule: a count the nav rail draws
@@ -13,7 +13,7 @@ type Badged interface {
 
 // Notifier raises a notification in the chassis. *Platform satisfies it.
 type Notifier interface {
-	Notify(t MessageType, msg string, d Duration)
+	Notify(t msgtype.Type, msg string, d Duration)
 }
 
 // UsesNotifier is an optional capability of a UIModule that raises

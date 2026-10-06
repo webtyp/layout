@@ -2,6 +2,7 @@ package platformd
 
 import (
 	"sync"
+	"webtyp.com/msgtype"
 
 	"webtyp.com/components/usermenu"
 	"webtyp.com/layout"
@@ -192,7 +193,7 @@ type Platform struct {
 const scrollStowThreshold = 8
 
 type notification struct {
-	Type MessageType
+	Type msgtype.Type
 	Msg  string
 	ID   string
 	// expiryNs is the auto-dismiss deadline (UnixNano); 0 = persistent. The
@@ -661,7 +662,7 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 	for _, n := range p.rawNotifications {
 		role := "status"
 		switch n.Type {
-		case Msg.Warning, Msg.Error:
+		case msgtype.Warning, msgtype.Error:
 			role = "alert"
 		}
 
@@ -684,7 +685,7 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 // Auto() sizes it to the message, Persistent() leaves it until dismissed,
 // For(ms) pins it. Errors are the one case that must not vanish on their own
 // — hand them Persistent(), or a generous For().
-func (p *Platform) Notify(t MessageType, msg string, d Duration) {
+func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 	p.mu.Lock()
 	ms := 0
 	if d.millis != nil {
