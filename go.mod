@@ -10,7 +10,7 @@ require (
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.23
 	webtyp.com/html v0.0.24
-	webtyp.com/image v0.1.11
+	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.11
 	webtyp.com/model v0.2.2
 	webtyp.com/svg v0.3.14
