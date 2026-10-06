@@ -2,6 +2,8 @@
 PLAN: "feat: layout types its fixed UI text as lang.Text, ships lang.json, drops Go dictionaries"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 3421908638887019252
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
