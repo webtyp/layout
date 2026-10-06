@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/components v0.8.8
 	webtyp.com/css v0.4.28
-	webtyp.com/date v0.0.7
+	webtyp.com/date v0.0.8
 	webtyp.com/dom v0.13.21
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.23
