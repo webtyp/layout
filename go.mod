@@ -3,20 +3,20 @@ module webtyp.com/layout
 go 1.25.2
 
 require (
-	webtyp.com/components v0.8.7
-	webtyp.com/css v0.4.27
+	webtyp.com/components v0.8.8
+	webtyp.com/css v0.4.28
 	webtyp.com/date v0.0.7
 	webtyp.com/dom v0.13.19
 	webtyp.com/fmt v1.0.0
-	webtyp.com/form v0.4.22
+	webtyp.com/form v0.4.23
 	webtyp.com/html v0.0.24
 	webtyp.com/image v0.1.11
-	webtyp.com/input v0.0.9
+	webtyp.com/input v0.0.11
 	webtyp.com/model v0.1.9
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
 	webtyp.com/view v0.6.10
-	webtyp.com/widget v0.6.34
+	webtyp.com/widget v0.6.35
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
@@ -32,5 +32,3 @@ require (
 	webtyp.com/json v0.5.27 // indirect
 	webtyp.com/router v0.3.2 // indirect
 )
-
-// TEMP: local until FloatingChrome consume + Filled cue + CueSibling ship in webtyp/widget.
