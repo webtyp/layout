@@ -257,6 +257,26 @@ plan). `crudview` is the renderer that paints from inside those callbacks:
    The user-facing hooks (`OnSaved`, `OnDeleted`, `OnUpdated`) fire exactly once, with the
    `error` the callback delivered.
 
+### Actions — commands on the whole list
+
+> STATUS (remove this note when the "crudview actions" plan lands): this section is the spec of that plan.
+
+A presenter may declare **actions** (`view.Actioner`, spec in `webtyp.com/view` SPECS §9): named
+commands on the whole list, such as "Apply" on a list of pending network changes. They are not record
+edits: no form, usually not undoable.
+
+`crudview` draws one **text button per action** in an actions band at the top of the aside (above the
+list, below the filter controls), labelled with `lang.Translate(action.Label)`:
+
+- disabled while the presenter has no items, and while that action is running;
+- with `Confirm` set, the click opens a confirmation modal — a second `modaldialog` built like the
+  delete confirmation: the question (`action.Confirm`, translated), **Cancel** and a button labelled
+  with the action itself. Two explicit exits, no "×";
+- the outcome goes to `CrudView.OnAction func(op string, err error)`, fired exactly once per run (the
+  sibling of `OnSaved`); on success `Presenter.Run` has already reloaded the list.
+
+A presenter with no actions renders no band at all.
+
 ### Signal Fields
 
 | Field | Type | Role |
