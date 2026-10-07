@@ -81,8 +81,10 @@ Ways to do the same thing           0
   `OnClick` → `actionRequest(a)`.
 - No band when there are no actions (no empty element in the DOM).
 - Mount the `confirmAction` modal next to the delete confirmation mount.
-- `css.go`: classes for the band (horizontal, gap = the token the footer uses) and the button (the
-  text-button recipe the confirmation buttons use).
+- `css.go`: classes for the band and the button. The band is `style.Row(style.Space1)` — `Row`
+  already wraps (`flex-wrap: wrap`); there is no `style.Wrap`. The button reuses the text-button
+  recipe the confirmation buttons use. Import path: `webtyp.com/widget/style` (never
+  `github.com/tinywasm/...`).
 
 ## Stage 3 — tests
 
