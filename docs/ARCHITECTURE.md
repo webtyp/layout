@@ -254,21 +254,21 @@ plan). `crudview` is the renderer that paints from inside those callbacks:
    `Presenter.Record()`, then calls `Presenter.Save([...], done)` /
    `Presenter.Delete([...], done)` / `Presenter.Update([...], done)`. The outcome — success
    or error — arrives through the callback, and only a successful write reloads the list.
-   The user-facing hooks (`OnSaved`, `OnDeleted`, `OnUpdated`) fire exactly once, with the
+   The user-facing hooks (`OnSaved`, `OnDeleted`, `OnUpdated`, and `OnAction` for actions) fire exactly once, with the
    `error` the callback delivered.
 
 ### Actions — commands on the whole list
-
-> STATUS (remove this note when the "crudview actions" plan lands): this section is the spec of that plan.
 
 A presenter may declare **actions** (`view.Actioner`, spec in `webtyp.com/view` SPECS §9): named
 commands on the whole list, such as "Apply" on a list of pending network changes. They are not record
 edits: no form, usually not undoable.
 
-`crudview` draws one **text button per action** in an actions band at the top of the aside (above the
-list, below the filter controls), labelled with `lang.Translate(action.Label)`:
+`crudview` draws one **text button per action** (`name="cv-action-<op>"`) in an action bar
+(`crudview__action-bar`) inside the aside's controls band, below the filter — that band keeps its
+size, so the list below keeps its fill. Labels are `lang.Translate(action.Label)`:
 
-- disabled while the presenter has no items, and while that action is running;
+- disabled while the **presenter** has no items (not the filtered list: a search that hides every
+  row does not disable an action over the whole list), and while that action is running;
 - with `Confirm` set, the click opens a confirmation modal — a second `modaldialog` built like the
   delete confirmation: the question (`action.Confirm`, translated), **Cancel** and a button labelled
   with the action itself. Two explicit exits, no "×";

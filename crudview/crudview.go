@@ -8,11 +8,11 @@ import (
 	"webtyp.com/components/targetlist"
 	"webtyp.com/fmt"
 	"webtyp.com/form"
-	"webtyp.com/lang"
 	"webtyp.com/icons/pencil"
 	"webtyp.com/icons/plus"
 	"webtyp.com/icons/trash"
 	"webtyp.com/icons/undo"
+	"webtyp.com/lang"
 	"webtyp.com/layout/rightpanel"
 	"webtyp.com/model"
 	"webtyp.com/view"
@@ -36,7 +36,14 @@ var (
 	clsDelConfirmBtn       = NameCrudView.Class("delconfirm-btn")
 	clsDelConfirmBtnDanger = NameCrudView.Class("delconfirm-btn-danger")
 	clsDelConfirmMount     = NameCrudView.Class("delconfirm-mount")
+	clsControls            = NameCrudView.Class("control-stack")
+	clsActions             = NameCrudView.Class("action-bar")
+	clsActionBtn           = NameCrudView.Class("action-bar-btn")
 )
+
+// actionNamePrefix names each action button "cv-action-<op>", so a host or a
+// test can find the control of one action without depending on its label.
+const actionNamePrefix = "cv-action-"
 
 const (
 	// The single toggle button swaps between these two glyphs reactively — see
@@ -158,6 +165,12 @@ type CrudView struct {
 	// trail.
 	OnLoadError func(err error)
 
+	// OnAction reports the outcome of a view.Action (a command on the whole
+	// list, such as "Apply") — the sibling of OnSaved. Fired exactly once per
+	// run, with the op that ran; on success the list has already been reloaded.
+	// nil disables it silently; failures are Logged regardless.
+	OnAction func(op string, err error)
+
 	// internal
 	form          *form.Form             // typed handle set by New; nil when standalone
 	list          ListView               // owns the row rendering + ⋮ menu
@@ -187,6 +200,16 @@ type CrudView struct {
 	// (which the form already does — master plan §4).
 	hasMultiRows *SignalBool
 	loaded       bool
+
+	// Actions (view.Actioner). itemsLoaded mirrors "the presenter has at least
+	// one item" — NOT hasRows, which is the FILTERED list: a search term that
+	// hides every row must not disable an action over the whole list.
+	itemsLoaded     *SignalBool
+	actionRunning   *SignalString // op currently running ("" = none)
+	pendingAction   view.Action   // the action whose confirmation is open
+	confirmQuestion *SignalString // its translated Confirm text
+	confirmLabel    *SignalString // its translated Label, on the confirm button
+	confirmAction   *modaldialog.ModalDialog
 }
 
 // active reports whether the toggle button should show "↺" (cancel/undo):
@@ -229,6 +252,10 @@ func (v *CrudView) Init(ctx Ctx) {
 	v.hasEdits = NewBool(false)
 	v.hasRows = NewBool(false)
 	v.hasMultiRows = NewBool(false)
+	v.itemsLoaded = NewBool(false)
+	v.actionRunning = NewString("")
+	v.confirmQuestion = NewString("")
+	v.confirmLabel = NewString("")
 
 	// The list owns row rendering + the ⋮ menu and shares the selected signal
 	// so its highlight follows the form. New resolves Config.List's default
@@ -267,6 +294,121 @@ func (v *CrudView) Init(ctx Ctx) {
 		HideClose: true,
 		Content:   v.renderDeleteConfirm(),
 	}
+
+	// Action confirmation — built like the delete confirmation: two explicit
+	// exits, no "×". The confirm button carries the action's own label (the
+	// verb), not a generic "OK", and is not the danger variant: an action is
+	// not a delete.
+	v.confirmAction = &modaldialog.ModalDialog{
+		Title:     "Confirm",
+		HideClose: true,
+		Content:   v.renderActionConfirm(),
+	}
+}
+
+// renderActionConfirm builds the action confirmation's body: the action's
+// question plus Cancel / <action label>. Built once in Init; its texts react
+// to confirmQuestion / confirmLabel.
+func (v *CrudView) renderActionConfirm() *Element {
+	msg := P().BindTextFunc(func() string { return v.confirmQuestion.Get() })
+
+	cancel := Button().Set(clsDelConfirmBtn.AsAttr()).Text(lang.Translate("Cancel").String()).
+		OnClick(func(Event) { v.confirmAction.Close() })
+
+	confirm := Button().Set(clsDelConfirmBtn.AsAttr()).
+		BindTextFunc(func() string { return v.confirmLabel.Get() }).
+		OnClick(func(Event) { v.confirmActionRun() })
+
+	actions := Div().Set(clsDelConfirmActions.AsAttr()).Child(cancel, confirm)
+	return Div().Set(clsDelConfirmBody.AsAttr()).Child(msg, actions)
+}
+
+// actionEnabled is the single condition an action button is enabled by: the
+// presenter has items (an action runs over the list) and this action is not
+// already running (no double submit). The DOM binding and the conformance
+// driver both read it.
+func (v *CrudView) actionEnabled(op string) bool {
+	return v.Presenter != nil && len(v.Presenter.Items()) > 0 && v.actionRunning.Get() != op
+}
+
+// actionRequest is an action button's click: with a Confirm question it opens
+// the confirmation; otherwise it runs right away.
+func (v *CrudView) actionRequest(a view.Action) {
+	if !v.actionEnabled(a.Op) {
+		return
+	}
+	if a.Confirm != "" {
+		v.pendingAction = a
+		v.confirmQuestion.Set(lang.Translate(a.Confirm).String())
+		v.confirmLabel.Set(lang.Translate(a.Label).String())
+		v.confirmAction.Open()
+		return
+	}
+	v.runAction(a.Op)
+}
+
+// confirmActionRun is the confirmation's accept button: closes the dialog and
+// runs the pending action. A no-op when no confirmation is pending.
+func (v *CrudView) confirmActionRun() {
+	op := v.pendingAction.Op
+	v.pendingAction = view.Action{}
+	v.confirmAction.Close()
+	if op != "" {
+		v.runAction(op)
+	}
+}
+
+// runAction asks the presenter to run op. Presenter.Run reloads it on
+// success, so the list repaints from the fresh items here.
+func (v *CrudView) runAction(op string) {
+	actioner, ok := v.Presenter.(view.Actioner)
+	if !ok {
+		return
+	}
+	v.actionRunning.Set(op)
+	actioner.Run(op, func(err error) {
+		v.actionRunning.Set("")
+		if err == nil {
+			v.filter()
+		}
+		v.reportAction(op, err)
+	})
+}
+
+// reportAction funnels every action outcome through one place, exactly once
+// per run: Log on error, then the OnAction hook.
+func (v *CrudView) reportAction(op string, err error) {
+	if err != nil {
+		Log(err.Error())
+	}
+	if v.OnAction != nil {
+		v.OnAction(op, err)
+	}
+}
+
+// renderActions builds the actions band: one text button per action the
+// presenter declares. ok=false when there are none — no empty band in the DOM.
+func (v *CrudView) renderActions() (*Element, bool) {
+	actioner, ok := v.Presenter.(view.Actioner)
+	if !ok || len(actioner.Actions()) == 0 {
+		return nil, false
+	}
+	band := Div().Set(clsActions.AsAttr())
+	for _, a := range actioner.Actions() {
+		a := a
+		btn := Button().Set(clsActionBtn.AsAttr()).
+			Attr("name", actionNamePrefix+a.Op).
+			Text(lang.Translate(a.Label).String()).
+			BindAttrBool("disabled", DeriveBool(func() bool {
+				// itemsLoaded is read so the binding re-evaluates on every
+				// reload; the decision itself is actionEnabled.
+				_ = v.itemsLoaded.Get()
+				return !v.actionEnabled(a.Op)
+			}))
+		btn.OnClick(func(Event) { v.actionRequest(a) })
+		band.Child(btn)
+	}
+	return band, true
 }
 
 // renderDeleteConfirm builds the confirmation modal's body: a message naming
@@ -667,6 +809,9 @@ func (v *CrudView) filter() {
 	if v.hasMultiRows != nil {
 		v.hasMultiRows.Set(v.list.Count() > 1)
 	}
+	if v.itemsLoaded != nil {
+		v.itemsLoaded.Set(len(v.Presenter.Items()) > 0)
+	}
 	v.dropSelectionOutOfScope()
 }
 
@@ -811,6 +956,16 @@ func (v *CrudView) Render() *Element {
 		// second frame around a control that has one reads as a box in a box.
 		v.panel.AsideControls = v.Filter
 
+		// The actions band rides the controls band (below the filter): that
+		// band keeps its size, so the list below keeps its Fill.
+		if band, ok := v.renderActions(); ok {
+			if v.Filter != nil {
+				v.panel.AsideControls = Div().Set(clsControls.AsAttr()).Child(v.Filter, band)
+			} else {
+				v.panel.AsideControls = band
+			}
+		}
+
 		// The create action ("+") needs view.Saver; 🗑 needs view.Deleter; ✏
 		// (bulk patch) needs view.Updater. 🗑/✏ already gate their own render
 		// below. The toggle button always renders — it is also the "↺" that
@@ -944,6 +1099,7 @@ func (v *CrudView) Render() *Element {
 		// clsDelConfirmMount is position:fixed, which removes it from grid item
 		// participation entirely, regardless of visibility.
 		root.Child(Div().Set(clsDelConfirmMount.AsAttr()).Child(v.confirmDelete))
+		root.Child(Div().Set(clsDelConfirmMount.AsAttr()).Child(v.confirmAction))
 	}
 
 	return root

@@ -229,7 +229,9 @@ func TestListCardMatchesFormIndentOnMobile(t *testing.T) {
 }
 
 func TestConsumer_StylesheetAsserts(t *testing.T) {
-	fb := &conformance.FakeLister{}
+	// One action, so the action bar (and, with Filter set, the controls stack)
+	// is in the markup the parity check below compares against the sheet.
+	fb := &conformance.FakeLister{ActionList: []view.Action{{Op: "apply", Label: "Apply"}}}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
 		Title:     "CRUD",

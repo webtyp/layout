@@ -60,6 +60,25 @@ func TestViewConformance(t *testing.T) {
 					}
 					return v.form.FocusedFieldID()
 				},
+				ActionLabels: func() []string {
+					band, ok := v.renderActions()
+					if !ok {
+						return nil
+					}
+					return buttonTexts(band)
+				},
+				ActionEnabled: func(op string) bool { return v.actionEnabled(op) },
+				ClickAction: func(op string) {
+					if a, ok := p.(view.Actioner); ok {
+						for _, act := range a.Actions() {
+							if act.Op == op {
+								v.actionRequest(act)
+								return
+							}
+						}
+					}
+				},
+				ConfirmAction: func() { v.confirmActionRun() },
 			}
 		},
 	})

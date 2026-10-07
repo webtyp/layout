@@ -16,7 +16,7 @@ require (
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
-	webtyp.com/view v0.6.26
+	webtyp.com/view v0.6.27
 	webtyp.com/widget v0.6.36
 )
 

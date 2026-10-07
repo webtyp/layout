@@ -232,6 +232,21 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		Part(widget.Part("delconfirm-btn-danger"),
 			style.Button(style.Danger),
 		).
+		// Filter above, actions below, inside the aside's controls band (which
+		// keeps its size — so the list below keeps its Fill).
+		Part(widget.Part("control-stack"),
+			style.Stack(style.Space1),
+		).
+		// One text button per view.Action. Row already wraps when the buttons do
+		// not fit (there is no separate Wrap option).
+		Part(widget.Part("action-bar"),
+			style.Row(style.Space1),
+		).
+		// The same Secondary button the confirmation dialogs use: an action is a
+		// command, not the footer's Primary create/delete bar.
+		Part(widget.Part("action-bar-btn"),
+			style.Button(style.Secondary),
+		).
 		When(widget.Open, widget.Part("action-new"),
 			style.RevealedBy(widget.Open),
 		)
