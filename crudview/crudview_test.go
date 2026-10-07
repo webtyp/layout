@@ -8,7 +8,6 @@ import (
 	"webtyp.com/dom"
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
-	"webtyp.com/lang"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )

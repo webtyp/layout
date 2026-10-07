@@ -1,6 +1,7 @@
 package rightpanel
 
 import (
+	"webtyp.com/lang"
 	"webtyp.com/widget"
 
 	. "webtyp.com/dom"
@@ -65,8 +66,8 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 type RightPanel struct {
 	Element
 
-	// Title is rendered as <h1> in the header.
-	Title string
+	// Title is rendered as <h1> in the header. English; translated in Render.
+	Title lang.Text
 
 	// Head is rendered beside the <h1> (e.g. status badge, icon).
 	Head Component
@@ -108,7 +109,7 @@ func (r *RightPanel) Render() *Element {
 
 	titleRow := Div().Set(clsTitleRow.AsAttr())
 	if r.Title != "" {
-		titleRow.Child(H1().Set(clsTitle.AsAttr()).Text(r.Title))
+		titleRow.Child(H1().Set(clsTitle.AsAttr()).Text(lang.Translate(r.Title).String()))
 	}
 	if r.Head != nil {
 		titleRow.Child(r.Head)

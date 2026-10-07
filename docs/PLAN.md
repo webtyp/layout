@@ -128,4 +128,8 @@ Flutter localized getters. Ledger: +0 concepts here (`lang.Text` is introduced b
 | 2 | `lang.json` | `chatview/words.go` (deleted), `lang.json` |
 | 3 | Tests | `tests/*.go`, `crudview/crudview_test.go` |
 ## Executor notes
-The tests are failing due to type mismatch errors. The components and views now require `lang.Text` for `Empty`, `Placeholder`, etc. but they are receiving `string` from `lang.Translate(...).String()`. The user explicitly asked to publish despite the test failures.
+The executor stopped with the build broken; the planner finished on the branch: chatview passes
+English `lang.Text` to the components (they translate in Render), `RightPanel.Title` and
+`Login.Title`/`Subtitle` retyped, `chatview/words.go` deleted, `lang.json` added (plus the two
+`fmt.Err` keys langc finds in chatview), and the WASM test mounts the dialog with `dom.Render`
+and opens it after mounting (in WASM `Show` fills the body on mount).

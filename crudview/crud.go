@@ -89,7 +89,7 @@ func New(cfg Config) (*CrudView, error) {
 	// the presenter's placeholder. The demo injects its own — see platformd.
 	filter := cfg.Filter
 	if filter == nil {
-		filter = &searchbar.SearchBar{Placeholder: lang.Translate(cfg.Presenter.SearchPlaceholder()).String()}
+		filter = &searchbar.SearchBar{Placeholder: cfg.Presenter.SearchPlaceholder()}
 	}
 
 	v := &CrudView{

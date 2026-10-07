@@ -9,7 +9,7 @@ import (
 	"webtyp.com/components/bubblethread"
 	"webtyp.com/components/inboxlist"
 	"webtyp.com/components/presencelist"
-	"webtyp.com/fmt/lang"
+	"webtyp.com/lang"
 )
 
 func TestNew_Errors(t *testing.T) {
