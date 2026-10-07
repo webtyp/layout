@@ -11,8 +11,8 @@ import (
 
 	. "webtyp.com/dom"
 	. "webtyp.com/fmt"
-	"webtyp.com/fmt/lang"
 	. "webtyp.com/html"
+	"webtyp.com/lang"
 )
 
 const NameChatView widget.Name = "chatview"
@@ -84,13 +84,13 @@ func (v *ChatView) Init(ctx Ctx) {
 	v.headerTitle = NewString("")
 	v.composeDisabled = NewBool(true)
 
-	v.inbox.Empty = lang.Translate("No conversations yet").String()
+	v.inbox.Empty = "No conversations yet"
 	v.inbox.Selected = NewString("")
 	v.inbox.OnSelect = func(id string) {
 		v.openRoom(id)
 	}
 
-	v.presence.Empty = lang.Translate("Nobody else is here yet").String()
+	v.presence.Empty = "Nobody else is here yet"
 	v.presence.OnlineLabel = lang.Translate("Online").String()
 	v.presence.OfflineLabel = lang.Translate("Offline").String()
 	v.presence.OnSelect = func(personID string) {
@@ -111,11 +111,11 @@ func (v *ChatView) Init(ctx Ctx) {
 		})
 	}
 
-	v.thread.Empty = lang.Translate("Pick a conversation").String()
+	v.thread.Empty = "Pick a conversation"
 	v.thread.ReadLabel = lang.Translate("Read").String()
 
-	v.bar.Placeholder = lang.Translate("Write a message").String()
-	v.bar.SendLabel = lang.Translate("Send").String()
+	v.bar.Placeholder = "Write a message"
+	v.bar.SendLabel = "Send"
 	v.bar.MaxLength = v.maxBodyLength
 	v.bar.Disabled = v.composeDisabled
 	v.bar.OnSend = func(body string) {
@@ -130,7 +130,7 @@ func (v *ChatView) Init(ctx Ctx) {
 					v.OnError(err)
 				}
 				if len(v.thread.Bubbles()) == 0 {
-					v.thread.Empty = err.Error()
+					v.thread.Empty = lang.Text(err.Error())
 				}
 				return
 			}
@@ -143,12 +143,12 @@ func (v *ChatView) Init(ctx Ctx) {
 		Items: []decktabs.Item{
 			{
 				ID:    "conversations",
-				Label: lang.Translate("Conversations").String(),
+				Label: "Conversations",
 				Panel: v.inbox.Render(),
 			},
 			{
 				ID:    "people",
-				Label: lang.Translate("People").String(),
+				Label: "People",
 				Panel: v.presence.Render(),
 			},
 		},
@@ -192,10 +192,10 @@ func (v *ChatView) openRoom(id string) {
 				v.OnError(err)
 			}
 			if len(v.thread.Bubbles()) == 0 {
-				v.thread.Empty = err.Error()
+				v.thread.Empty = lang.Text(err.Error())
 			}
 		} else {
-			v.thread.Empty = lang.Translate("No messages yet").String()
+			v.thread.Empty = "No messages yet"
 			v.thread.SetBubbles(bubbles)
 		}
 

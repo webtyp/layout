@@ -7,8 +7,8 @@ import (
 	"webtyp.com/components/modaldialog"
 	"webtyp.com/components/targetlist"
 	"webtyp.com/fmt"
-	"webtyp.com/fmt/lang"
 	"webtyp.com/form"
+	"webtyp.com/lang"
 	"webtyp.com/icons/pencil"
 	"webtyp.com/icons/plus"
 	"webtyp.com/icons/trash"
@@ -87,7 +87,7 @@ func (v *CrudView) WidgetKind() widget.Kind { return widget.Disclosure }
 type CrudView struct {
 	Element // value embed — NEVER *dom.Element
 
-	Title     string
+	Title     lang.Text
 	Form      Component // what Render paints (may stay nil in standalone mode)
 	Presenter view.Presenter
 
@@ -263,7 +263,7 @@ func (v *CrudView) Init(ctx Ctx) {
 	// nothing Cancelar does not. A destructive confirmation wants exactly two
 	// exits, both of them explicit.
 	v.confirmDelete = &modaldialog.ModalDialog{
-		Title:     lang.Translate("Confirm").String(),
+		Title:     "Confirm",
 		HideClose: true,
 		Content:   v.renderDeleteConfirm(),
 	}

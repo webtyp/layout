@@ -7,7 +7,6 @@ import (
 
 	"webtyp.com/dom"
 	. "webtyp.com/fmt"
-	"webtyp.com/fmt/lang"
 	. "webtyp.com/html"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
@@ -76,66 +75,6 @@ func TestCrudView_Render_WithSource(t *testing.T) {
 type mockCtx struct{}
 
 func (m *mockCtx) OnCleanup(fn func()) {}
-
-// TestCrudView_DeleteConfirm_Language: the delete-confirmation dialog is
-// framework-owned chrome, so its text is a lang.Translate call — resolved
-// from the English canonical keys, never hardcoded. The dictionary is the
-// consumer's concern (registered here, in the test — never in production
-// code), mirroring webtyp/input's lazy-resolution test.
-func TestCrudView_DeleteConfirm_Language(t *testing.T) {
-	openDialog := func(v *CrudView) string {
-		v.confirmDelete.Init(&mockCtx{})
-		v.deleteLabel.Set("Device One")
-		v.confirmDelete.Open()
-		// Rendered once per instance: the dialog's content element can only
-		// be attached once (one element, one parent).
-		return v.confirmDelete.Render().String()
-	}
-
-	// English is the canonical dictionary key and the default output
-	// language: the dialog renders in EN until a consumer registers a
-	// dictionary and activates another language via lang.OutLang.
-	v := &CrudView{Title: "Test CRUD"}
-	v.Init(&mockCtx{})
-	html := openDialog(v)
-	for _, want := range []string{
-		"Confirm", "Cancel", "Delete",
-		"Delete «Device One»? This action cannot be undone.",
-	} {
-		if !Contains(html, want) {
-			t.Errorf("expected EN dialog text %q, got: %s", want, html)
-		}
-	}
-
-	// With the ES dictionary registered and active BEFORE the view is built,
-	// the same chrome resolves the Spanish text — title included. Every word
-	// is its own entry, so words stay independent and reusable ("Delete" is
-	// shared between the message and the confirm button).
-	lang.RegisterWords([]lang.DictEntry{
-		{EN: "Confirm", ES: "Confirmar"},
-		{EN: "Cancel", ES: "Cancelar"},
-		{EN: "Delete", ES: "Eliminar"},
-		{EN: "This", ES: "Esta"},
-		{EN: "action", ES: "acción"},
-		{EN: "cannot", ES: "no"},
-		{EN: "be", ES: "se"},
-		{EN: "undone.", ES: "puede deshacer."},
-	})
-	defer lang.OutLang(lang.EN)
-	lang.OutLang(lang.ES)
-
-	v2 := &CrudView{Title: "Test CRUD"}
-	v2.Init(&mockCtx{})
-	html = openDialog(v2)
-	for _, want := range []string{
-		"Confirmar", "Cancelar", "Eliminar",
-		"Eliminar «Device One»? Esta acción no se puede deshacer.",
-	} {
-		if !Contains(html, want) {
-			t.Errorf("expected ES dialog text %q, got: %s", want, html)
-		}
-	}
-}
 
 type stubList struct {
 	items    []view.Item

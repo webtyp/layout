@@ -2,8 +2,9 @@
 PLAN: "feat: layout types its fixed UI text as lang.Text, ships lang.json, drops Go dictionaries"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 3421908638887019252
+PR: https://github.com/webtyp/layout/pull/41
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
@@ -126,3 +127,9 @@ Flutter localized getters. Ledger: +0 concepts here (`lang.Text` is introduced b
 | 1 | Retype + translate | `crudview/crudview.go`, `crudview/crud.go`, `rightpanel/rightpanel.go`, `login/login.go`, call sites, `go.mod`, `go.sum` |
 | 2 | `lang.json` | `chatview/words.go` (deleted), `lang.json` |
 | 3 | Tests | `tests/*.go`, `crudview/crudview_test.go` |
+## Executor notes
+The executor stopped with the build broken; the planner finished on the branch: chatview passes
+English `lang.Text` to the components (they translate in Render), `RightPanel.Title` and
+`Login.Title`/`Subtitle` retyped, `chatview/words.go` deleted, `lang.json` added (plus the two
+`fmt.Err` keys langc finds in chatview), and the WASM test mounts the dialog with `dom.Render`
+and opens it after mounting (in WASM `Show` fills the body on mount).

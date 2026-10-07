@@ -5,6 +5,7 @@ import (
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/form"
+	"webtyp.com/lang"
 	"webtyp.com/model"
 	"webtyp.com/view"
 )
@@ -92,7 +93,7 @@ func New(cfg Config) (*CrudView, error) {
 	}
 
 	v := &CrudView{
-		Title:     cfg.Presenter.Title(),
+		Title:     lang.Text(cfg.Presenter.Title()),
 		Form:      f,
 		form:      f,
 		Presenter: cfg.Presenter,

@@ -3,6 +3,7 @@ package login
 import (
 	. "webtyp.com/dom"
 	. "webtyp.com/html"
+	"webtyp.com/lang"
 	"webtyp.com/widget"
 )
 
@@ -51,16 +52,16 @@ var (
 type Login struct {
 	Element // value embed — NEVER *dom.Element (TinyGo heap constraint)
 
-	// Title leads the card — the app's own name, or a translated
-	// "Ingreso"/"Sign in" if the app prefers that framing over its brand.
+	// Title leads the card — the app's own name, or "Sign in" if the app
+	// prefers that framing over its brand. English; translated in Render.
 	// Required: the screen reads as unbranded without it.
-	Title string
+	Title lang.Text
 
 	// Subtitle is the single line under the title telling the user what this
-	// screen wants from them ("Ingrese sus credenciales para continuar").
-	// Optional — omitted, the title sits alone and the card is that much
-	// tighter.
-	Subtitle string
+	// screen wants from them ("Enter your credentials to continue").
+	// English; translated in Render. Optional — omitted, the title sits alone
+	// and the card is that much tighter.
+	Subtitle lang.Text
 
 	// Form is the actual login form, built and validated by the caller.
 	Form Component
@@ -97,9 +98,9 @@ func (l *Login) Render() *Element {
 	if l.LogoMark != "" {
 		header.Child(NewElement("img").NoCloseTag().Set(clsMark.AsAttr()).Attr("src", l.LogoMark).Attr("alt", ""))
 	}
-	header.Child(H1().Set(clsTitle.AsAttr()).Text(l.Title))
+	header.Child(H1().Set(clsTitle.AsAttr()).Text(lang.Translate(l.Title).String()))
 	if l.Subtitle != "" {
-		header.Child(P().Set(clsSubtitle.AsAttr()).Text(l.Subtitle))
+		header.Child(P().Set(clsSubtitle.AsAttr()).Text(lang.Translate(l.Subtitle).String()))
 	}
 
 	card := Div().Set(clsCard.AsAttr()).Child(header)

@@ -1,0 +1,27 @@
+{
+  "languages": ["es"],
+  "keys": {
+    "Cancel": ["Cancelar"],
+    "Confirm": ["Confirmar"],
+    "Conversations": ["Conversaciones"],
+    "Delete": ["Eliminar"],
+    "No conversations yet": ["Aún no hay conversaciones"],
+    "No messages yet": ["Aún no hay mensajes"],
+    "Nobody else is here yet": ["Todavía no hay nadie más"],
+    "Offline": ["Desconectado"],
+    "Online": ["En línea"],
+    "People": ["Personas"],
+    "Pick a conversation": ["Elige una conversación"],
+    "Read": ["Leído"],
+    "Send": ["Enviar"],
+    "This": ["Esta"],
+    "Write a message": ["Escribe un mensaje"],
+    "action": ["acción"],
+    "be": ["se"],
+    "cannot": ["no"],
+    "chatview.New: MaxBodyLength must be greater than zero": ["chatview.New: MaxBodyLength debe ser mayor que cero"],
+    "chatview.New: Source is required": ["chatview.New: Source es obligatorio"],
+    "records": ["registros"],
+    "undone.": ["puede deshacer."]
+  }
+}
