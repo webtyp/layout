@@ -5,6 +5,7 @@ import (
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/form"
+	"webtyp.com/lang"
 	"webtyp.com/model"
 	"webtyp.com/view"
 )
@@ -88,11 +89,11 @@ func New(cfg Config) (*CrudView, error) {
 	// the presenter's placeholder. The demo injects its own — see platformd.
 	filter := cfg.Filter
 	if filter == nil {
-		filter = &searchbar.SearchBar{Placeholder: cfg.Presenter.SearchPlaceholder()}
+		filter = &searchbar.SearchBar{Placeholder: lang.Translate(cfg.Presenter.SearchPlaceholder()).String()}
 	}
 
 	v := &CrudView{
-		Title:     cfg.Presenter.Title(),
+		Title:     lang.Text(cfg.Presenter.Title()),
 		Form:      f,
 		form:      f,
 		Presenter: cfg.Presenter,

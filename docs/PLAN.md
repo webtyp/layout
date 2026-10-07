@@ -126,3 +126,5 @@ Flutter localized getters. Ledger: +0 concepts here (`lang.Text` is introduced b
 | 1 | Retype + translate | `crudview/crudview.go`, `crudview/crud.go`, `rightpanel/rightpanel.go`, `login/login.go`, call sites, `go.mod`, `go.sum` |
 | 2 | `lang.json` | `chatview/words.go` (deleted), `lang.json` |
 | 3 | Tests | `tests/*.go`, `crudview/crudview_test.go` |
+## Executor notes
+The tests are failing due to type mismatch errors. The components and views now require `lang.Text` for `Empty`, `Placeholder`, etc. but they are receiving `string` from `lang.Translate(...).String()`. The user explicitly asked to publish despite the test failures.

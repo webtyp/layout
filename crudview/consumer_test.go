@@ -6,6 +6,7 @@ import (
 
 	"webtyp.com/fmt"
 	"webtyp.com/input"
+	"webtyp.com/lang"
 	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
@@ -125,7 +126,7 @@ type fakeNoWidgetsPresenter struct {
 }
 
 func (f *fakeNoWidgetsPresenter) Title() string                  { return "No Widgets" }
-func (f *fakeNoWidgetsPresenter) SearchPlaceholder() string      { return "Search" }
+func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text   { return lang.Text("Buscar...") }
 func (f *fakeNoWidgetsPresenter) Record() model.Model            { return f.record }
 func (f *fakeNoWidgetsPresenter) Items() []view.Item             { return nil }
 func (f *fakeNoWidgetsPresenter) Filter(term string) []view.Item { return nil }

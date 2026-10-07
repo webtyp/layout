@@ -11,7 +11,7 @@ import (
 
 	. "webtyp.com/dom"
 	. "webtyp.com/fmt"
-	"webtyp.com/fmt/lang"
+	"webtyp.com/lang"
 	. "webtyp.com/html"
 )
 
