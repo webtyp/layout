@@ -2,6 +2,8 @@
 PLAN: "feat(crudview): render view actions — buttons, confirmation, OnAction"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 10293940262224669237
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
