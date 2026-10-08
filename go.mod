@@ -3,12 +3,12 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.8.12
+	webtyp.com/components v0.8.16
 	webtyp.com/css v0.4.29
 	webtyp.com/date v0.0.9
 	webtyp.com/dom v0.13.22
 	webtyp.com/fmt v1.0.0
-	webtyp.com/form v0.4.24
+	webtyp.com/form v0.4.29
 	webtyp.com/html v0.0.24
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.18
@@ -18,7 +18,7 @@ require (
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
 	webtyp.com/view v0.6.27
-	webtyp.com/widget v0.6.36
+	webtyp.com/widget v0.6.37
 )
 
 require webtyp.com/escape v0.1.0 // indirect

@@ -40,8 +40,9 @@ func (p *Page) RenderSheet() *style.Sheet {
 			style.Pad(style.Space6),
 			style.As(style.Primary),
 		).
+		// Two children (text + image): two columns at most.
 		Part(partSplit,
-			style.Grid(style.ColumnMedium, style.Space4),
+			style.Grid(2, style.ColumnMedium, style.Space4),
 		).
 		Part(partCards,
 			style.Stack(style.Space4),
@@ -69,8 +70,9 @@ func (p *Page) RenderSheet() *style.Sheet {
 		Part(partMedia,
 			style.MediaBox(style.Aspect16x9),
 		).
+		// Four: what fits a 1440px viewport at ColumnMedium, kept as the cap.
 		Part(partGrid,
-			style.Grid(style.ColumnMedium, style.Space4),
+			style.Grid(4, style.ColumnMedium, style.Space4),
 		).
 		Part(partBadge,
 			style.FontSize(style.TextSm),
