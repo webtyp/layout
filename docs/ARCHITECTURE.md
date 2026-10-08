@@ -257,6 +257,13 @@ plan). `crudview` is the renderer that paints from inside those callbacks:
    The user-facing hooks (`OnSaved`, `OnDeleted`, `OnUpdated`, and `OnAction` for actions) fire exactly once, with the
    `error` the callback delivered.
 
+### Read-only lists — no form
+
+A presenter with **no write capability** (no `view.Saver`, no `view.Updater`) over a record with no
+form widgets — output rows such as a plan, an audit log, "who is connected" — builds a **standalone
+list**: `crudview.New` succeeds with no form. A presenter that CAN write over a record without
+widgets still fails in `New`, loudly: that is a missing widget declaration, not a read-only screen.
+
 ### Actions — commands on the whole list
 
 A presenter may declare **actions** (`view.Actioner`, spec in `webtyp.com/view` SPECS §9): named

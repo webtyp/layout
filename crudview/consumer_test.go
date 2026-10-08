@@ -160,8 +160,15 @@ func fieldErrorText(t *testing.T, v *CrudView, field string) string {
 }
 
 // Case 1: New with a model without widgets fails
+// fakeNoWidgetsSaver is the same widget-less presenter, but able to save: an
+// editable record without widgets is a missing declaration and New must fail
+// loudly. (A read-only one is a standalone list — see readonly_test.go.)
+type fakeNoWidgetsSaver struct{ *fakeNoWidgetsPresenter }
+
+func (f *fakeNoWidgetsSaver) Save(recs []model.Model, done func(error)) { done(nil) }
+
 func TestConsumer_NewNoWidgets(t *testing.T) {
-	p := &fakeNoWidgetsPresenter{record: &DeviceNoWidgets{}}
+	p := &fakeNoWidgetsSaver{&fakeNoWidgetsPresenter{record: &DeviceNoWidgets{}}}
 	cfg := Config{
 		ParentID:  "my-id",
 		Presenter: p,

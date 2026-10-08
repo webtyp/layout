@@ -78,11 +78,22 @@ func New(cfg Config) (*CrudView, error) {
 		return nil, fmt.Errf("crudview.New: IDs is required (e.g. unixid.NewUnixID())")
 	}
 
+	// A record with no widgets fails HERE, loudly — when the presenter can write
+	// it (Saver/Updater): an editable record without widgets is a missing
+	// declaration. A read-only presenter (a list of output rows: a plan, an
+	// audit log) legitimately has no form: the view runs in standalone mode.
+	_, canSave := cfg.Presenter.(view.Saver)
+	_, canUpdate := cfg.Presenter.(view.Updater)
 	f, err := form.New(cfg.ParentID, cfg.Presenter.Record(), cfg.IDs)
 	if err != nil {
-		return nil, err // a record with no widgets fails HERE, loudly
+		if canSave || canUpdate {
+			return nil, err
+		}
+		f = nil
 	}
-	f.HideSubmit() // there is no Save button — auto-save (OnFieldChange) replaces it
+	if f != nil {
+		f.HideSubmit() // there is no Save button — auto-save (OnFieldChange) replaces it
+	}
 
 	// The default filter keeps every existing consumer compiling: a host that
 	// does not care which control it gets still gets a working search bar with
@@ -94,7 +105,6 @@ func New(cfg Config) (*CrudView, error) {
 
 	v := &CrudView{
 		Title:     lang.Text(cfg.Presenter.Title()),
-		Form:      f,
 		form:      f,
 		Presenter: cfg.Presenter,
 		Filter:    filter,
@@ -107,10 +117,15 @@ func New(cfg Config) (*CrudView, error) {
 		OnAfterReload: cfg.OnAfterReload,
 	}
 
-	// Auto-save: every field commit (blur/change) persists immediately — see
-	// docs/ROADMAP.md "Save: auto-save". Only wired when the presenter can save;
-	// autoSaveAction is a no-op otherwise.
-	f.OnFieldChange(func() { v.autoSaveAction() })
+	// Form is a Component interface: assign it only when there is a form, or a
+	// typed nil would read as "has a form" in Render.
+	if f != nil {
+		v.Form = f
+		// Auto-save: every field commit (blur/change) persists immediately — see
+		// docs/ROADMAP.md "Save: auto-save". Only wired when the presenter can save;
+		// autoSaveAction is a no-op otherwise.
+		f.OnFieldChange(func() { v.autoSaveAction() })
+	}
 
 	return v, nil
 }
