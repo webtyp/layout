@@ -1,6 +1,8 @@
 {
   "languages": ["es"],
   "keys": {
+    "API Explorer": ["Explorador de API"],
+    "Body": ["Cuerpo"],
     "Cancel": ["Cancelar"],
     "Confirm": ["Confirmar"],
     "Conversations": ["Conversaciones"],
@@ -12,8 +14,11 @@
     "Online": ["En línea"],
     "People": ["Personas"],
     "Pick a conversation": ["Elige una conversación"],
+    "Raw JSON": ["JSON Crudo"],
     "Read": ["Leído"],
+    "Search routes": ["Buscar rutas"],
     "Send": ["Enviar"],
+    "Sending...": ["Enviando..."],
     "This": ["Esta"],
     "Write a message": ["Escribe un mensaje"],
     "action": ["acción"],
@@ -21,7 +26,10 @@
     "cannot": ["no"],
     "chatview.New: MaxBodyLength must be greater than zero": ["chatview.New: MaxBodyLength debe ser mayor que cero"],
     "chatview.New: Source is required": ["chatview.New: Source es obligatorio"],
+    "nobody": ["nadie"],
     "records": ["registros"],
-    "undone.": ["puede deshacer."]
+    "the server did not describe its policy": ["el servidor no describió su política"],
+    "undone.": ["puede deshacer."],
+    "you need permission to view the API": ["necesitas permisos para ver la API"]
   }
 }
