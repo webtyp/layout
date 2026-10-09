@@ -2,6 +2,8 @@
 PLAN: "feat: layout/apiexplorer — read /_routes, show every endpoint with its access and roles, and call it"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 7148536291371730541
 ---
 
 > This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
