@@ -7,6 +7,7 @@ require (
 	webtyp.com/css v0.4.29
 	webtyp.com/date v0.0.9
 	webtyp.com/dom v0.13.23
+	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.30
 	webtyp.com/html v0.0.27
@@ -23,7 +24,6 @@ require (
 
 require (
 	webtyp.com/escape v0.1.0 // indirect
-	webtyp.com/fetch v0.1.29 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
 )
 
@@ -37,6 +37,6 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/icons v0.0.7
 	webtyp.com/js v0.1.1 // indirect
-	webtyp.com/json v0.5.29 // indirect
-	webtyp.com/router v0.4.0 // indirect
+	webtyp.com/json v0.5.29
+	webtyp.com/router v0.4.1
 )
