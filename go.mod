@@ -21,7 +21,11 @@ require (
 	webtyp.com/widget v0.6.37
 )
 
-require webtyp.com/escape v0.1.0 // indirect
+require (
+	webtyp.com/escape v0.1.0 // indirect
+	webtyp.com/fetch v0.1.29 // indirect
+	webtyp.com/filepath v0.1.0 // indirect
+)
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
 // dom. Quitar y volver a la versión publicada en cuanto el test manual confirme
