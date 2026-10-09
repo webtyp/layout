@@ -11,8 +11,13 @@ import (
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
 	"webtyp.com/lang"
+	"webtyp.com/layout/platformd"
+	"webtyp.com/model"
 	"webtyp.com/svg"
 )
+
+// Explorer is a module of the platform shell: proven at compile time.
+var _ platformd.UIModule = (*Explorer)(nil)
 
 const NameAPIExplorer widget.Name = "apiexplorer"
 
@@ -31,9 +36,9 @@ var (
 	clsColPermission = NameAPIExplorer.Class("col-permission")
 	clsColRoles      = NameAPIExplorer.Class("col-roles")
 
-	clsError       = NameAPIExplorer.Class("error")
+	clsError = NameAPIExplorer.Class("error")
 
-	clsTryForm     = NameAPIExplorer.Class("try-form")
+	clsTryForm = NameAPIExplorer.Class("try-form")
 )
 
 type Config struct {
@@ -86,7 +91,12 @@ func (e *Explorer) Init(ctx Ctx) {
 		e.search.Set(term)
 		e.updateRows()
 	})
+}
 
+// Activate is called by the shell when the module is opened: only then is /_routes fetched,
+// and each activation refreshes it (routes and roles change while the app runs).
+func (e *Explorer) Activate() {
+	e.errorMsg.Set("")
 	e.load()
 }
 
@@ -101,7 +111,7 @@ func (e *Explorer) load() {
 			if resp.Status == 403 {
 				e.errorMsg.Set(lang.Translate("you need permission to view the API").String())
 			} else {
-				e.errorMsg.Set(Sprintf("Error %d", resp.Status))
+				e.errorMsg.Set(lang.Translate("Error").String() + " " + Sprintf("%d", resp.Status))
 			}
 			return
 		}
@@ -109,7 +119,7 @@ func (e *Explorer) load() {
 		var table router.RouteTable
 		err = json.Decode(resp.Body(), &table)
 		if err != nil {
-			e.errorMsg.Set(Sprintf("Failed to decode routes: %v", err))
+			e.errorMsg.Set(lang.Translate("Failed to decode routes").String() + ": " + err.Error())
 			return
 		}
 		e.tableData = &table
@@ -178,7 +188,7 @@ func (e *Explorer) updateRows() {
 		if r.Orphan() {
 			row.Set(clsOrphan.AsAttr())
 		}
-		if r.Access == "public" {
+		if r.Access == model.AccessPublic.String() {
 			row.Set(clsPublic.AsAttr())
 		}
 
@@ -210,7 +220,7 @@ func (e *Explorer) updateRows() {
 			rolesStr = "—" // with tooltip "the server did not describe its policy"
 		} else {
 			if len(r.Roles) == 0 {
-				rolesStr = "nobody"
+				rolesStr = lang.Translate("nobody").String()
 			} else {
 				rolesStr = joinStrings(r.Roles, ", ")
 			}

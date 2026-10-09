@@ -4,11 +4,11 @@
 package apiexplorer
 
 import (
+	"strings"
 	"syscall/js"
 	"testing"
-	"strings"
-	"webtyp.com/router"
 	. "webtyp.com/dom"
+	"webtyp.com/router"
 )
 
 func TestExplorer_WASM_Mount(t *testing.T) {

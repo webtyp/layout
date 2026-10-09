@@ -62,6 +62,13 @@ its view, its data and its icon; the chassis ships only its own chrome glyphs.
 Adding a module to an application is a package plus one line in `p.Modules` —
 no `if` in the shell.
 
+### apiexplorer
+
+A screen that lists every endpoint of the running server (`GET /_routes`) with its access,
+permission and the roles that hold it, and lets an authorized user call each one. Add it as one
+more module: `explorer, _ := apiexplorer.New(apiexplorer.Config{})` and put it in `p.Modules`.
+Never expose it publicly in production — see `apiexplorer/README.md`.
+
 ### crudview
 
 A CRUD controller for `rightpanel` (form left, list right) that replicates the Pa100T experience. Renders no frame of its own — it builds a `rightpanel.RightPanel`, fills its slots, and owns only the state machine.

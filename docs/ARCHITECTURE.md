@@ -12,6 +12,8 @@
     │                   # Renders NO frame — composes rightpanel.
     ├── chatview/       # Chat view: inbox, presence list, thread & compose bar.
     │                   # Renders NO frame — composes rightpanel.
+    ├── apiexplorer/    # API explorer: reads /_routes (router.RouteTable), one row per
+    │                   # endpoint with access and roles, and a form to call it.
     ├── login/          # Pre-authentication screen: card on a brand backdrop.
     └── landing/        # Public multi-page website: typed sections in call
                         # order, explicit anchors, RenderPages() per URL.
@@ -335,3 +337,23 @@ type Source interface {
 ```
 
 Every `Source` method is asynchronous and calls `done` exactly once upon completion. `chatview` handles selection, reading state, tab switching, and error propagation via `OnError`.
+
+## API Explorer (`apiexplorer`)
+
+A `platformd.UIModule` that reads the server's route table (`GET /_routes`,
+`router.MountIntrospection`) and decodes it with `router.RouteTable` — the shape is owned by
+`router`, next to its encoder; this package never redeclares it.
+
+- **Why in the browser:** the table is already JSON. Rendering it server side would put the UI
+  kit in a Cloudflare Worker (1 MB limit) or in `server/httpd` (absent from edge deployments).
+- **Data flow:** `Activate()` fetches `/_routes` (each activation refreshes it); `Init` only wires
+  the filter. Rows: method · path · access · permission (`resource:action`) · roles. Guarded routes
+  no role holds (`RouteRecord.Orphan()`) are sorted first and styled as danger; `PolicyKnown ==
+  false` shows `—`, never an empty list.
+- **Trying a route:** path parameters get one input each; the body is built from the route's
+  declared `args` (raw JSON only when it declared none); nothing is sent without pressing the
+  button, and any method other than GET asks for a second click. A 403 is annotated with the
+  permission and who holds it.
+- **Never public in production:** the permission map of a service is a map of what to attack.
+  Mount `MountIntrospection(...).Requires("api_explorer", model.Read)` and show the module only to
+  roles that hold that permission.

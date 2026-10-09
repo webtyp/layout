@@ -3,12 +3,12 @@ package apiexplorer
 
 import (
 	"testing"
-	"webtyp.com/router"
 	"webtyp.com/dom"
+	"webtyp.com/router"
 )
 
 func TestExtractPathParams(t *testing.T) {
-	cases := []struct{
+	cases := []struct {
 		path string
 		want []string
 	}{

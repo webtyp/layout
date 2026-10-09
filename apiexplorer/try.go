@@ -2,6 +2,7 @@ package apiexplorer
 
 import (
 	"webtyp.com/fetch"
+	"webtyp.com/lang"
 	"webtyp.com/router"
 	"webtyp.com/time"
 
@@ -42,10 +43,10 @@ func buildTryPanel(r router.RouteRecord) *Element {
 	if r.Method != "GET" && r.Method != "HEAD" {
 		bodyForm := Div().Set(NameAPIExplorer.Class("body-form").AsAttr())
 		if !r.HasArgs {
-			rawBody := NewElement("textarea").Attr("placeholder", "Raw JSON").Bind(rawBodySig).OnChange(func(e Event) {
+			rawBody := NewElement("textarea").Attr("placeholder", lang.Translate("Raw JSON").String()).Bind(rawBodySig).OnChange(func(e Event) {
 				rawBodySig.Set(e.TargetValue())
 			})
-			bodyForm.Child(Label().Text("Body"), rawBody)
+			bodyForm.Child(Label().Text(lang.Translate("Body").String()), rawBody)
 		} else {
 			for _, arg := range r.Args {
 				argRecords = append(argRecords, arg)
@@ -82,9 +83,9 @@ func buildTryPanel(r router.RouteRecord) *Element {
 	bodyMsg := NewString("")
 	resultPanel.Child(Div().BindText(statusMsg), Pre().BindText(bodyMsg))
 
-	btnText := "Send"
+	btnText := lang.Translate("Send").String()
 	if r.Method != "GET" {
-		btnText = "Execute " + r.Method
+		btnText = lang.Translate("Execute").String() + " " + r.Method
 	}
 
 	sendBtn := Button().Text(btnText)
@@ -94,7 +95,7 @@ func buildTryPanel(r router.RouteRecord) *Element {
 		evt.StopPropagation()
 
 		if r.Method != "GET" && !confirmState {
-			sendBtn.Text("Confirm " + btnText + "?")
+			sendBtn.Text(lang.Translate("Confirm").String() + " " + btnText + "?")
 			confirmState = true
 
 			time.AfterFunc(3000, func() {
@@ -121,11 +122,11 @@ func buildTryPanel(r router.RouteRecord) *Element {
 		}
 
 		if !allValid {
-			statusMsg.Set("Path parameters cannot be empty")
+			statusMsg.Set(lang.Translate("Path parameters cannot be empty").String())
 			return
 		}
 
-		statusMsg.Set("Sending...")
+		statusMsg.Set(lang.Translate("Sending...").String())
 		bodyMsg.Set("")
 
 		var req *fetch.Request
@@ -151,17 +152,17 @@ func buildTryPanel(r router.RouteRecord) *Element {
 
 		req.Send(func(resp *fetch.Response, err error) {
 			if err != nil {
-				statusMsg.Set("Error: " + err.Error())
+				statusMsg.Set(lang.Translate("Error").String() + ": " + err.Error())
 				return
 			}
 
 			statusText := Sprintf("%d", resp.Status)
 			if resp.Status == 403 {
-				rolesStr := "nobody"
+				rolesStr := lang.Translate("nobody").String()
 				if len(r.Roles) > 0 {
 					rolesStr = joinStrings(r.Roles, ", ")
 				}
-				statusText += Sprintf(" (requires %s:%s, held by: %s)", r.Resource, r.Action, rolesStr)
+				statusText += " (" + lang.Translate("requires").String() + " " + r.Resource + ":" + r.Action + ", " + lang.Translate("held by").String() + ": " + rolesStr + ")"
 			}
 			statusMsg.Set(statusText)
 
