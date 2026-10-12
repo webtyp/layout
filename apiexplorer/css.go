@@ -38,9 +38,6 @@ func (e *Explorer) RenderSheet() *style.Sheet {
 		).
 		Part("col-method", style.FontWeight(style.WeightBold)).
 		Part("col-path", style.Grow()).
-		Part("col-access").
-		Part("col-permission").
-		Part("col-roles").
 		Part("error",
 			style.As(style.Danger),
 		).
