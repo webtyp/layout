@@ -704,3 +704,47 @@ func contains(s, substr string) bool {
 	}
 	return false
 }
+
+// Status sits in the header's right slot, before the user menu.
+func TestPlatform_Render_Status(t *testing.T) {
+	p := &Platform{
+		AppName: "Test App",
+		User:    testIdentity{},
+		Status:  func() Component { return Span().Text("status-probe") },
+		Modules: []UIModule{&mockModule{id: "mod1", label: "Module 1"}},
+	}
+	p.Init(NilCtx())
+	html := p.Render().String()
+
+	status := indexOf(html, "status-probe")
+	header := indexOf(html, "pd__header")
+	menu := indexOf(html, "usermenu")
+	if status < 0 || header < 0 || status < header {
+		t.Fatalf("status not rendered inside the header (status %d, header %d)", status, header)
+	}
+	if menu >= 0 && status > menu {
+		t.Fatalf("status must come before the user menu (status %d, menu %d)", status, menu)
+	}
+	if n := count(html, "status-probe"); n != 1 {
+		t.Fatalf("status rendered %d times, want 1", n)
+	}
+}
+
+func indexOf(s, sub string) int {
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			return i
+		}
+	}
+	return -1
+}
+
+func count(s, sub string) int {
+	n := 0
+	for i := 0; i+len(sub) <= len(s); i++ {
+		if s[i:i+len(sub)] == sub {
+			n++
+		}
+	}
+	return n
+}

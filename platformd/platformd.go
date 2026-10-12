@@ -114,6 +114,11 @@ type Platform struct {
 	// in the drawer inert.
 	UserActions func() Component
 
+	// Status slot — shown at the header RIGHT, before the user menu: what the app
+	// says about itself right now (connection state, a new version waiting).
+	// Optional. A factory, like UserActions.
+	Status func() Component
+
 	// Modules registered in order — appearance order in the nav rail.
 	Modules []UIModule
 
@@ -570,6 +575,9 @@ func (p *Platform) Render() *Element {
 
 	right := Div().Set(clsHeaderRight.AsAttr()).
 		OnClick(func(e Event) { e.StopPropagation() })
+	if p.Status != nil {
+		right.Child(p.Status())
+	}
 	if p.User != nil {
 		right.Child(p.userMenu())
 	}
