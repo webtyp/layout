@@ -9,7 +9,7 @@ require (
 	webtyp.com/dom v0.13.24
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
-	webtyp.com/form v0.4.30
+	webtyp.com/form v0.4.34
 	webtyp.com/html v0.0.27
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.18
@@ -30,7 +30,6 @@ require (
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
 // dom. Quitar y volver a la versión publicada en cuanto el test manual confirme
 // el resultado (funcione o no).
-replace webtyp.com/form => ../form
 
 require (
 	webtyp.com/color v0.1.2 // indirect
