@@ -6,7 +6,7 @@ require (
 	webtyp.com/components v0.8.16
 	webtyp.com/css v0.4.30
 	webtyp.com/date v0.0.9
-	webtyp.com/dom v0.13.23
+	webtyp.com/dom v0.13.24
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.30
@@ -32,7 +32,6 @@ require (
 // el resultado (funcione o no).
 replace (
 	webtyp.com/components => ../components
-	webtyp.com/dom => ../dom
 	webtyp.com/form => ../form
 	webtyp.com/widget => ../widget
 )
