@@ -3,7 +3,7 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.8.16
+	webtyp.com/components v0.8.23
 	webtyp.com/css v0.4.30
 	webtyp.com/date v0.0.9
 	webtyp.com/dom v0.13.24
@@ -30,10 +30,7 @@ require (
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
 // dom. Quitar y volver a la versión publicada en cuanto el test manual confirme
 // el resultado (funcione o no).
-replace (
-	webtyp.com/components => ../components
-	webtyp.com/form => ../form
-)
+replace webtyp.com/form => ../form
 
 require (
 	webtyp.com/color v0.1.2 // indirect
