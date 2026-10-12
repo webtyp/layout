@@ -145,6 +145,7 @@ func (r *RightPanel) RenderSheet() *style.Sheet {
 		// corners; flush (SpaceNone) is banned for floating chrome, where
 		// elements get lost and tap targets die at the edge.
 		On(css.Mobile, partAsideFooter, style.Docked(style.Parent, style.EdgeBottom, style.SideEnd, style.Space3)).
+		On(css.Mobile, partAside, style.Pad(style.Space3)).
 		// Restores the aside's card border once there is room to show it — see
 		// the "aside" Part above for why it starts borderless.
 		On(css.Tablet, partAside, style.As(style.Panel)).

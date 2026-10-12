@@ -13,8 +13,10 @@ import (
 	"webtyp.com/icons/trash"
 	"webtyp.com/icons/undo"
 	"webtyp.com/lang"
+	"webtyp.com/layout/platformd"
 	"webtyp.com/layout/rightpanel"
 	"webtyp.com/model"
+	"webtyp.com/msgtype"
 	"webtyp.com/view"
 	"webtyp.com/widget"
 )
@@ -29,7 +31,6 @@ var (
 	clsBtnCrudDeleteIcon   = NameCrudView.Class("action-delete-icon")
 	clsBtnCrudEditIcon     = NameCrudView.Class("action-edit-icon")
 	clsFooter              = NameCrudView.Class("footer")
-	clsBtnCrudIconHidden   = NameCrudView.Class("action-hidden")
 	clsListaBox            = NameCrudView.Class("list")
 	clsDelConfirmBody      = NameCrudView.Class("delconfirm-body")
 	clsDelConfirmActions   = NameCrudView.Class("delconfirm-actions")
@@ -210,7 +211,16 @@ type CrudView struct {
 	confirmQuestion *SignalString // its translated Confirm text
 	confirmLabel    *SignalString // its translated Label, on the confirm button
 	confirmAction   *modaldialog.ModalDialog
+	notifier        platformd.Notifier
 }
+
+// UseNotifier satisfies platformd.UsesNotifier so the chassis automatically
+// wires toast notifications to this CRUD controller.
+func (v *CrudView) UseNotifier(n platformd.Notifier) {
+	v.notifier = n
+}
+
+var _ platformd.UsesNotifier = (*CrudView)(nil)
 
 // active reports whether the toggle button should show "↺" (cancel/undo):
 // either an existing row is selected, or the user is mid-composing a new one
@@ -485,9 +495,15 @@ func (v *CrudView) confirmDeleteAction() {
 				deleter.Delete(ids, func(err error) {
 					if err != nil {
 						Log(err.Error())
+						if v.notifier != nil {
+							v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+						}
 					} else {
 						v.setMode(modeNormal)
 						v.Reload(nil)
+						if v.notifier != nil {
+							v.notifier.Notify(msgtype.Success, "Eliminado con éxito", platformd.Auto())
+						}
 					}
 					if v.OnDeleted != nil {
 						v.OnDeleted(ids, err)
@@ -709,12 +725,21 @@ func (v *CrudView) saveAction(saver view.Saver) {
 	}
 	record := v.Presenter.Record()
 	if err := v.form.Validate(); err != nil {
-		v.reportSave(err)
+		if v.OnSaved != nil {
+			v.OnSaved(err)
+		}
 		return
 	}
 	if err := v.form.SyncValues(record); err != nil {
 		v.reportSave(err)
 		return
+	}
+	isNew := v.composing.Get()
+	var newID string
+	if isNew {
+		if iz, ok := record.(view.Itemizer); ok {
+			newID = iz.Item().ID
+		}
 	}
 	saver.Save([]model.Model{record}, func(err error) {
 		if err != nil {
@@ -723,21 +748,29 @@ func (v *CrudView) saveAction(saver view.Saver) {
 		}
 		v.form.MarkPristine() // a later untouched commit isn't dirty again
 		if v.composing.Get() {
-			// A new-record draft just saved successfully: the draft is
-			// done, return to the "+" ready state. Not undoAction — that
-			// fires OnCancel ("Cancelado"), wrong after a real save; this
-			// is a silent reset, same shape as undoAction minus the
-			// callback. Only for composing: editing an EXISTING record
-			// (selected≠"", composing=false) must NOT reset here, or
-			// every auto-save on blur would kick the user out of the
-			// record they're still editing.
 			v.composing.Set(false)
 			v.selected.Set("")
 			v.canDelete.Set(false)
 			v.Presenter.Deselect()
 			v.form.Reset()
 		}
-		v.Reload(nil)
+		v.Reload(func(err error) {
+			if isNew && err == nil && v.list != nil && newID != "" {
+				items := v.list.Items()
+				for i, it := range items {
+					if it.ID == newID {
+						if i > 0 {
+							reordered := make([]view.Item, len(items))
+							reordered[0] = it
+							copy(reordered[1:i+1], items[:i])
+							copy(reordered[i+1:], items[i+1:])
+							v.list.SetItems(reordered)
+						}
+						break
+					}
+				}
+			}
+		})
 		v.reportSave(nil)
 	})
 }
@@ -749,6 +782,13 @@ func (v *CrudView) saveAction(saver view.Saver) {
 func (v *CrudView) reportSave(err error) {
 	if err != nil {
 		Log(err.Error())
+		if v.notifier != nil {
+			v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+		}
+	} else {
+		if v.notifier != nil {
+			v.notifier.Notify(msgtype.Success, "Guardado con éxito", platformd.Auto())
+		}
 	}
 	if v.OnSaved != nil {
 		v.OnSaved(err)
@@ -787,10 +827,16 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 	deleter.Delete([]string{id}, func(err error) {
 		if err != nil {
 			Log(err.Error())
+			if v.notifier != nil {
+				v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+			}
 		} else {
 			v.selected.Set("")
 			v.canDelete.Set(false)
 			v.Reload(nil)
+			if v.notifier != nil {
+				v.notifier.Notify(msgtype.Success, "Eliminado con éxito", platformd.Auto())
+			}
 		}
 		if v.OnDeleted != nil {
 			v.OnDeleted([]string{id}, err)
@@ -894,10 +940,16 @@ func (v *CrudView) bulkEditAction() {
 	updater.Update(ids, record, fields, func(err error) {
 		if err != nil {
 			Log(err.Error())
+			if v.notifier != nil {
+				v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+			}
 		} else {
 			v.setMode(modeNormal)
 			v.form.Reset()
 			v.Reload(nil)
+			if v.notifier != nil {
+				v.notifier.Notify(msgtype.Success, "Actualizado con éxito", platformd.Auto())
+			}
 		}
 		if v.OnUpdated != nil {
 			v.OnUpdated(ids, err)

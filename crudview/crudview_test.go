@@ -8,6 +8,8 @@ import (
 	"webtyp.com/dom"
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
+	"webtyp.com/layout/platformd"
+	"webtyp.com/msgtype"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -160,5 +162,46 @@ func TestOnAfterReload_NilNoop(t *testing.T) {
 	v.Reload(func(err error) { rerr = err })
 	if rerr != nil {
 		t.Fatalf("unexpected error on Reload: %v", rerr)
+	}
+}
+
+type mockNotifier struct {
+	lastType msgtype.Type
+	lastMsg  string
+}
+
+func (n *mockNotifier) Notify(t msgtype.Type, msg string, dur platformd.Duration) {
+	n.lastType = t
+	n.lastMsg = msg
+}
+
+func TestCrudView_UsesNotifier(t *testing.T) {
+	fb := &conformance.FakeLister{}
+	p := view.New(fb, &Device{})
+
+	cfg := Config{
+		ParentID:  "test-id",
+		Presenter: p,
+		IDs:       testIDs,
+	}
+	v, err := New(cfg)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v.Init(&fakeCtx{})
+
+	n := &mockNotifier{}
+	v.UseNotifier(n)
+
+	// reportSave(nil) triggers success toast
+	v.reportSave(nil)
+	if n.lastType != msgtype.Success || n.lastMsg != "Guardado con éxito" {
+		t.Errorf("expected success toast 'Guardado con éxito', got %v: %s", n.lastType, n.lastMsg)
+	}
+
+	// reportSave(err) triggers error toast
+	v.reportSave(Err("save failed"))
+	if n.lastType != msgtype.Error || n.lastMsg != "save failed" {
+		t.Errorf("expected error toast, got %v: %s", n.lastType, n.lastMsg)
 	}
 }

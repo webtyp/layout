@@ -206,3 +206,61 @@ func TestRecordIdentity_InvalidLoadedValueDoesNotSave(t *testing.T) {
 		t.Error("expected OnSaved to carry the validation error, got nil")
 	}
 }
+
+func TestRecordIdentity_CreatedItemAppearsFirstInList(t *testing.T) {
+	backend := &memoryBackend{rows: []Device{
+		{Id: "a1", Name: "Alpha", Ip: "10.0.0.1"},
+		{Id: "b1", Name: "Beta", Ip: "10.0.0.2"},
+	}}
+	v := newIdentityView(t, backend)
+
+	// Initial list: a1, b1
+	initItems := v.list.Items()
+	if len(initItems) != 2 || initItems[0].ID != "a1" || initItems[1].ID != "b1" {
+		t.Fatalf("expected initial items [a1 b1], got %v", initItems)
+	}
+
+	// Create a new item
+	v.newAction()
+	v.form.SetValues("name", "CreatedNew")
+	v.form.SetValues("ip", "10.0.0.99")
+	v.autoSaveAction()
+
+	if len(backend.saved) != 1 {
+		t.Fatalf("expected 1 saved record, got %d", len(backend.saved))
+	}
+	newID := backend.saved[0].Id
+
+	// List should now have 3 items, with newID at index 0
+	listItems := v.list.Items()
+	if len(listItems) != 3 {
+		t.Fatalf("expected 3 items in list, got %d", len(listItems))
+	}
+	if listItems[0].ID != newID {
+		t.Errorf("expected newly created item %q at index 0, got %q", newID, listItems[0].ID)
+	}
+	if listItems[1].ID != "a1" || listItems[2].ID != "b1" {
+		t.Errorf("expected remaining items [a1 b1], got [%s %s]", listItems[1].ID, listItems[2].ID)
+	}
+
+	// Now edit an existing item (b1) - it must NOT jump to the top
+	v.selectAction(view.Item{ID: "b1"})
+	v.form.SetValues("name", "Beta Edited")
+	v.autoSaveAction()
+
+	listItemsAfterEdit := v.list.Items()
+	if len(listItemsAfterEdit) != 3 {
+		t.Fatalf("expected 3 items in list after edit, got %d", len(listItemsAfterEdit))
+	}
+	if listItemsAfterEdit[0].ID == "b1" {
+		t.Errorf("expected edited item b1 NOT to jump to index 0, got %v", listItemsAfterEdit)
+	}
+
+	// Deleting the created item removes it
+	v.deleteAction(backend, newID)
+	listItemsAfterDelete := v.list.Items()
+	if len(listItemsAfterDelete) != 2 {
+		t.Fatalf("expected 2 items after deleting created item, got %d", len(listItemsAfterDelete))
+	}
+}
+

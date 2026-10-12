@@ -19,29 +19,13 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.HideOverflow(),
 			style.As(style.Page),
 		).
-		// On a phone the header is gone and the hamburger (inside msg-stack,
-		// Docked top-end) FLOATS over the module content — it does not reserve
-		// space. What stows it is SCROLL and nothing else: down stows it, up
-		// brings it back, and the top of a scroller always has it (see
-		// onScroll in platformd.go). That is the gesture every mobile app
-		// trains its users on, so it needs no explaining.
+		// On a phone the header is an integrated App Bar: it stays in the flow,
+		// sits above the module content, and holds the brand/title and hamburger.
+		// What stows it is SCROLL (via style.AppBar and onScroll in platformd.go):
+		// down stows the entire bar off-screen, up brings it back, and the top of
+		// a scroller always has it. It leaves the content 100% free of floating
+		// chrome collisions while keeping navigation accessible.
 		//
-		// It deliberately does NOT yield to what the user is doing inside the
-		// panel. Two :has()-from-root rules used to hide it — one on
-		// :focus-within, one on any [data-open="true"] control in the panel —
-		// and both were wrong for the same reason: navigation is not a
-		// distraction from the task, it is part of it. A user halfway through
-		// an edit still needs to look something up in another module, and a
-		// rule that keeps the menu gone "through the whole select→edit flow"
-		// makes the app a dead end until they cancel. The focus rule was worse
-		// still: a pointer click leaves focus parked inside the panel, so on a
-		// desktop browser (and in a device emulator) the button vanished on
-		// arrival and only came back by clicking outside the page entirely —
-		// a real phone never reproduced it, because iOS does not focus on tap.
-		//
-		// The cost accepted here is that the floating button can overlap
-		// whatever a module puts in its top-end corner. That is the normal
-		// bargain for floating chrome, and scrolling clears it.
 		// A slim bar, not a banner: Space1 padding and the IconMd avatar keep
 		// it near 40px — the header frames the stage, it does not compete
 		// with it.
@@ -70,6 +54,23 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.FontWeight(style.WeightBold),
 			style.KeepSize(),
 		).
+		Part(widget.Part("header-brand-name"),
+			style.FontSize(style.TextBase),
+			style.FontWeight(style.WeightBold),
+			style.KeepSize(),
+		).
+		OnlyOn(css.Mobile, widget.Part("header-title"),
+			style.Row(style.Space2),
+			style.CenterContent(),
+			style.Fill(),
+		).
+		OnlyOn(css.Mobile, widget.Part("header-title-text"),
+			style.Row(style.SpaceNone),
+			style.FontSize(style.TextBase),
+			style.FontWeight(style.WeightBold),
+			style.KeepSize(),
+		).
+
 		// Fill() here is what pushes header-right to the far edge: it grows to
 		// take the free space between the two blocks. CenterContent() makes the
 		// message itself read in the middle of that space instead of hard
@@ -194,18 +195,15 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// The drawer's copy of the brand exists only where there is no header
 		// to hold one — same reasoning as drawer-identity above. On a wide
 		// screen the header's own brand, top-left, is already permanently on
-		// screen; showing it again in the hover-revealed rail panel would say
-		// the app's own name twice at once.
 		OnlyOn(css.Mobile, widget.Part("drawer-brand"),
 			style.Row(style.SpaceNone),
+			style.Pad(style.Space2),
 			style.KeepSize(),
 		).
-		// A tap target, not decoration: the same padded row a nav-link gets,
-		// so it reads as the first item of the list it leads rather than a
-		// caption above it.
+		// In the mobile header, brand has no extra padding, keeping it exactly 24x24px
+		// to match hamburger (24x24px) for symmetric centering of the title.
 		On(css.Mobile, widget.Part("brand"),
-			style.Pad(style.Space2),
-			style.Width(style.Full),
+			style.Pad(style.SpaceNone),
 		).
 		// Pad(Space1): the inset that, with navbar's own Space1 stack gap, gives
 		// every nav item the SAME clearance on all four sides instead of items
@@ -229,10 +227,125 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// moment the panel floats out and stops being full height. A rail packed
 		// from the top measures the same collapsed and expanded.
 		Part(widget.Part("nav-item"),
+			style.Stack(style.SpaceNone),
+			style.KeepSize(),
+		).
+		Part(widget.Part("submenu"),
+			style.Stack(style.Space1),
+			style.Pad(style.Space1),
+			style.Round(style.RadiusSm),
+			style.As(style.Secondary),
+			style.Fill(),
+			style.Hide(),
+		).
+		OnlyOn(css.Mobile, widget.Part("submenu"),
+			style.Stack(style.SpaceNone),
+			style.Pad(style.SpaceNone),
+			style.Round(style.RadiusNone),
+			style.As(style.Secondary),
+			style.RevealedBy(widget.Open),
+		).
+		CueWithinHover(widget.Hover, widget.Part("menu"), widget.Part("submenu"),
+			style.Stack(style.Space1),
+			style.Pad(style.Space1),
+			style.Round(style.RadiusSm),
+			style.As(style.Secondary),
+			style.Fill(),
+			style.RevealedBy(widget.Open),
+		).
+		Part(widget.Part("nav-parent"),
+			style.Anchor(),
+			style.Row(style.Space1),
+			style.Pad(style.Space2),
+			style.Width(style.Full),
+			style.CenterContent(),
+			style.Round(style.RadiusSm),
+			style.Animate(style.MotionFast),
+		).
+		On(css.Mobile, widget.Part("nav-parent"),
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+			style.StartContent(),
+			style.Round(style.RadiusNone),
+			style.DividerBelow(),
+			style.As(style.Primary),
+		).
+		When(widget.Current, widget.Part("nav-parent"),
+			style.As(style.AccentInverse),
+		).
+		Cue(widget.Hover, widget.Part("nav-parent"),
+			style.As(style.AccentHover),
+		).
+		Cue(widget.Focus, widget.Part("nav-parent"),
+			style.As(style.AccentHover),
+		).
+		CueWithinHover(widget.Hover, widget.Part("menu"), widget.Part("nav-parent"),
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+			style.StartContent(),
+			style.As(style.Primary),
+		).
+		WhenWithin(widget.Open, widget.Part("menu"), widget.Part("nav-parent"),
+			style.As(style.Primary),
+		).
+		Part(widget.Part("nav-group-icon"),
+			style.IconBox(style.IconLg),
+		).
+		On(css.Mobile, widget.Part("nav-group-icon"),
+			style.IconBox(style.IconMd),
+		).
+		Part(widget.Part("nav-active-icon"),
+			style.IconBox(style.IconLg),
+			style.Hide(),
+		).
+		Part(widget.Part("subnav-item"),
 			style.Row(style.SpaceNone),
 			style.KeepSize(),
 		).
+		Part(widget.Part("subnav-link"),
+			style.Anchor(),
+			style.Row(style.Space1),
+			style.Pad(style.Space2),
+			style.PadInline(style.Space2),
+			style.Width(style.Full),
+			style.CenterContent(),
+			style.Round(style.RadiusSm),
+			style.FontSize(style.TextSm),
+			style.Animate(style.MotionFast),
+		).
+		On(css.Mobile, widget.Part("subnav-link"),
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+			style.PadInline(style.Space4),
+			style.StartContent(),
+			style.Round(style.RadiusNone),
+			style.FontSize(style.TextSm),
+			style.DividerBelow(),
+		).
+		When(widget.Current, widget.Part("subnav-link"),
+			style.As(style.AccentInverse),
+		).
+		Cue(widget.Hover, widget.Part("subnav-link"),
+			style.As(style.AccentHover),
+		).
+		Cue(widget.Focus, widget.Part("subnav-link"),
+			style.As(style.AccentHover),
+		).
+		Part(widget.Part("subnav-icon"),
+			style.IconBox(style.IconMd),
+		).
+		Part(widget.Part("chevron"),
+			style.IconBox(style.IconSm),
+			style.PushEnd(),
+			style.Rotate(style.TurnNone),
+			style.Animate(style.MotionFast),
+			style.Hide(),
+		).
+		OnlyOn(css.Mobile, widget.Part("chevron"), style.Row(style.SpaceNone)).
+		CueWithinHover(widget.Hover, widget.Part("menu"), widget.Part("chevron"), style.Row(style.SpaceNone)).
+		WhenWithin(widget.Open, widget.Part("nav-parent"), widget.Part("chevron"), style.Rotate(style.TurnHalf)).
 		// An available route paints NOTHING of its own: transparent box, white
+
 		// icon and label inherited (ColorOnPrimary) from the Primary rail it
 		// sits on. So the rail reads as one continuous Primary surface — under
 		// css.SetGradient, one gradient — instead of a column of per-item
@@ -356,43 +469,47 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Pad(style.Space2),
 			style.StartContent(),
 		).
+		CueWithinHover(widget.Hover, widget.Part("menu"), widget.Part("subnav-link"),
+			style.Row(style.Space2),
+			style.Pad(style.Space2),
+			style.PadInline(style.Space3),
+			style.StartContent(),
+		).
+
 		// ── mobile-only chrome ────────────────────────────────────────────────
-		// No header on a phone: the module brings its own title and the chrome
-		// floats over the content. The button pins to the screen so it is
-		// reachable from either page of a swipe strip.
+		// Mobile top bar: the platform header is an integrated App Bar that stays
+		// in the flow, holds the brand/app-name and hamburger, and smoothly slides
+		// off-screen when the user scrolls down.
 		On(css.Mobile, widget.Part("header"),
+			style.AppBar(widget.Open, style.MotionBase),
+			style.As(style.Primary),
+		).
+		On(css.Mobile, widget.Part("header-right"),
+			style.Hide(),
+		).
+		On(css.Mobile, widget.Part("header-brand-name"),
+			style.Hide(),
+		).
+		On(css.Mobile, widget.Part("msg-slot"),
 			style.Hide(),
 		).
 		// AccentInverse, not Primary: the hamburger is the one control that is
 		// always "current" -- it is how the user reaches every module, so it
 		// wears the same amber-with-white-icon the rail's current nav-link and
-		// crudview's open action already use, instead of blending into the
-		// plain blue every other control defaults to.
+		// crudview's open action already use. Inside the header it rides as part
+		// of the App Bar with no floating shadow or fixed viewport pin.
 		//
-		// The position comes from the msg-stack wrapper it rides inside, not
-		// from this rule: two docked boxes in the same corner would need an
-		// offset calculation to stay apart. PushEnd pushes it to the end
-		// edge — the same corner it always had — while the toast block
-		// below widens with its messages.
-		//
-		// Exact 50px square from closed scales only: FontSize(TextLg) +
-		// IconBox(IconLg) = 2.5em of 1.25rem — the same pair that boxes
-		// every square control, replacing the old content-plus-Pad sizing
-		// (40px glyph + Space2 = 56, matching nothing). The 40px nav glyphs
-		// ride centered inside with room to spare.
+		// Exact 24px square (IconMd = 1.5em): perfectly fits inside the 48px
+		// App Bar with 12px vertical clearance matching the brand mark.
 		OnlyOn(css.Mobile, widget.Part("hamburger"),
-			style.Row(style.Space1),
-			style.As(style.AccentInverse),
-			style.FontSize(style.TextLg),
-			style.IconBox(style.IconLg),
-			style.Round(style.RadiusSm),
-			style.Raise(style.Floating),
+			style.Row(style.SpaceNone),
+			style.As(style.Bare),
+			style.IconBox(style.IconMd),
 			style.CenterContent(),
-			style.PushEnd(),
-			// Se guarda mientras el usuario baja. Es un estado, no una clase: lo
-			// escribe Go y lo lee la hoja, y el atributo sale del propio State para
-			// que marcado y selector no puedan discrepar.
-			style.RevealedBy(widget.Open),
+			style.KeepSize(),
+		).
+		On(css.Mobile, widget.Part("nav-icon"),
+			style.IconBox(style.IconMd),
 		).
 		OnlyOn(css.Mobile, widget.Part("nav-overlay"),
 			style.Backdrop(style.Viewport),
@@ -400,11 +517,8 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.RevealedBy(widget.Open),
 		).
 		// The toast stack is the hamburger's phone home. It docks the button
-		// exactly where the button used to sit alone (top-end, Space4 from the
-		// edge), then lets the toasts hang below it. One wrapper positioned
-		// once beats two floating pieces that would each need an offset
-		// calculation to stay apart — the plan's "justo debajo del botón"
-		// falls out of the Stack gap, no arithmetic.
+		// in the top-end corner (Space3 from the edges) and lets toasts hang
+		// below it.
 		//
 		// Stack(Space2): the wrapper's own gap lands between the button and
 		// the toast block; the gap BETWEEN toasts is the slot's own Stack
@@ -422,16 +536,10 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// above the drawer's overlay when both are on screen. (The --z-toast
 		// layer exists for widgets whose Kind is Alert; platformd is a Menu,
 		// and switching kinds to steal the layer would change its role.)
-		//
-		// FloatMiddle, not a top Docked: the hamburger rides the vertical
-		// middle of the end edge — reachable mid-scroll, clear of both the
-		// header zone and the footer chrome — with the same Space4 off the
-		// edge the footer keeps off the frame. Toasts hang below it down
-		// the Stack gap, as before.
 		OnlyOn(css.Mobile, widget.Part("msg-stack"),
 			style.Stack(style.Space2),
 			style.KeepSize(),
-			style.FloatMiddle(style.SideEnd, style.Space4),
+			style.Docked(style.Viewport, style.EdgeTop, style.SideEnd, style.Space3),
 		).
 		OnlyOn(css.Mobile, widget.Part("msg-slot-mobile"),
 			style.Stack(style.Space2),

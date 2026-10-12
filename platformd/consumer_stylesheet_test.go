@@ -204,10 +204,9 @@ func TestDrawerPanelFloatIsFinePointerScoped(t *testing.T) {
 // — invisible on a real phone (iOS does not focus on tap), but on a desktop
 // browser or a device emulator the button vanished on arrival and came back
 // only by clicking outside the page.
-// TestMsgStackFloatsMiddleEnd pins the hamburger's ride: vertically
-// centered on the end edge (FloatMiddle), one Space4 step off the frame —
-// the same 16px the footer keeps, reachable mid-scroll.
-func TestMsgStackFloatsMiddleEnd(t *testing.T) {
+// TestMsgStackDockedTopEnd pins the hamburger's ride: docked in the top-end
+// corner (EdgeTop, SideEnd), one Space3 step off the frame.
+func TestMsgStackDockedTopEnd(t *testing.T) {
 	cssStr := (&Platform{}).RenderCSS().String()
 	mediaIdx := strings.Index(cssStr, "@media (max-width")
 	if mediaIdx == -1 {
@@ -224,16 +223,16 @@ func TestMsgStackFloatsMiddleEnd(t *testing.T) {
 		if b == "" {
 			break
 		}
-		if strings.Contains(b, "top: 50%;") {
+		if strings.Contains(b, "position: fixed") {
 			mb = b
 			break
 		}
 		rest = rest[strings.Index(rest, b)+len(b):]
 	}
 	if mb == "" {
-		t.Fatal("expected a mobile .pd__msg-stack block carrying the middle pin")
+		t.Fatal("expected a mobile .pd__msg-stack block carrying the docked top-end pin")
 	}
-	for _, want := range []string{"top: 50%;", "translateY(-50%)", "inset-inline-end: var(--space-4"} {
+	for _, want := range []string{"position: fixed", "inset-block-start: var(--space-3", "inset-inline-end: var(--space-3"} {
 		if !strings.Contains(mb, want) {
 			t.Errorf(".pd__msg-stack should contain %q, block:\n%s", want, mb)
 		}
@@ -268,22 +267,23 @@ func TestHamburgerIsDrivenByScrollAlone(t *testing.T) {
 		i += len(".pd__hamburger")
 	}
 
-	// The scroll driver itself: RevealedBy(Open) is what navStowed writes to.
-	if !strings.Contains(cssStr, `.pd__hamburger[data-open="true"]`) {
-		t.Errorf("expected the hamburger to be revealed by its Open state (the scroll driver), got:\n%s", cssStr)
+	// The scroll driver: the entire header is an AppBar revealed by Open.
+	if !strings.Contains(cssStr, `.pd__header[data-open="true"]`) {
+		t.Errorf("expected the header to be revealed by its Open state (the scroll driver), got:\n%s", cssStr)
 	}
-	// It is a state, not a reservation: nothing pads for a floating strip.
+	// The hamburger does not float independently — it rides inside the header without fixed position or floating shadow.
+	if strings.Contains(cssStr, `.pd__hamburger[data-open="true"]`) {
+		t.Errorf("hamburger should not have separate data-open rule; the bar owns the reveal, got:\n%s", cssStr)
+	}
+	// It is an in-flow bar, not a reservation: nothing pads for a floating strip.
 	if Contains(cssStr, "--floating-top: calc(") {
-		t.Errorf("the hamburger must not reserve a floating strip — it floats, got:\n%s", cssStr)
+		t.Errorf("the header must not reserve a floating strip — it is in-flow, got:\n%s", cssStr)
 	}
 }
 
-// TestHamburgerIs50Square pins the single-source square: FontSize(TextXl) +
-// IconBox(IconLg) = 2.5em of 1.25rem, the same pair boxing every square
-// control — replacing the old content-plus-Pad sizing (40px glyph + Space2
-// = 56, matching nothing). Scans every block: the first match is OnlyOn's
-// base hide, not the sizing rule.
-func TestHamburgerIs50Square(t *testing.T) {
+// TestHamburgerIsSquare pins the mobile hamburger sizing: IconBox(IconMd) = 1.5em,
+// perfectly fitting the 48px App Bar with 12px vertical clearance matching the brand mark.
+func TestHamburgerIsSquare(t *testing.T) {
 	cssStr := (&Platform{}).RenderCSS().String()
 	rest := cssStr
 	found := false
@@ -292,15 +292,71 @@ func TestHamburgerIs50Square(t *testing.T) {
 		if mb == "" {
 			break
 		}
-		if strings.Contains(mb, "width: 2.5em") && strings.Contains(mb, "height: 2.5em") &&
-			strings.Contains(mb, "font-size: var(--text-lg") {
+		if strings.Contains(mb, "width: 1.5em") && strings.Contains(mb, "height: 1.5em") {
 			found = true
 			break
 		}
 		rest = rest[strings.Index(rest, mb)+len(mb):]
 	}
 	if !found {
-		t.Errorf("no .pd__hamburger block boxes the exact 50px square (2.5em + text-lg), got:\n%s", cssStr)
+		t.Errorf("no .pd__hamburger block boxes the exact 24px square (1.5em), got:\n%s", cssStr)
+	}
+}
+
+// TestHeaderLateralIconsSymmetric verifies that on mobile .pd__brand does not have
+// expanding padding (maintaining 0 padding), so that brand (24px) and hamburger (24px)
+// are strictly symmetric, centering the title at exactly width/2.
+func TestHeaderLateralIconsSymmetric(t *testing.T) {
+	cssStr := (&Platform{}).RenderCSS().String()
+	foundZeroPadding := false
+	rest := cssStr
+	for {
+		mb := ruleBlock(rest, ".pd__brand {")
+		if mb == "" {
+			break
+		}
+		if strings.Contains(mb, "padding: 0") {
+			foundZeroPadding = true
+		}
+		if strings.Contains(mb, "padding:") && strings.Contains(mb, "--space-2") {
+			t.Errorf("found unwanted --space-2 padding on .pd__brand block:\n%s", mb)
+		}
+		rest = rest[strings.Index(rest, mb)+len(mb):]
+	}
+	if !foundZeroPadding {
+		t.Errorf("expected mobile .pd__brand to declare padding: 0 for lateral symmetry, got:\n%s", cssStr)
+	}
+}
+
+// TestNavGroupAndActiveIconStates verifies that the parent category icon is always consistently displayed:
+// 1. Group icon is visible in base desktop (IconLg).
+// 2. Group icon on mobile is sized to IconMd (1.5em) matching all other drawer icons.
+// 3. Active icon slot is hidden, ensuring canonical category icon retention without duplication.
+func TestNavGroupAndActiveIconStates(t *testing.T) {
+	cssStr := (&Platform{}).RenderCSS().String()
+
+	// nav-active-icon must be hidden
+	activeRule := ruleBlock(cssStr, ".pd__nav-active-icon {")
+	if !strings.Contains(activeRule, "display: none") {
+		t.Errorf("expected .pd__nav-active-icon to be hidden (display: none), got:\n%s", activeRule)
+	}
+
+	// On mobile, group icon must be 1.5em (IconMd)
+	foundMobileMd := false
+	rest := cssStr
+	for {
+		mb := ruleBlock(rest, ".pd__nav-group-icon {")
+		if mb == "" {
+			break
+		}
+		if strings.Contains(mb, "width: 1.5em") && strings.Contains(mb, "height: 1.5em") {
+			foundMobileMd = true
+			break
+		}
+		rest = rest[strings.Index(rest, mb)+len(mb):]
+	}
+	if !foundMobileMd {
+		t.Errorf("expected mobile .pd__nav-group-icon to box 1.5em (IconMd), got:\n%s", cssStr)
 	}
 }
 
@@ -316,9 +372,13 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 		Modules: []UIModule{
 			&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")},
 			&mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
+			NewGroupUIModule("group1", "Group 1", svg.Icon("folder"), []UIModule{
+				&mockModule{id: "sub1", label: "Sub 1", icon: svg.Icon("file")},
+			}),
 		},
 	}
 	p.Init(NilCtx())
+
 
 	// Queue notifications of all types so the class-parity check below sees
 	// every toast shape that Notify can produce. Persistent: no timers

@@ -545,6 +545,142 @@ func TestPlatform_ActivateCallsModuleActivate(t *testing.T) {
 	}
 }
 
+func TestPlatform_GroupModuleAccordion(t *testing.T) {
+	sub1 := &activatingModule{mockModule: mockModule{id: "cat.services", label: "Servicios", icon: svg.Icon("service")}}
+	sub2 := &activatingModule{mockModule: mockModule{id: "cat.specialties", label: "Especialidades", icon: svg.Icon("aid")}}
+	group := NewGroupUIModule("cat", "Catálogo", svg.Icon("catalog"), []UIModule{sub1, sub2})
+
+	p := &Platform{
+		Modules:   []UIModule{group},
+		DefaultID: "cat",
+	}
+	p.Init(NilCtx())
+
+	// Init with DefaultID="cat" should auto-route to first child "cat.services"
+	if p.active.Get() != "cat.services" {
+		t.Errorf("expected active module to be 'cat.services', got %q", p.active.Get())
+	}
+	if p.expandedGroup.Get() != "cat" {
+		t.Errorf("expected expandedGroup to be 'cat', got %q", p.expandedGroup.Get())
+	}
+	if !sub1.activated {
+		t.Errorf("expected first child sub1 to be activated on Init")
+	}
+
+	html := p.Render().String()
+	if !contains(html, "data-id='cat.services'") {
+		t.Errorf("expected HTML to contain child panel cat.services")
+	}
+	if !contains(html, "data-id='cat.specialties'") {
+		t.Errorf("expected HTML to contain child panel cat.specialties")
+	}
+	if !contains(html, "class='pd__submenu'") {
+		t.Errorf("expected HTML to contain submenu")
+	}
+
+	// Activating second child directly
+	p.Activate("cat.specialties")
+	if p.active.Get() != "cat.specialties" {
+		t.Errorf("expected active module to be 'cat.specialties', got %q", p.active.Get())
+	}
+	if p.expandedGroup.Get() != "cat" {
+		t.Errorf("expected expandedGroup to remain 'cat', got %q", p.expandedGroup.Get())
+	}
+	if !sub2.activated {
+		t.Errorf("expected sub2 to be activated")
+	}
+
+	// Active icon should reflect child's icon
+	if p.activeIcon() != svg.Icon("aid") {
+		t.Errorf("expected active icon to be 'aid', got %q", p.activeIcon())
+	}
+
+	// Render markup and verify parentLink has data-current='true' and contains active icon
+	html2 := p.Render().String()
+	if !contains(html2, "class='pd__nav-parent'") {
+		t.Errorf("expected HTML to contain class='pd__nav-parent'")
+	}
+	if !contains(html2, "data-current='true'") {
+		t.Errorf("expected parentLink to have data-current='true' when child is active")
+	}
+	if !contains(html2, "#aid") {
+		t.Errorf("expected parentLink to contain active child icon #aid, got:\n%s", html2)
+	}
+
+	// Verify CSS stylesheet rules
+	cssStr := p.RenderCSS().String()
+	if !contains(cssStr, `.pd__menu:hover .pd__submenu[data-open="true"]`) {
+		t.Errorf("expected CSS to contain hover reveal rule for submenu, got:\n%s", cssStr)
+	}
+}
+
+func TestPlatform_HeaderTitle(t *testing.T) {
+	p := &Platform{
+		Modules: []UIModule{
+			&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")},
+			&mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
+		},
+	}
+	p.Init(NilCtx())
+
+	html := p.Render().String()
+	if !contains(html, "Module 1") {
+		t.Errorf("expected header to contain active module label 'Module 1', got:\n%s", html)
+	}
+
+	p.Activate("mod2")
+	html2 := p.Render().String()
+	if !contains(html2, "Module 2") {
+		t.Errorf("expected header to contain active module label 'Module 2' after Activate, got:\n%s", html2)
+	}
+}
+
+func TestPlatform_OnScroll_Hysteresis(t *testing.T) {
+	p := &Platform{}
+	p.Init(NilCtx())
+
+	// Initially at top: not stowed
+	if p.navStowed.Get() {
+		t.Errorf("expected nav not to be stowed at top")
+	}
+
+	// Small scroll below floor (e.g. 15px < scrollStowFloor 24px) should NOT stow
+	p.onScroll(15)
+	if p.navStowed.Get() {
+		t.Errorf("scroll below stow floor (15px) should not stow bar")
+	}
+
+	// Downward scroll past floor with intentional delta (15 -> 60, delta 45px >= 12px) should stow
+	p.onScroll(60)
+	if !p.navStowed.Get() {
+		t.Errorf("downward scroll past floor should stow bar")
+	}
+
+	// Tiny upward jitter (60 -> 55, delta 5px < 12px) should NOT unstow
+	p.onScroll(55)
+	if !p.navStowed.Get() {
+		t.Errorf("tiny upward movement (5px jitter) should not unstow bar")
+	}
+
+	// Intentional upward movement (55 -> 35, delta 20px >= 12px) should unstow immediately
+	p.onScroll(35)
+	if p.navStowed.Get() {
+		t.Errorf("intentional upward movement (delta >= 12px) should unstow bar immediately")
+	}
+
+	// Scrolling down again past floor with delta stows it
+	p.onScroll(80)
+	if !p.navStowed.Get() {
+		t.Errorf("expected stowed at 80")
+	}
+
+	// Scrolling all the way to 0 resets and unstows
+	p.onScroll(0)
+	if p.navStowed.Get() {
+		t.Errorf("expected unstowed at top (0)")
+	}
+}
+
 type mockCtx struct{}
 
 func (m *mockCtx) OnCleanup(fn func()) {}

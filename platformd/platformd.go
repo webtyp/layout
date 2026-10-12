@@ -2,6 +2,7 @@ package platformd
 
 import (
 	"sync"
+
 	"webtyp.com/msgtype"
 
 	"webtyp.com/components/usermenu"
@@ -18,37 +19,49 @@ import (
 const NamePlatform widget.Name = "pd"
 
 var (
-	clsRoot           = NamePlatform.Root()
-	clsHeader         = NamePlatform.Class("header")
-	clsDrawerPanel    = NamePlatform.Class("drawer-panel")
-	clsAppName        = NamePlatform.Class("app-name")
-	clsDrawerIdentity = NamePlatform.Class("drawer-identity")
-	clsDrawerBrand    = NamePlatform.Class("drawer-brand")
-	clsBrand          = NamePlatform.Class("brand")
-	clsBrandMark      = NamePlatform.Class("brand-mark")
-	clsBrandName      = NamePlatform.Class("brand-name")
-	clsMsgSlot        = NamePlatform.Class("msg-slot")
-	clsMsg            = NamePlatform.Class("msg")
-	clsHeaderRight    = NamePlatform.Class("header-right")
-	clsBody           = NamePlatform.Class("body")
-	clsStage          = NamePlatform.Class("stage")
-	clsPanel          = NamePlatform.Class("panel")
-	clsMenu           = NamePlatform.Class("menu")
-	clsNavbar         = NamePlatform.Class("navbar")
-	clsNavItem        = NamePlatform.Class("nav-item")
-	clsNavLink        = NamePlatform.Class("nav-link")
-	clsLinkText       = NamePlatform.Class("link-text")
-	ClsNavIcon        = NamePlatform.Class("nav-icon")
-	clsHamburger      = NamePlatform.Class("hamburger")
-	clsNavOverlay     = NamePlatform.Class("nav-overlay")
-	clsMsgStack       = NamePlatform.Class("msg-stack")
-	clsMsgSlotMobile  = NamePlatform.Class("msg-slot-mobile")
+	clsRoot            = NamePlatform.Root()
+	clsHeader          = NamePlatform.Class("header")
+	clsDrawerPanel     = NamePlatform.Class("drawer-panel")
+	clsAppName         = NamePlatform.Class("app-name")
+	clsDrawerIdentity  = NamePlatform.Class("drawer-identity")
+	clsDrawerBrand     = NamePlatform.Class("drawer-brand")
+	clsBrand           = NamePlatform.Class("brand")
+	clsBrandMark       = NamePlatform.Class("brand-mark")
+	clsBrandName       = NamePlatform.Class("brand-name")
+	clsHeaderBrandName = NamePlatform.Class("header-brand-name")
+	clsHeaderTitle     = NamePlatform.Class("header-title")
+	clsHeaderTitleText = NamePlatform.Class("header-title-text")
+	clsMsgSlot         = NamePlatform.Class("msg-slot")
+	clsMsg             = NamePlatform.Class("msg")
+	clsHeaderRight     = NamePlatform.Class("header-right")
+	clsBody            = NamePlatform.Class("body")
+	clsStage           = NamePlatform.Class("stage")
+	clsPanel           = NamePlatform.Class("panel")
+	clsMenu            = NamePlatform.Class("menu")
+	clsNavbar          = NamePlatform.Class("navbar")
+	clsNavItem         = NamePlatform.Class("nav-item")
+	clsNavLink         = NamePlatform.Class("nav-link")
+	clsLinkText        = NamePlatform.Class("link-text")
+	ClsNavIcon         = NamePlatform.Class("nav-icon")
+	clsHamburger       = NamePlatform.Class("hamburger")
+	clsNavOverlay      = NamePlatform.Class("nav-overlay")
+	clsMsgStack        = NamePlatform.Class("msg-stack")
+	clsMsgSlotMobile   = NamePlatform.Class("msg-slot-mobile")
+	clsSubmenu         = NamePlatform.Class("submenu")
+	clsSubnavItem      = NamePlatform.Class("subnav-item")
+	clsSubnavLink      = NamePlatform.Class("subnav-link")
+	clsSubnavIcon      = NamePlatform.Class("subnav-icon")
+	clsChevron         = NamePlatform.Class("chevron")
+	clsNavParent       = NamePlatform.Class("nav-parent")
+	clsNavGroupIcon    = NamePlatform.Class("nav-group-icon")
+	clsNavActiveIcon   = NamePlatform.Class("nav-active-icon")
 )
 
 const (
-	IconUser  = svg.Icon("pd-user")
-	IconBrand = svg.Icon("pd-brand")
-	iconMenu  = svg.Icon("pd-menu")
+	IconUser        = svg.Icon("pd-user")
+	IconBrand       = svg.Icon("pd-brand")
+	iconMenu        = svg.Icon("pd-menu")
+	iconChevronDown = svg.Icon("pd-chevron-down")
 )
 
 // UIModule is a module that provides its UI to the platform chassis.
@@ -64,47 +77,6 @@ type UIModule interface {
 
 func (p *Platform) WidgetName() widget.Name { return NamePlatform }
 func (p *Platform) WidgetKind() widget.Kind { return widget.Menu }
-
-// Identity is what the platform needs to know about whoever is logged in.
-//
-// It is a READ contract, not a store: platformd renders it and never mutates
-// it. Whatever owns authentication — webtyp.com/user in a real
-// application — supplies an implementation; the platform neither knows nor
-// cares where the values come from.
-//
-// It asks for facts, not for presentation. The glyph drawn when there is no
-// avatar is IconUser, which this package owns — an authentication package has
-// no business choosing a sprite, and asking it to would put a rendering
-// decision behind a login.
-//
-// Roles, plural, because they are plural: a user holds N of them and no
-// ordering exists to say which one matters. Asking for a single "area" forced
-// every implementation to pick arbitrarily, and that decision was invisible.
-type Identity interface {
-	// UserName is who is logged in.
-	UserName() string
-	// UserAvatar is the URL of their picture. Empty is normal and expected.
-	UserAvatar() string
-	// UserRoles are display names, not authorization codes. May be empty.
-	UserRoles() []string
-}
-
-// Brand is what the platform calls itself in its own chrome. The shell asks for
-// a mark and a name; how they are drawn, sized and spaced is platformd's
-// business.
-//
-// It is a READ contract, not a store, mirroring Identity: platformd renders it
-// and never mutates it. The consumer supplies facts, not presentation — a
-// Brand never hands the shell an svg.Icon, because picking the sprite is a
-// rendering decision this package owns (the same reasoning that keeps IconUser
-// out of Identity).
-type Brand interface {
-	// BrandName is shown beside the mark, and is the mark's alt text.
-	BrandName() string
-	// BrandMark is a URL or inline SVG data URI. Empty is normal and expected:
-	// the shell falls back to its own glyph, exactly as UserAvatar does.
-	BrandMark() string
-}
 
 // Platform is the typed skeleton root.
 type Platform struct {
@@ -169,11 +141,13 @@ type Platform struct {
 	// internal state
 	active              *SignalString
 	menuOpen            *SignalBool
+	expandedGroup       *SignalString
 	notifications       *SignalNodes // desktop toasts (header msg-slot)
 	notificationsMobile *SignalNodes // mobile toasts (msg-stack under the hamburger)
 	navIcon             *SignalNodes
 	navStowed           *SignalBool
 	idleTimer           time.Timer
+	groupActiveIcons    []groupIconSlot
 
 	rawNotifications []notification
 	mu               sync.Mutex
@@ -183,14 +157,30 @@ type Platform struct {
 	// va bajo p.mu — ese mutex existe por time.AfterFunc, que descarta
 	// notificaciones desde otra goroutine.
 	lastScrollTop float64
+	scrollAnchor  float64
 }
 
-// scrollStowThreshold son los píxeles de desplazamiento que hacen falta para que
-// el cromo reaccione. Sin umbral, un píxel de ruido lo haría entrar y salir; y
-// como en la página conviven varios scrollers y sus posiciones se intercalan en
-// un mismo handler, un salto pequeño puede venir de otro elemento y no de un
-// gesto.
-const scrollStowThreshold = 8
+type groupIconSlot struct {
+	id    string
+	nodes *SignalNodes
+}
+
+func (p *Platform) getGroupIconSlot(id string) *SignalNodes {
+	for _, s := range p.groupActiveIcons {
+		if s.id == id {
+			return s.nodes
+		}
+	}
+	return nil
+}
+
+// scrollStowFloor is the minimum scroll offset from the top before the bar can stow.
+// Keeps the bar stable near the very top of the page.
+const scrollStowFloor = 24
+
+// scrollDeltaThreshold is the intentional travel distance in either direction
+// to trigger a stow or reveal. Filters out touch jitter while responding promptly.
+const scrollDeltaThreshold = 12
 
 type notification struct {
 	Type msgtype.Type
@@ -244,12 +234,25 @@ func For(ms int) Duration {
 func (p *Platform) Init(ctx Ctx) {
 	p.active = NewString("")
 	p.menuOpen = NewBool(false)
+	p.expandedGroup = NewString("")
 	p.notifications = NewNodes()
 	p.notificationsMobile = NewNodes()
 	p.navIcon = NewNodes()
 	p.navStowed = NewBool(false)
+	p.groupActiveIcons = nil
 
 	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			p.groupActiveIcons = append(p.groupActiveIcons, groupIconSlot{
+				id:    gm.ModelName(),
+				nodes: NewNodes(),
+			})
+			for _, ch := range gm.Children() {
+				if u, ok := ch.(UsesNotifier); ok {
+					u.UseNotifier(p)
+				}
+			}
+		}
 		if u, ok := m.(UsesNotifier); ok {
 			u.UseNotifier(p)
 		}
@@ -311,7 +314,21 @@ func (p *Platform) isViewable(id string) bool {
 	if p.CanView == nil {
 		return true
 	}
-	return p.CanView(id)
+	if p.CanView(id) {
+		return true
+	}
+	for _, m := range p.Modules {
+		if m.ModelName() == id {
+			if gm, ok := m.(GroupModule); ok {
+				for _, ch := range gm.Children() {
+					if p.isViewable(ch.ModelName()) {
+						return true
+					}
+				}
+			}
+		}
+	}
+	return false
 }
 
 // activeIcon es el glifo del módulo en el que estamos. iconMenu es el respaldo:
@@ -320,6 +337,19 @@ func (p *Platform) isViewable(id string) bool {
 func (p *Platform) activeIcon() svg.Icon {
 	id := p.active.Get()
 	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			for _, child := range gm.Children() {
+				if child.ModelName() == id {
+					if ic := child.Icon(); ic != "" {
+						return ic
+					}
+					if ic := gm.Icon(); ic != "" {
+						return ic
+					}
+					break
+				}
+			}
+		}
 		if m.ModelName() == id {
 			if ic := m.Icon(); ic != "" {
 				return ic
@@ -354,34 +384,70 @@ func (p *Platform) activity() {
 	p.mu.Unlock()
 }
 
-// onScroll guarda el botón de menú mientras el usuario baja y lo devuelve en
-// cuanto sube. Arriba del todo siempre está a mano: una pantalla que no llega a
-// desplazarse — el listado de este demo, sin ir más lejos — dejaría el menú
-// inalcanzable si el botón naciera guardado.
-//
-// Limitación conocida: el handler recibe la posición de CUALQUIER scroller. Si
-// dos están en pantalla y se desplazan alternándose, sus posiciones se
-// intercalan en un mismo lastScrollTop y el botón puede parpadear. En móvil
-// solo hay una columna visible a la vez (MasterDetail enseña una), así que en
-// la práctica no ocurre, y el umbral de 8px absorbe el resto.
+// activeLabel returns the display label of the currently active module.
+func (p *Platform) activeLabel() string {
+	id := p.active.Get()
+	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			for _, child := range gm.Children() {
+				if child.ModelName() == id {
+					if l := child.Label(); l != "" {
+						return l
+					}
+					return gm.Label()
+				}
+			}
+		}
+		if m.ModelName() == id {
+			return m.Label()
+		}
+	}
+	return ""
+}
+
+// onScroll guarda la barra de cabecera mientras el usuario baja en el contenido y la
+// devuelve de inmediato en cuanto sube, siguiendo el estándar de la industria (Material 3 enterAlways / iOS Safari).
 func (p *Platform) onScroll(top float64) {
 	if top <= 0 {
 		p.lastScrollTop = 0
+		p.scrollAnchor = 0
 		p.navStowed.Set(false)
 		return
 	}
-	switch {
-	case top > p.lastScrollTop+scrollStowThreshold:
-		p.lastScrollTop = top
-		p.navStowed.Set(true)
-	case top < p.lastScrollTop-scrollStowThreshold:
-		p.lastScrollTop = top
-		p.navStowed.Set(false)
+
+	if top > p.lastScrollTop {
+		// Moving down into content
+		p.scrollAnchor = top
+		if top > scrollStowFloor && top-p.lastScrollTop >= scrollDeltaThreshold {
+			p.lastScrollTop = top
+			p.navStowed.Set(true)
+		} else {
+			p.lastScrollTop = top
+		}
+	} else if top < p.lastScrollTop {
+		// Moving up (user intends to navigate or search)
+		if p.lastScrollTop-top >= scrollDeltaThreshold || top <= scrollStowFloor {
+			p.lastScrollTop = top
+			p.scrollAnchor = top
+			p.navStowed.Set(false)
+		} else {
+			p.lastScrollTop = top
+		}
 	}
 }
 
 func (p *Platform) fallback() {
 	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			for _, ch := range gm.Children() {
+				chID := ch.ModelName()
+				if p.isViewable(chID) {
+					p.Activate(chID)
+					return
+				}
+			}
+			continue
+		}
 		id := m.ModelName()
 		if p.isViewable(id) {
 			p.Activate(id)
@@ -437,18 +503,60 @@ func (p *Platform) userMenu() Component {
 func (p *Platform) Render() *Element {
 	root := Div().Set(clsRoot.AsAttr())
 
-	// ── header ───────────────────────────────────────────────────────────────
-	// Three parts: who the platform is (brand), what it is telling them
-	// (messages), and who is logged in (user menu). None of it echoes the route
-	// — the module names itself, and repeating that here says nothing new.
-	header := Header().Set(clsHeader.AsAttr())
+	// Touch swipe direction detection: enables header hide/reveal even on short
+	// content or when swiping on non-scrolling areas of the mobile screen.
+	var touchStartY float64
+	root.OnTouchStart(func(e Event) {
+		touchStartY = e.ClientY()
+	})
+	root.OnTouchMove(func(e Event) {
+		y := e.ClientY()
+		if touchStartY <= 0 || y <= 0 {
+			return
+		}
+		delta := touchStartY - y
+		if delta > 16 {
+			// Swiped up -> advance into content -> stow header
+			p.navStowed.Set(true)
+		} else if delta < -16 {
+			// Swiped down -> user intends to navigate or search -> reveal header immediately
+			p.navStowed.Set(false)
+		}
+	})
+	root.OnTouchEnd(func(Event) {
+		touchStartY = 0
+	})
 
-	// The leading slot: the brand's mark and name. Mirror of the user menu at
-	// the other end, so the two edges of the header read as the same kind of
-	// object — facts in, rendering owned by the shell.
+	// ── header ───────────────────────────────────────────────────────────────
+	header := Header().Set(clsHeader.AsAttr()).
+		BindStateFunc(widget.Open, func() bool { return !p.navStowed.Get() || p.menuOpen.Get() }).
+		OnClick(func(Event) { p.menuOpen.Toggle() })
+
+	// The leading slot: app mark / brand glyph and name.
 	if p.Brand != nil {
-		header.Child(p.brand())
+		brandSlot := Div().Set(clsBrand.AsAttr())
+		if url := p.Brand.BrandMark(); url != "" {
+			brandSlot.Child(NewElement("img").
+				Set(clsBrandMark.AsAttr()).
+				Attr("src", url).
+				Attr("alt", p.Brand.BrandName()).
+				Attr("loading", "lazy"))
+		} else {
+			brandSlot.Child(IconBrand.Render(string(clsBrandMark)))
+		}
+		brandSlot.Child(Span().Set(clsHeaderBrandName.AsAttr()).Text(p.Brand.BrandName()))
+		header.Child(brandSlot)
+	} else if p.AppName != "" {
+		brandSlot := Div().Set(clsBrand.AsAttr())
+		brandSlot.Child(IconBrand.Render(string(clsBrandMark)))
+		brandSlot.Child(Span().Set(clsHeaderBrandName.AsAttr()).Text(p.AppName))
+		header.Child(brandSlot)
 	}
+
+	// The center slot: dynamic active module title.
+	headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
+		Child(Span().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
+	header.Child(headerTitle)
 
 	// Chassis singleton: one per page by construction, so a stable global id is
 	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
@@ -460,60 +568,31 @@ func (p *Platform) Render() *Element {
 	}
 	header.Child(msgSlot)
 
-	right := Div().Set(clsHeaderRight.AsAttr())
+	right := Div().Set(clsHeaderRight.AsAttr()).
+		OnClick(func(e Event) { e.StopPropagation() })
 	if p.User != nil {
 		right.Child(p.userMenu())
 	}
 
 	header.Child(right)
 
+	hamburger := Button().Set(clsHamburger.AsAttr()).
+		Attr("aria-label", "Menu").
+		BindChildren(p.navIcon).
+		ID("pd-hamburger-btn")
+	header.Child(hamburger)
+
 	root.Child(header)
 
 	// ── mobile message stack (mobile only) ─────────────────────────────────
-	// The toasts' phone home, a sibling of the header for the same reason the
-	// hamburger is one: on a phone the header is display:none, and a fixed
-	// descendant of a hidden ancestor is not rendered either (that is exactly
-	// why the desktop msg-slot, inside the header, never painted on mobile).
-	//
-	// The hamburger rides INSIDE this wrapper so the stack can claim the same
-	// corner the button alone used to occupy — Docked to the top-end with the
-	// same Space4 gap — with the toasts hanging just below it through
-	// Stack(Space2). Two floating pieces pinned to the same corner would need
-	// an offset calculation to stay apart; one stack with both inside is
-	// positioned once.
-	//
-	// The slot is a dedicated child, never a sibling of the hamburger inside a
-	// shared BindChildren: the keyed reconcile treats every existing child of
-	// a bound container as a toast row, so a static sibling would be
-	// reordered by it and finally removed as excess. The slot declares its own
-	// Stack for the inter-toast gap — the wrapper's gap belongs between the
-	// button and the block, not inside it.
+	// The toasts' phone home, docked to the top-end.
 	msgStack := Div().Set(clsMsgStack.AsAttr())
-
-	// Chassis singleton: one per page by construction, so a stable global id is
-	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
-	hamburger := Button().Set(clsHamburger.AsAttr()).
-		Attr("aria-label", "Menu").
-		// Open aquí significa "el cromo está desplegado": el botón se pinta
-		// mientras NO está guardado por scroll Y el cajón NO está abierto. Con
-		// el cajón abierto el botón sería redundante (el cajón ya ocupa dos
-		// tercios de la pantalla) y se cerraría tocando el velo, no el botón.
-		BindStateFunc(widget.Open, func() bool { return !p.navStowed.Get() && !p.menuOpen.Get() }).
-		BindChildren(p.navIcon).
-		ID("pd-hamburger-btn")
-	hamburger.OnClick(func(Event) {
-		p.menuOpen.Toggle()
-	})
-
 	msgSlotMobile := Div().Set(clsMsgSlotMobile.AsAttr()).
 		BindChildren(p.notificationsMobile)
-	// Because elementToHTML/SSR doesn't process "children" bindings, initial
-	// nodes must be manually added — same as the desktop slot.
 	for _, n := range p.notificationsMobile.Get() {
 		msgSlotMobile.Child(n)
 	}
-
-	msgStack.Child(hamburger, msgSlotMobile)
+	msgStack.Child(msgSlotMobile)
 	// Added as the root's LAST child below — see that site for why DOM order
 	// matters there (the stack ties with the drawer/overlay at --z-dropdown).
 
@@ -533,6 +612,26 @@ func (p *Platform) Render() *Element {
 
 	for _, m := range p.Modules {
 		m := m
+		if gm, ok := m.(GroupModule); ok {
+			for _, child := range gm.Children() {
+				child := child
+				cID := child.ModelName()
+				if !p.isViewable(cID) {
+					continue
+				}
+				panel := Section().Set(clsPanel.AsAttr()).
+					Key(cID).
+					Attr("data-id", cID).
+					BindStateFunc(widget.Current, func() bool { return p.active.Get() == cID })
+
+				if v := child.View(); v != nil {
+					panel.Child(v)
+				}
+				stage.Child(panel)
+			}
+			continue
+		}
+
 		id := m.ModelName()
 		if !p.isViewable(id) {
 			continue
@@ -560,6 +659,89 @@ func (p *Platform) Render() *Element {
 		if !p.isViewable(id) {
 			continue
 		}
+
+		if gm, ok := m.(GroupModule); ok {
+			children := gm.Children()
+			navItem := Li().Set(clsNavItem.AsAttr())
+
+			parentLink := A("#"+id).Set(clsNavParent.AsAttr()).
+				Attr("data-id", id).
+				BindStateFunc(widget.Open, func() bool {
+					return p.expandedGroup.Get() == id
+				}).
+				BindStateFunc(widget.Current, func() bool {
+					activeID := p.active.Get()
+					for _, ch := range children {
+						if ch.ModelName() == activeID {
+							return true
+						}
+					}
+					return false
+				})
+
+			slotNodes := p.getGroupIconSlot(id)
+			if slotNodes == nil {
+				slotNodes = NewNodes()
+			}
+			activeIconSlot := Span().Set(clsNavActiveIcon.AsAttr()).BindChildren(slotNodes)
+			parentLink.Child(activeIconSlot)
+
+			if icon := gm.Icon(); icon != "" {
+				parentLink.Child(icon.Render(string(clsNavGroupIcon)))
+			}
+			parentLink.Child(Span().Set(clsLinkText.AsAttr()).Text(gm.Label()))
+			parentLink.Child(iconChevronDown.Render(string(clsChevron)))
+
+			parentLink.OnClick(func(Event) {
+				if p.expandedGroup.Get() == id {
+					p.expandedGroup.Set("")
+				} else {
+					p.expandedGroup.Set(id)
+					for _, ch := range children {
+						if p.isViewable(ch.ModelName()) {
+							p.Activate(ch.ModelName())
+							break
+						}
+					}
+				}
+			})
+
+			navItem.Child(parentLink)
+
+			submenu := Ul().Set(clsSubmenu.AsAttr()).
+				BindStateFunc(widget.Open, func() bool {
+					return p.expandedGroup.Get() == id
+				})
+
+			for _, ch := range children {
+				ch := ch
+				chID := ch.ModelName()
+				if !p.isViewable(chID) {
+					continue
+				}
+
+				chLink := A("#"+chID).Set(clsSubnavLink.AsAttr()).
+					Attr("data-id", chID).
+					BindStateFunc(widget.Current, func() bool { return p.active.Get() == chID })
+
+				if icon := ch.Icon(); icon != "" {
+					chLink.Child(icon.Render(string(clsSubnavIcon)))
+				}
+				chLink.Child(Span().Set(clsLinkText.AsAttr()).Text(ch.Label()))
+				if b, ok := ch.(Badged); ok {
+					if badge := b.Badge(); badge != nil {
+						chLink.Child(badge.Render())
+					}
+				}
+
+				submenu.Child(Li().Set(clsSubnavItem.AsAttr()).Child(chLink))
+			}
+
+			navItem.Child(submenu)
+			navbar.Child(navItem)
+			continue
+		}
+
 		link := A("#"+id).Set(clsNavLink.AsAttr()).
 			Attr("data-id", id).
 			BindStateFunc(widget.Current, func() bool { return p.active.Get() == id })
@@ -671,7 +853,10 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 			Key(id+suffix).
 			Attr("role", role).
 			Text(n.Msg).
-			OnClick(func(Event) { p.dismiss(id) }).
+			OnClick(func(e Event) {
+				e.StopPropagation()
+				p.dismiss(id)
+			}).
 			OnMouseEnter(func(Event) { p.pauseToast(id) }).
 			OnMouseLeave(func(Event) { p.resumeToast(id) }).
 			OnFocusIn(func(Event) { p.pauseToast(id) }).
@@ -782,6 +967,42 @@ func (p *Platform) Activate(moduleID string) {
 		return
 	}
 
+	// If moduleID is a GroupModule itself, activate its first viewable child instead!
+	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok && m.ModelName() == moduleID {
+			for _, ch := range gm.Children() {
+				if p.isViewable(ch.ModelName()) {
+					p.Activate(ch.ModelName())
+					return
+				}
+			}
+		}
+	}
+
+	var foundParentID string
+	var targetModule UIModule
+
+	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			for _, ch := range gm.Children() {
+				if ch.ModelName() == moduleID {
+					foundParentID = gm.ModelName()
+					targetModule = ch
+					break
+				}
+			}
+		}
+		if m.ModelName() == moduleID {
+			targetModule = m
+		}
+	}
+
+	if foundParentID != "" {
+		p.expandedGroup.Set(foundParentID)
+	} else {
+		p.expandedGroup.Set("")
+	}
+
 	if p.active.Get() == moduleID && !p.menuOpen.Get() {
 		return
 	}
@@ -789,20 +1010,28 @@ func (p *Platform) Activate(moduleID string) {
 	p.active.Set(moduleID)
 	p.menuOpen.Set(false)
 
-	for _, m := range p.Modules {
-		if m.ModelName() == moduleID {
-			m.Activate()
-			break
-		}
+	if targetModule != nil {
+		targetModule.Activate()
 	}
 
-	// El botón de menú lleva el estado de la navegación: en móvil no hay cabecera
-	// ni rail visible, así que su glifo es lo único que dice en qué sección estás.
-	p.navIcon.Set([]*Element{p.activeIcon().Render(string(ClsNavIcon)).Key(moduleID)})
+	p.navIcon.Set([]*Element{p.activeIcon().Render(string(ClsNavIcon)).Key("hmod-" + moduleID)})
+
+	for _, s := range p.groupActiveIcons {
+		if s.id == foundParentID && targetModule != nil {
+			if ic := targetModule.Icon(); ic != "" {
+				s.nodes.Set([]*Element{ic.Render(string(ClsNavIcon)).Key("gact-" + s.id + "-" + moduleID)})
+			} else {
+				s.nodes.Set(nil)
+			}
+		} else {
+			s.nodes.Set(nil)
+		}
+	}
 
 	// Cambiar de sección reinicia el cromo: el módulo nuevo empieza desde arriba y
 	// con el botón a mano.
 	p.lastScrollTop = 0
+	p.scrollAnchor = 0
 	p.navStowed.Set(false)
 
 	// Update window hash if needed

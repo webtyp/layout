@@ -23,4 +23,13 @@ type UsesNotifier interface {
 	UseNotifier(n Notifier)
 }
 
+// GroupModule is an optional capability of a UIModule indicating that it groups
+// nested child modules. The chassis renders a downward accordion in the nav rail
+// and drawer for group modules.
+type GroupModule interface {
+	UIModule
+	Children() []UIModule
+}
+
 var _ Notifier = (*Platform)(nil)
+

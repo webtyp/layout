@@ -39,3 +39,52 @@ func (m *uiModule) Activate() {
 		act.Activate()
 	}
 }
+
+func (m *uiModule) UseNotifier(n Notifier) {
+	if u, ok := m.view.(UsesNotifier); ok {
+		u.UseNotifier(n)
+	}
+}
+
+var _ UIModule = (*uiModule)(nil)
+var _ UsesNotifier = (*uiModule)(nil)
+
+// NewGroupUIModule returns an implementation of GroupModule that wraps child UIModules.
+func NewGroupUIModule(id, label string, icon svg.Icon, children []UIModule) UIModule {
+	return &uiGroupModule{
+		id:       id,
+		label:    label,
+		icon:     icon,
+		children: children,
+	}
+}
+
+type uiGroupModule struct {
+	id       string
+	label    string
+	icon     svg.Icon
+	children []UIModule
+}
+
+func (m *uiGroupModule) ModelName() string    { return m.id }
+func (m *uiGroupModule) Label() string        { return m.label }
+func (m *uiGroupModule) Icon() svg.Icon       { return m.icon }
+func (m *uiGroupModule) View() Component      { return nil }
+func (m *uiGroupModule) Children() []UIModule { return m.children }
+func (m *uiGroupModule) Activate() {
+	if len(m.children) > 0 {
+		m.children[0].Activate()
+	}
+}
+
+func (m *uiGroupModule) UseNotifier(n Notifier) {
+	for _, ch := range m.children {
+		if u, ok := ch.(UsesNotifier); ok {
+			u.UseNotifier(n)
+		}
+	}
+}
+
+var _ GroupModule = (*uiGroupModule)(nil)
+var _ UsesNotifier = (*uiGroupModule)(nil)
+
