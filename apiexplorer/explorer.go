@@ -26,6 +26,7 @@ var (
 	clsHeader      = NameAPIExplorer.Class("header")
 	clsTable       = NameAPIExplorer.Class("table")
 	clsRow         = NameAPIExplorer.Class("row")
+	clsRowHeader   = NameAPIExplorer.Class("row-header")
 	clsRowExpanded = NameAPIExplorer.Class("row-expanded")
 	clsOrphan      = NameAPIExplorer.Class("orphan")
 	clsPublic      = NameAPIExplorer.Class("public")
@@ -230,7 +231,7 @@ func (e *Explorer) updateRows() {
 			rolesCol.Attr("title", lang.Translate("the server did not describe its policy").String())
 		}
 
-		headerRow := Div().Child(methodCol, pathCol, accessCol, permCol, rolesCol)
+		headerRow := Div().Set(clsRowHeader.AsAttr()).Child(methodCol, pathCol, accessCol, permCol, rolesCol)
 		row.Child(headerRow)
 
 		if isExpanded {

@@ -27,6 +27,9 @@ func (e *Explorer) RenderSheet() *style.Sheet {
 			style.Round(style.RadiusMd),
 			style.Interactive(style.Page),
 		).
+		Part("row-header",
+			style.Row(style.Space3),
+		).
 		Part("row-expanded",
 			style.As(style.Highlight),
 		).
