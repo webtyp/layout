@@ -14,14 +14,24 @@ func (e *Explorer) RenderSheet() *style.Sheet {
 			style.Stack(style.Space3),
 			style.Pad(style.Space3),
 		).
+		// Stack, not Row: the search bar is the header's only child and a Stack
+		// gives it the full width; a Row left it at its intrinsic 120px.
+		// KeepSize: the header stays put while the table scrolls under it.
 		Part("header",
-			style.Row(style.Space2),
+			style.Stack(style.Space2),
+			style.KeepSize(),
 		).
+		// The table is the scroll region. The root fills the stage, so without
+		// a scroller the rows had nowhere to overflow but into each other.
 		Part("table",
 			style.Stack(style.Space1),
+			style.Scroll(),
 		).
+		// KeepSize: a Stack emits min-height: 0, so inside the fixed-height
+		// table a row shrank below its content and the text overlapped.
 		Part("row",
 			style.Stack(style.Space2),
+			style.KeepSize(),
 			style.Pad(style.Space2),
 			style.As(style.Page), // instead of generic Surface type
 			style.Round(style.RadiusMd),
