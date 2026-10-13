@@ -21,6 +21,18 @@ var _ platformd.UIModule = (*Explorer)(nil)
 
 const NameAPIExplorer widget.Name = "apiexplorer"
 
+// labelMFA is appended to the access column of a route that RequiresMFA.
+const labelMFA = " + mfa"
+
+// accessLabel is the access column text: the declared access, plus the second
+// factor when the route demands one.
+func accessLabel(r router.RouteRecord) string {
+	if r.MFA {
+		return r.Access + labelMFA
+	}
+	return r.Access
+}
+
 var (
 	clsRoot        = NameAPIExplorer.Root()
 	clsHeader      = NameAPIExplorer.Class("header")
@@ -208,7 +220,7 @@ func (e *Explorer) updateRows() {
 
 		methodCol := Div().Set(clsColMethod.AsAttr()).Text(r.Method)
 		pathCol := Div().Set(clsColPath.AsAttr()).Text(r.Path)
-		accessCol := Div().Set(clsColAccess.AsAttr()).Text(r.Access)
+		accessCol := Div().Set(clsColAccess.AsAttr()).Text(accessLabel(r))
 
 		permStr := ""
 		if r.Resource != "" && r.Action != "" {

@@ -34,3 +34,14 @@ func TestSortingAndFiltering(t *testing.T) {
 		t.Errorf("expected /a in results")
 	}
 }
+
+// A route that RequiresMFA must say so in the access column: the explorer is
+// the security posture of the server, and "guarded" alone hides the second factor.
+func TestAccessLabelShowsMFA(t *testing.T) {
+	if got := accessLabel(router.RouteRecord{Access: "guarded", MFA: true}); got != "guarded"+labelMFA {
+		t.Errorf("MFA route label = %q, want %q", got, "guarded"+labelMFA)
+	}
+	if got := accessLabel(router.RouteRecord{Access: "public"}); got != "public" {
+		t.Errorf("non-MFA route label = %q, want %q", got, "public")
+	}
+}
