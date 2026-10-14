@@ -19,7 +19,7 @@ require (
 	webtyp.com/svg v0.3.14
 	webtyp.com/time v0.5.7
 	webtyp.com/view v0.6.27
-	webtyp.com/widget v0.6.40
+	webtyp.com/widget v0.6.41
 )
 
 require (
@@ -40,3 +40,5 @@ require (
 	webtyp.com/json v0.5.29
 	webtyp.com/router v0.4.3
 )
+
+replace webtyp.com/components => ../components
