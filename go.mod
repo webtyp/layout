@@ -3,7 +3,7 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.8.24
+	webtyp.com/components v0.8.30
 	webtyp.com/css v0.4.30
 	webtyp.com/date v0.0.9
 	webtyp.com/dom v0.13.26
@@ -40,5 +40,3 @@ require (
 	webtyp.com/json v0.5.29
 	webtyp.com/router v0.4.3
 )
-
-replace webtyp.com/components => ../components
