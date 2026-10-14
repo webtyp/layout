@@ -9,7 +9,7 @@ require (
 	webtyp.com/dom v0.13.26
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
-	webtyp.com/form v0.4.34
+	webtyp.com/form v0.4.41
 	webtyp.com/html v0.0.27
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.20
