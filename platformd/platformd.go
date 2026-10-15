@@ -5,6 +5,7 @@ import (
 
 	"webtyp.com/msgtype"
 
+	"webtyp.com/components/themetoggle"
 	"webtyp.com/components/usermenu"
 	"webtyp.com/layout"
 	"webtyp.com/svg"
@@ -106,8 +107,9 @@ type Platform struct {
 	// the drawer's first entry are built from it.
 	User Identity
 
-	// UserActions slot — shown at the header RIGHT, next to the work-area name
-	// (e.g. the light/dark theme toggle). Optional.
+	// UserActions slot — the app's own actions inside the user menu panel
+	// (sign-out, site picker). The theme control is NOT one of them: the shell
+	// always renders it in the same menu. Optional.
 	// A factory, not a Component: the shell renders one menu per surface and a
 	// single element cannot have two parents. Passing one instance put the same
 	// element in both menus, which rendered twice with one id and left the copy
@@ -501,7 +503,10 @@ func (p *Platform) userMenu() Component {
 		Avatar:   p.User.UserAvatar(),
 		Roles:    p.User.UserRoles(),
 		Fallback: IconUser,
-		Actions:  actions,
+		// The theme is the shell's, not the app's: every platform gets the
+		// same control in the same place, and no app has to wire one.
+		Preferences: &themetoggle.ThemeToggle{},
+		Actions:     actions,
 	}
 }
 

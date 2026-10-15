@@ -50,7 +50,7 @@ func (m *chatModule) UseNotifier(n platformd.Notifier) { m.notify = n }
 | `AppName` | `string` | Drawer title on a phone when there is no `Brand`. Optional. |
 | `Brand` | `Brand` | Mark + name at the header's leading slot; it is the "go home" control. Optional. |
 | `User` | `Identity` | The logged-in identity. Required — header and drawer are built from it. |
-| `UserActions` | `func() Component` | Factory for the header-right slot (theme toggle, etc.). One instance per surface. Optional. |
+| `UserActions` | `func() Component` | Factory for the app's actions in the user menu (sign-out, site picker). The theme control is built in. One instance per surface. Optional. |
 | `Status` | `func() Component` | Factory for what the app says about itself now (connection state, a new version waiting), at the header right before the user menu. Optional. |
 | `Modules` | `[]UIModule` | Registered modules, in nav-rail order. |
 | `CanView` | `func(resource string) bool` | Filters which modules the shell presents. `nil` shows all. |
