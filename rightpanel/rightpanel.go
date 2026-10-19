@@ -1,7 +1,6 @@
 package rightpanel
 
 import (
-	"webtyp.com/lang"
 	"webtyp.com/widget"
 
 	. "webtyp.com/dom"
@@ -14,10 +13,6 @@ const NameRightPanel widget.Name = "rp"
 // cannot drift apart by a typo in either string literal.
 const (
 	partMain         widget.Part = "main"
-	partHeader       widget.Part = "header"
-	partTitleRow     widget.Part = "title-row"
-	partTitle        widget.Part = "title"
-	partHeadControls widget.Part = "controls"
 	partArticle      widget.Part = "article"
 	partAside        widget.Part = "aside"
 	partAsideHeader  widget.Part = "aside-header"
@@ -28,10 +23,6 @@ const (
 var (
 	clsWrapper      = NameRightPanel.Root()
 	clsMain         = NameRightPanel.Class(partMain)
-	clsHeader       = NameRightPanel.Class(partHeader)
-	clsTitleRow     = NameRightPanel.Class(partTitleRow)
-	clsTitle        = NameRightPanel.Class(partTitle)
-	clsHeadControls = NameRightPanel.Class(partHeadControls)
 	clsArticle      = NameRightPanel.Class(partArticle)
 	clsAside        = NameRightPanel.Class(partAside)
 	clsAsideHeader  = NameRightPanel.Class(partAsideHeader)
@@ -43,7 +34,8 @@ func (r *RightPanel) WidgetName() widget.Name { return NameRightPanel }
 func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 
 // RightPanel is a two-column layout skeleton:
-//   - Left: main content area with header (title + controls) and article.
+//   - Left: main content area (the article). It has no title of its own: the
+//     module's name is the platform header's <h1> (see platformd).
 //   - Right: aside panel with its own header (controls) and content.
 //
 // All slots are optional. A nil slot is simply not rendered.
@@ -55,8 +47,6 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 // Usage:
 //
 //	panel := &rightpanel.RightPanel{
-//	    Title:         "Users",
-//	    HeadControls:  mySelectSearch,
 //	    Article:       myTable,
 //	    AsideControls: myFilterBar,
 //	    Aside:         myDetailPanel,
@@ -65,15 +55,6 @@ func (r *RightPanel) WidgetKind() widget.Kind { return widget.Region }
 //	panel.Render()
 type RightPanel struct {
 	Element
-
-	// Title is rendered as <h1> in the header. English; translated in Render.
-	Title lang.Text
-
-	// Head is rendered beside the <h1> (e.g. status badge, icon).
-	Head Component
-
-	// HeadControls is rendered below the title row (e.g. select with search).
-	HeadControls Component
 
 	// Article is the main content area.
 	Article Component
@@ -103,23 +84,6 @@ func (r *RightPanel) Render() *Element {
 
 	// ── main section ─────────────────────────────────────────────────────────
 	main := Section().Set(clsMain.AsAttr()).Key("main")
-
-	// header row: title + Head slot + HeadControls slot
-	header := Div().Set(clsHeader.AsAttr())
-
-	titleRow := Div().Set(clsTitleRow.AsAttr())
-	if r.Title != "" {
-		titleRow.Child(H1().Set(clsTitle.AsAttr()).Text(lang.Translate(r.Title).String()))
-	}
-	if r.Head != nil {
-		titleRow.Child(r.Head)
-	}
-	header.Child(titleRow)
-
-	if r.HeadControls != nil {
-		header.Child(Div().Set(clsHeadControls.AsAttr()).Child(r.HeadControls))
-	}
-	main.Child(header)
 
 	// article
 	article := Article().Set(clsArticle.AsAttr())

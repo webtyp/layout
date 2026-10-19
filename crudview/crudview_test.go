@@ -16,16 +16,12 @@ import (
 
 func TestCrudView_Render_Basic(t *testing.T) {
 	v := &CrudView{
-		Title: "Test CRUD",
-		Form:  Div().Text("The Form"),
+		Form: Div().Text("The Form"),
 	}
 	v.Init(&mockCtx{})
 
 	html := v.Render().String()
 
-	if !Contains(html, "Test CRUD") {
-		t.Error("expected title")
-	}
 	if !Contains(html, "The Form") {
 		t.Error("expected form")
 	}
@@ -40,7 +36,6 @@ func TestCrudView_Render_WithSource(t *testing.T) {
 	p := view.New(fb, &Device{})
 
 	v := &CrudView{
-		Title:     "CRUD with List",
 		Presenter: p,
 		OnNew:     func() {},
 	}
@@ -104,7 +99,6 @@ func TestOnAfterReload_FiresWithList(t *testing.T) {
 	sList := &stubList{}
 
 	v := &CrudView{
-		Title:     "OnAfterReload Test",
 		Presenter: p,
 		List: func(selected *dom.SignalString, onSelect func(view.Item)) ListView {
 			sList.selected = selected
@@ -130,7 +124,6 @@ func TestOnAfterReload_AfterSetItems(t *testing.T) {
 	sList := &stubList{}
 
 	v := &CrudView{
-		Title:     "OnAfterReload Test",
 		Presenter: p,
 		List: func(selected *dom.SignalString, onSelect func(view.Item)) ListView {
 			sList.selected = selected
@@ -153,7 +146,6 @@ func TestOnAfterReload_NilNoop(t *testing.T) {
 	p := view.New(fb, &Device{})
 
 	v := &CrudView{
-		Title:     "OnAfterReload Nil Test",
 		Presenter: p,
 	}
 	v.Init(&mockCtx{})
@@ -201,7 +193,7 @@ func TestCrudView_UsesNotifier(t *testing.T) {
 
 	// reportSave(err) triggers error toast
 	v.reportSave(Err("save failed"))
-	if n.lastType != msgtype.Error || n.lastMsg != "save failed" {
-		t.Errorf("expected error toast, got %v: %s", n.lastType, n.lastMsg)
+	if n.lastType != msgtype.Error || n.lastMsg != "Could not save: save failed" {
+		t.Errorf("expected an error toast naming the action and the cause, got %v: %s", n.lastType, n.lastMsg)
 	}
 }

@@ -95,7 +95,6 @@ func (v *CrudView) WidgetKind() widget.Kind { return widget.Disclosure }
 type CrudView struct {
 	Element // value embed — NEVER *dom.Element
 
-	Title     lang.Text
 	Form      Component // what Render paints (may stay nil in standalone mode)
 	Presenter view.Presenter
 
@@ -109,14 +108,13 @@ type CrudView struct {
 	// would never fire.
 	Filter Component
 
-	// Context is a control rendered in the title band (below the H1), for a
-	// context/scope selector: "which professional / which área". nil paints no
-	// band. Set by New from Config.Context.
+	// Scope is a selector that decides which records the list shows ("which
+	// professional"). nil paints nothing. Set by New from Config.Scope.
 	//
-	// Deliberately NOT auto-wired to the list filter: changing the context
+	// Deliberately NOT auto-wired to the list filter: changing the scope
 	// re-scopes the data (the composing module calls its presenter +
 	// Reload), it does not write a search term. crudview only renders it.
-	Context Component
+	Scope Component
 
 	// List builds the row-rendering widget, given the Selected signal and the
 	// OnSelect/OnDelete callbacks CrudView owns — Init calls it once. Set by
@@ -496,7 +494,7 @@ func (v *CrudView) confirmDeleteAction() {
 					if err != nil {
 						Log(err.Error())
 						if v.notifier != nil {
-							v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+							v.notifyError("Could not delete", err)
 						}
 					} else {
 						v.setMode(modeNormal)
@@ -775,6 +773,17 @@ func (v *CrudView) saveAction(saver view.Saver) {
 	})
 }
 
+// notifyError tells the person what failed, then why: the bare cause
+// ("tenant_id required") names a field and no action, so it is prefixed with
+// the action that did not happen. Errors stay on screen until dismissed
+// (platformd.Notify), and an identical one is not stacked again.
+func (v *CrudView) notifyError(action string, err error) {
+	if v.notifier == nil {
+		return
+	}
+	v.notifier.Notify(msgtype.Error, lang.Translate(action).String()+": "+err.Error(), platformd.Auto())
+}
+
 // reportSave funnels every save outcome through one place: a non-nil err is
 // logged and handed to OnSaved; nil reports success. Called exactly once per
 // save attempt — from the synchronous validation path or the async done
@@ -783,7 +792,7 @@ func (v *CrudView) reportSave(err error) {
 	if err != nil {
 		Log(err.Error())
 		if v.notifier != nil {
-			v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+			v.notifyError("Could not save", err)
 		}
 	} else {
 		if v.notifier != nil {
@@ -828,7 +837,7 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 		if err != nil {
 			Log(err.Error())
 			if v.notifier != nil {
-				v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+				v.notifyError("Could not delete", err)
 			}
 		} else {
 			v.selected.Set("")
@@ -941,7 +950,7 @@ func (v *CrudView) bulkEditAction() {
 		if err != nil {
 			Log(err.Error())
 			if v.notifier != nil {
-				v.notifier.Notify(msgtype.Error, err.Error(), platformd.Auto())
+				v.notifyError("Could not update", err)
 			}
 		} else {
 			v.setMode(modeNormal)
@@ -993,9 +1002,7 @@ func (v *CrudView) Render() *Element {
 	}
 
 	v.panel = &rightpanel.RightPanel{
-		Title:        v.Title,
-		Article:      boxContent,
-		HeadControls: v.Context,
+		Article: boxContent,
 	}
 
 	if hasSource {
@@ -1003,19 +1010,28 @@ func (v *CrudView) Render() *Element {
 		v.panel.Aside = Div().Set(clsListaBox.AsAttr()).
 			Child(v.list)
 
-		// The filter is the consumer's control. crudview supplies no card
-		// around it: rightpanel's controls band already keeps its size, and a
-		// second frame around a control that has one reads as a box in a box.
-		v.panel.AsideControls = v.Filter
-
-		// The actions band rides the controls band (below the filter): that
-		// band keeps its size, so the list below keeps its Fill.
+		// The list header: the scope selector (which records), then the filter
+		// (which of them), then the actions band. crudview supplies no card
+		// around the consumer's controls: rightpanel's controls band already
+		// keeps its size, and a second frame around a control that has one
+		// reads as a box in a box. One control alone is passed as is; several
+		// are stacked; the band keeps its size so the list below keeps its Fill.
+		var controls []Component
+		if v.Scope != nil {
+			controls = append(controls, v.Scope)
+		}
+		if v.Filter != nil {
+			controls = append(controls, v.Filter)
+		}
 		if band, ok := v.renderActions(); ok {
-			if v.Filter != nil {
-				v.panel.AsideControls = Div().Set(clsControls.AsAttr()).Child(v.Filter, band)
-			} else {
-				v.panel.AsideControls = band
-			}
+			controls = append(controls, band)
+		}
+		switch len(controls) {
+		case 0:
+		case 1:
+			v.panel.AsideControls = controls[0]
+		default:
+			v.panel.AsideControls = Div().Set(clsControls.AsAttr()).Child(controls...)
 		}
 
 		// The create action ("+") needs view.Saver; 🗑 needs view.Deleter; ✏

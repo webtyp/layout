@@ -44,7 +44,6 @@ func fakeListBackend() *conformance.FakeLister {
 func TestCrudView_RendersThroughRightPanel(t *testing.T) {
 	p := view.New(fakeListBackend(), &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Filter:    &fakeFilter{},
 	}
@@ -69,7 +68,6 @@ func TestCrudView_RendersThroughRightPanel(t *testing.T) {
 func TestCrudView_FilterSlotIsRendered(t *testing.T) {
 	p := view.New(fakeListBackend(), &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Filter:    &fakeFilter{},
 	}
@@ -88,7 +86,7 @@ func TestCrudView_FilterSlotIsRendered(t *testing.T) {
 // No Filter paints no controls band at all — and no search input either.
 func TestCrudView_NoFilterPaintsNoControlsBand(t *testing.T) {
 	p := view.New(fakeListBackend(), &Device{})
-	v := &CrudView{Title: "CRUD", Presenter: p}
+	v := &CrudView{Presenter: p}
 	v.Init(&fakeCtx{})
 
 	html := v.Render().String()
@@ -104,7 +102,7 @@ func TestCrudView_NoFilterPaintsNoControlsBand(t *testing.T) {
 func TestCrudView_FilterableDrivesTheList(t *testing.T) {
 	p := view.New(fakeListBackend(), &Device{})
 	f := &fakeFilter{}
-	v := &CrudView{Title: "CRUD", Presenter: p, Filter: f}
+	v := &CrudView{Presenter: p, Filter: f}
 	v.Init(&fakeCtx{})
 	v.Activate()
 

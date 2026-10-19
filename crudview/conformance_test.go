@@ -29,9 +29,9 @@ func TestViewConformance(t *testing.T) {
 			}
 
 			return conformance.Driver{
-				Mount:    func() { v.Reload(nil) },
-				Labels:   func() []string { return cardLabels(v) },
-				Select:   func(id string) { v.selectAction(view.Item{ID: id}) },
+				Mount:  func() { v.Reload(nil) },
+				Labels: func() []string { return cardLabels(v) },
+				Select: func(id string) { v.selectAction(view.Item{ID: id}) },
 				SetField: func(name, value string) {
 					// A driver that "sets" a field the form never rendered
 					// (e.g. the hidden PK) would pass while proving nothing —

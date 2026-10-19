@@ -45,48 +45,6 @@ func (r *RightPanel) RenderSheet() *style.Sheet {
 			style.Stack(style.Space2),
 			style.Fill(),
 		).
-		// The heading needs its own indent: it sits directly on the primary
-		// surface with no card of its own to inset it. PadInline, not Pad —
-		// the indent is horizontal; vertically the band answers to
-		// --control-height, the same token every control measures by, so the
-		// frame reads as one rhythm.
-		Part(partHeader,
-			style.Row(style.Space1),
-			style.PadInline(style.Space2),
-			style.ControlBox(),
-			style.KeepSize(),
-		).
-		// No Center(): the header's own PadInline above is the indent, and it
-		// applies to BOTH rows of the header. Center() added a second, rival
-		// one — a 65ch cap with auto margins — that only engages once the row
-		// is wider than the measure. So the title's alignment depended on
-		// whether the panel happened to have an aside: with one, main is ~2/3
-		// of the frame, narrower than 65ch, and the cap was inert; without
-		// one, main takes the full width, the cap engaged, and the title
-		// floated ~130px in while HeadControls right below it stayed flush at
-		// the padding. One header, two width policies, and the visible result
-		// changed with an unrelated structural fact.
-		//
-		// A title row is not prose either: the readable measure is what a LINE
-		// of running text wants, and a heading beside its controls is a band.
-		Part(partTitleRow,
-			style.Row(style.Space2),
-		).
-		// The heading is TEXT on Root's Primary surface — it takes only the
-		// inherited on-primary ink (Root is style.As(style.Primary), and color
-		// inherits through the reset, which sets no color on h1..h6). It must
-		// NOT carry style.As() of its own: As() is background + border + radius
-		// as well as text, and under a gradient Primary theme (css.SetGradient)
-		// that fill re-origins the gradient across the heading's own box and
-		// paints a detached rectangle over the panel. FontSize is explicit
-		// because the reset forces h1 font-size: inherit.
-		Part(partTitle,
-			style.FontSize(style.Text2xl),
-			style.FontWeight(style.WeightBold),
-		).
-		Part(partHeadControls,
-			style.Row(style.Space1),
-		).
 		// Secondary, not Page: aside's own backdrop is Secondary/Panel's
 		// ColorSurface at every breakpoint (see the "aside" Part below), so on
 		// mobile — where neither panel is overridden to Panel yet — article
@@ -171,30 +129,17 @@ func (r *RightPanel) RenderSheet() *style.Sheet {
 		// components/targetlist/css.go.
 		// On a phone the desktop Split becomes a horizontal scroll-snap strip:
 		// the aside is what shows on arrival, and selecting an item slides the
-		// main panel in from the left, leaving a sliver of the aside on the right
-		// so it is obvious where you came from.
+		// main panel in from the left. The main panel takes the strip's whole
+		// width: the sliver of the aside it used to leave beside it (to show
+		// where you came from) only confused and cost the form 10% of a narrow
+		// screen; the way back is the footer's undo, or a swipe.
 		// Pad(SpaceNone) is part of the contract, not a detail: the panels are
 		// sized as a share of the scroll container, and any padding on it makes
 		// each panel that much narrower than the window, so a strip of the
 		// neighbour shows through at rest.
 		On(css.Mobile, "",
-			style.MasterDetail(style.Most),
+			style.MasterDetail(style.Full),
 			style.Pad(style.SpaceNone),
-		).
-		// En móvil no hay cabecera: el chasis lleva el nombre de la sección en su
-		// botón de menú, que es el único cromo que sobrevive ahí. Una chapa flotante
-		// con el título repetía ese dato encima del contenido y tapaba la barra de
-		// búsqueda del aside.
-		//
-		// Se apaga la cabecera entera y no solo el <h1>: ControlBox le fija una
-		// altura mínima de --control-height, así que ocultar únicamente el título
-		// dejaría una banda vacía de 50px en lo alto de cada módulo.
-		//
-		// HeadControls cae con ella. Es aceptable porque hoy no lo usa nadie en el
-		// repositorio salvo los tests; un control que deba sobrevivir en móvil va en
-		// AsideControls, que es la banda que sí se ve ahí.
-		On(css.Mobile, partHeader,
-			style.Hide(),
 		)
 }
 

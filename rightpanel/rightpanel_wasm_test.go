@@ -46,11 +46,9 @@ func TestTwoRightPanels_DoNotCollide(t *testing.T) {
 	})
 
 	panelA := &RightPanel{
-		Title: "Panel A",
 		Aside: &stubComponent{text: "Aside A"},
 	}
 	panelB := &RightPanel{
-		Title: "Panel B",
 		Aside: &stubComponent{text: "Aside B"},
 	}
 

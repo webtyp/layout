@@ -6,8 +6,6 @@ import (
 	"strings"
 	"testing"
 
-	"webtyp.com/layout/crudview"
-	"webtyp.com/layout/rightpanel"
 	"webtyp.com/layout/login"
 	"webtyp.com/dom"
 )
@@ -16,22 +14,10 @@ type mockCtx struct{}
 
 func (m *mockCtx) OnCleanup(fn func()) {}
 
+// Fixed UI text is English as written and translated on render; the login card
+// is the one component that still carries a title of its own (a module's title
+// is the platform header's <h1>).
 func TestTitles_RenderEnglishAsIs(t *testing.T) {
-	// CrudView
-	v1 := &crudview.CrudView{Title: "Devices"}
-	v1.Init(&mockCtx{})
-	html1 := v1.Render().String()
-	if !strings.Contains(html1, "Devices") {
-		t.Errorf("expected CrudView to render 'Devices', got %s", html1)
-	}
-
-	// RightPanel
-	v2 := &rightpanel.RightPanel{Title: "Devices"}
-	html2 := v2.Render().String()
-	if !strings.Contains(html2, "Devices") {
-		t.Errorf("expected RightPanel to render 'Devices', got %s", html2)
-	}
-
 	// Login
 	v3 := &login.Login{Title: "Sign in", Message: dom.NewString("")}
 	html3 := v3.Render().String()

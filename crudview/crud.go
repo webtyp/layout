@@ -5,7 +5,6 @@ import (
 	"webtyp.com/dom"
 	"webtyp.com/fmt"
 	"webtyp.com/form"
-	"webtyp.com/lang"
 	"webtyp.com/model"
 	"webtyp.com/view"
 )
@@ -29,16 +28,13 @@ type Config struct {
 	// pass any widget.Filterable to replace it.
 	Filter dom.Component
 
-	// Context is a control rendered in the title band (below the H1, above
-	// the article), for a context/scope selector: e.g. "which professional /
-	// which área". Optional: nil paints no band. It is the mirror of the
-	// legacy Pa100T professional dropdown that re-scoped the whole screen.
-	//
-	// Unlike Filter, Context NEVER wires itself to the list filter even if it
-	// satisfies widget.Filterable: changing the context re-scopes the data
-	// (the composing module calls its presenter + CrudView.Reload), it does
-	// not filter a search term. crudview only renders it.
-	Context dom.Component
+	// Scope is a selector that decides which records the list shows (e.g. which
+	// professional). It is rendered in the list header, above Filter. Changing
+	// it re-scopes the data: the composing module reloads its presenter;
+	// crudview only renders it, and NEVER wires it to the list filter even if
+	// it satisfies widget.Filterable. A value that belongs to the record is a
+	// form field, never a Scope.
+	Scope dom.Component
 
 	// List builds the row-rendering widget. Optional: nil installs a
 	// targetlist.TargetList factory — the ergonomic default, not a decision
@@ -104,11 +100,10 @@ func New(cfg Config) (*CrudView, error) {
 	}
 
 	v := &CrudView{
-		Title:     lang.Text(cfg.Presenter.Title()),
 		form:      f,
 		Presenter: cfg.Presenter,
 		Filter:    filter,
-		Context:   cfg.Context,
+		Scope:     cfg.Scope,
 		NewRecord: cfg.NewRecord,
 		// List is passed through as-is, nil included: Init resolves the
 		// same targetlist.TargetList default that a nil List would get

@@ -296,28 +296,58 @@ func TestPlatform_Notify_ManualDismiss(t *testing.T) {
 	if p.notificationCount() != 1 {
 		t.Errorf("persistent notification must not auto-dismiss, got %d", p.notificationCount())
 	}
+
+	// An error whose length was left to Auto() is persistent too (WCAG 2.2.1):
+	// no deadline, no timer. An error with an explicit For(ms) keeps its window.
+	p.Notify(msgtype.Error, "boom", Auto())
+	p.Notify(msgtype.Error, "timed", For(60000))
+	for _, n := range p.rawNotifications {
+		switch n.Msg {
+		case "boom":
+			if n.expiryNs != 0 || n.timer != nil {
+				t.Errorf("an error left to Auto() must be persistent, got deadline %d", n.expiryNs)
+			}
+		case "timed":
+			if n.expiryNs == 0 {
+				t.Errorf("an error with an explicit For(ms) must keep its window")
+			}
+		}
+	}
+}
+
+// The same message already on screen is not stacked again: a failing auto-save
+// fires once per field commit, and a pile of identical toasts hides the page.
+func TestPlatform_Notify_IdenticalNotStacked(t *testing.T) {
+	p := &Platform{Element: *Div()}
+	p.Init(NilCtx())
+	p.Notify(msgtype.Error, "tenant_id required", Auto())
+	p.Notify(msgtype.Error, "tenant_id required", Auto())
+	p.Notify(msgtype.Success, "tenant_id required", Auto()) // other type: its own toast
+	if got := p.notificationCount(); got != 2 {
+		t.Errorf("expected 2 notifications (error once, success once), got %d", got)
+	}
 }
 
 func TestPlatform_Notify_AutoDuration(t *testing.T) {
-	// Auto() sizes the window to the message: floor 2s for a one-word toast,
-	// then ~350ms per extra word, capped at 8s. The deadline is computed at
+	// Auto() sizes the window to the message: floor 4s for a short toast,
+	// then ~350ms per word on top of 2.5s, capped at 10s. The deadline is computed at
 	// Notify time and stays fixed across pause/resume.
 	p := &Platform{Element: *Div()}
 	p.Init(NilCtx())
 
-	if got := autoMillis("Guardado"); got != 2000 {
-		t.Errorf("one word: expected 2000ms, got %d", got)
+	if got := autoMillis("Guardado"); got != 4000 {
+		t.Errorf("one word: expected the 4000ms floor, got %d", got)
 	}
-	if got := autoMillis("Dispositivo guardado correctamente"); got != 2250 {
-		t.Errorf("three words: expected 2250ms, got %d", got)
+	if got := autoMillis("Dispositivo guardado correctamente"); got != 4000 {
+		t.Errorf("three words: expected the 4000ms floor, got %d", got)
 	}
-	// Exactly 15 words: 1200 + 15×350 = 6450ms
+	// Exactly 15 words: 2500 + 15×350 = 7750ms
 	long := "un error muy largo de quince palabras a b c d e f g h"
-	if got := autoMillis(long); got != 6450 {
-		t.Errorf("fifteen words: expected 6450ms, got %d", got)
+	if got := autoMillis(long); got != 7750 {
+		t.Errorf("fifteen words: expected 7750ms, got %d", got)
 	}
-	if got := autoMillis(Repeat("muy ", 30) + "larga"); got != 8000 {
-		t.Errorf("long message must be capped at 8000ms, got %d", got)
+	if got := autoMillis(Repeat("muy ", 30) + "larga"); got != 10000 {
+		t.Errorf("long message must be capped at 10000ms, got %d", got)
 	}
 
 	p.Notify(msgtype.Success, "Guardado", Auto())
@@ -632,6 +662,49 @@ func TestPlatform_HeaderTitle(t *testing.T) {
 	html2 := p.Render().String()
 	if !contains(html2, "Module 2") {
 		t.Errorf("expected header to contain active module label 'Module 2' after Activate, got:\n%s", html2)
+	}
+
+	// The module's name is the page's single <h1> (one h1 per page: an
+	// accessibility contract); the content below only has <h2> sections.
+	if n := Count(html2, "<h1"); n != 1 {
+		t.Errorf("expected exactly one <h1> on the page, got %d:\n%s", n, html2)
+	}
+	if !contains(html2, ">Module 2</h1>") {
+		t.Errorf("expected the <h1> to hold the active module label, got:\n%s", html2)
+	}
+
+	// Inside a group the <h1> names the active CHILD (the screen), not the group.
+	g := &Platform{
+		Modules: []UIModule{
+			NewGroupUIModule("group1", "Group 1", svg.Icon("folder"), []UIModule{
+				&mockModule{id: "sub1", label: "Sub 1", icon: svg.Icon("file")},
+				&mockModule{id: "sub2", label: "Sub 2", icon: svg.Icon("file")},
+			}),
+		},
+	}
+	g.Init(NilCtx())
+	g.Activate("sub2")
+	if h := g.Render().String(); !contains(h, ">Sub 2</h1>") {
+		t.Errorf("expected the <h1> to hold the active child's label 'Sub 2', got:\n%s", h)
+	}
+
+	// The app's name and version do not sit in the header beside the module's
+	// name (they compete with it): they live in the panel the app's mark opens.
+	b := &Platform{
+		AppName:    "Acme App",
+		AppVersion: "v1.2.3",
+		Modules:    []UIModule{&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")}},
+	}
+	b.Init(NilCtx())
+	bh := b.Render().String()
+	for _, want := range []string{"<details", ">Acme App</span>", ">v1.2.3</span>"} {
+		if !contains(bh, want) {
+			t.Errorf("expected the header's app panel to contain %q, got:\n%s", want, bh)
+		}
+	}
+	hdr := bh[Index(bh, "<header"):Index(bh, "</header>")]
+	if n := Count(hdr, "Acme App"); n != 2 { // the mark's aria-label and the panel's name — nothing beside the h1
+		t.Errorf("expected the app name in the header only in the mark's label and its panel, got %d occurrences:\n%s", n, hdr)
 	}
 }
 

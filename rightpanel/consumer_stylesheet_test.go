@@ -32,18 +32,10 @@ func ruleBlock(cssStr, want string) string {
 	return body[:end]
 }
 
-// TestRightPanel_EdgeAsserts guards two things: the panel is welded to the
-// application frame and must be square, and the title is inherited ink on that
-// Primary panel — NOT a surface of its own. It carries no background and no
-// radius: the panel behind it is the colour, and a fill here would re-origin a
-// gradient Primary theme across the heading's own box (a detached rectangle).
-// This supersedes the earlier "PLAN v0.2.0 item 5" contract that had the title
-// keep an interior radius.
+// TestRightPanel_EdgeAsserts guards that the panel is welded to the application
+// frame and must be square.
 func TestRightPanel_EdgeAsserts(t *testing.T) {
 	r := &RightPanel{
-		Title:         "Test Title",
-		Head:          html.Div(),
-		HeadControls:  html.Div(),
 		Article:       html.Div(),
 		AsideControls: html.Div(),
 		Aside:         html.Div(),
@@ -65,19 +57,10 @@ func TestRightPanel_EdgeAsserts(t *testing.T) {
 			t.Errorf("%s must be squared at the frame, block:\n%s", sel, b)
 		}
 	}
-	if b := ruleBlock(desktop, ".rp__title {"); fmt.Contains(b, "border-radius") {
-		t.Errorf(".rp__title must NOT carry a surface radius — it is inherited ink on Root's Primary panel, block:\n%s", b)
-	}
-	if b := ruleBlock(desktop, ".rp__title {"); fmt.Contains(b, "background") {
-		t.Errorf(".rp__title must NOT carry a background — the panel behind it is the colour, block:\n%s", b)
-	}
 }
 
 func TestRightPanel_StylesheetAsserts(t *testing.T) {
 	r := &RightPanel{
-		Title:         "Test Title",
-		Head:          html.Div(),
-		HeadControls:  html.Div(),
 		Article:       html.Div(),
 		AsideControls: html.Div(),
 		Aside:         html.Div(),
@@ -183,7 +166,6 @@ func TestRightPanel_StylesheetAsserts(t *testing.T) {
 // components/targetlist/css.go's mobile PartList rule.
 func TestAsideKeepsGutterOnMobile(t *testing.T) {
 	r := &RightPanel{
-		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),
 		Aside:         html.Div(),
@@ -229,7 +211,6 @@ func TestAsideKeepsGutterOnMobile(t *testing.T) {
 // msg-stack keeps. Flush (SpaceNone) strands tap targets at the edge.
 func TestFooterKeepsOffFrameOnMobile(t *testing.T) {
 	r := &RightPanel{
-		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),
 		Aside:         html.Div(),
@@ -258,7 +239,6 @@ func TestFooterKeepsOffFrameOnMobile(t *testing.T) {
 
 func TestRightPanel_FlowIsSplitRootStackedMain(t *testing.T) {
 	r := &RightPanel{
-		Title:         "Test Title",
 		Article:       html.Div(),
 		AsideControls: html.Div(),
 		Aside:         html.Div(),

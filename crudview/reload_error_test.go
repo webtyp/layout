@@ -36,7 +36,6 @@ func TestCrudView_Reload_ReportsErrorViaOnLoadError(t *testing.T) {
 
 	var gotErr error
 	v := &CrudView{
-		Title:     "Test CRUD",
 		Presenter: p,
 		OnLoadError: func(err error) {
 			gotErr = err

@@ -20,7 +20,6 @@ func TestCrudView_Wasm_Flow(t *testing.T) {
 	p := view.New(fb, &Device{}, view.WithTitle("Wasm Test"))
 
 	v := &CrudView{
-		Title:     "Wasm Test",
 		Presenter: p,
 	}
 	v.Init(&mockCtxWasm{})

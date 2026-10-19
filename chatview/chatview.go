@@ -3,7 +3,6 @@ package chatview
 import (
 	"webtyp.com/components/bubblethread"
 	"webtyp.com/components/composebar"
-	"webtyp.com/components/decktabs"
 	"webtyp.com/components/inboxlist"
 	"webtyp.com/components/presencelist"
 	"webtyp.com/layout/rightpanel"
@@ -21,6 +20,11 @@ const (
 	partHeader widget.Part = "header"
 	partWork   widget.Part = "work"
 	partThread widget.Part = "thread"
+	partAside  widget.Part = "aside"
+	partTabs   widget.Part = "tabs"
+	partTab    widget.Part = "tab"
+	partDeck   widget.Part = "deck"
+	partPanel  widget.Part = "panel"
 )
 
 var (
@@ -28,6 +32,16 @@ var (
 	clsHeader = NameChatView.Class(partHeader)
 	clsWork   = NameChatView.Class(partWork)
 	clsThread = NameChatView.Class(partThread)
+	clsAside  = NameChatView.Class(partAside)
+	clsTabs   = NameChatView.Class(partTabs)
+	clsTab    = NameChatView.Class(partTab)
+	clsDeck   = NameChatView.Class(partDeck)
+	clsPanel  = NameChatView.Class(partPanel)
+)
+
+const (
+	tabConversations = "conversations"
+	tabPeople        = "people"
 )
 
 func (v *ChatView) WidgetName() widget.Name { return NameChatView }
@@ -55,7 +69,6 @@ type ChatView struct {
 	presence presencelist.PresenceList
 	thread   bubblethread.BubbleThread
 	bar      composebar.ComposeBar
-	tabs     decktabs.DeckTabs
 
 	composeDisabled *SignalBool
 }
@@ -80,7 +93,7 @@ func New(cfg Config) (*ChatView, error) {
 }
 
 func (v *ChatView) Init(ctx Ctx) {
-	v.activeTab = NewString("conversations")
+	v.activeTab = NewString(tabConversations)
 	v.headerTitle = NewString("")
 	v.composeDisabled = NewBool(true)
 
@@ -106,7 +119,7 @@ func (v *ChatView) Init(ctx Ctx) {
 					v.updateRooms(rows)
 				}
 				v.openRoom(roomID)
-				v.activeTab.Set("conversations")
+				v.activeTab.Set(tabConversations)
 			})
 		})
 	}
@@ -136,22 +149,6 @@ func (v *ChatView) Init(ctx Ctx) {
 			}
 			v.thread.Append(sent)
 		})
-	}
-
-	v.tabs = decktabs.DeckTabs{
-		Active: v.activeTab,
-		Items: []decktabs.Item{
-			{
-				ID:    "conversations",
-				Label: "Conversations",
-				Panel: v.inbox.Render(),
-			},
-			{
-				ID:    "people",
-				Label: "People",
-				Panel: v.presence.Render(),
-			},
-		},
 	}
 
 	// Initial fetch
@@ -284,9 +281,48 @@ func (v *ChatView) Render() *Element {
 	workArea := Div().Set(clsWork.AsAttr()).Child(header, threadBox, v.bar.Render())
 
 	panel := rightpanel.RightPanel{
-		Aside:   v.tabs.Render(),
+		Aside:   v.renderAside(),
 		Article: workArea,
 	}
 
 	return Div().Set(clsRoot.AsAttr()).Child(panel.Render())
+}
+
+// renderAside is the list column: a two-tab strip over a deck whose panels stay
+// mounted, the one carrying widget.Current on screen. The tab set is local to
+// the chat because components no longer ships one; grouping screens belongs to
+// the navigation shell.
+func (v *ChatView) renderAside() *Element {
+	type tab struct {
+		id, label string
+		panel     *Element
+	}
+	tabs := []tab{
+		{tabConversations, "Conversations", v.inbox.Render()},
+		{tabPeople, "People", v.presence.Render()},
+	}
+
+	strip := Nav().Set(clsTabs.AsAttr()).Attr("role", "tablist")
+	deck := Div().Set(clsDeck.AsAttr())
+	for _, t := range tabs {
+		id := t.id
+		isActive := func() bool { return v.activeTab.Get() == id }
+
+		btn := Button().Set(clsTab.AsAttr()).
+			Attr("type", "button").
+			Attr("role", "tab").
+			BindStateFunc(widget.Current, isActive).
+			OnClick(func(Event) { v.activeTab.Set(id) }).
+			Text(lang.Translate(lang.Text(t.label)).String())
+		panel := Section().Set(clsPanel.AsAttr()).
+			Attr("role", "tabpanel").
+			BindStateFunc(widget.Current, isActive).
+			Child(t.panel)
+		btn.Attr("aria-controls", panel.GetID())
+		panel.Attr("aria-labelledby", btn.GetID())
+
+		strip.Child(btn)
+		deck.Child(panel)
+	}
+	return Div().Set(clsAside.AsAttr()).Child(strip, deck)
 }

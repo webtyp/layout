@@ -196,11 +196,16 @@ Parts touching the application frame — header, nav, menu, msg, and the
   "where I am"), hover renders `As(Inset)` (tonal). The light selection tint
   (`Highlight`) is deliberately not used in the nav; selected rows in consumer
   lists re-point at `Accent` for the same reason.
-- **On a phone the module header is gone** (`rightpanel` hides it): the only
-  chrome naming the section is the hamburger, which renders the active module's
-  icon (`navIcon`) instead of a fixed hamburger glyph — "you are here, and from
-  here you change". The `iconMenu` glyph stays as fallback for a module that
-  declares `Icon() == ""`.
+- **The module's name is the shell's, not the content's.** The `platformd` header
+  carries the page's single `<h1>`: the module name (for a module inside a group,
+  the active child's label) in a large size beside the app's mark, centred and
+  smaller on a phone. The mark opens a panel with the app's name and
+  `Platform.AppVersion`; the name is not drawn in the header. The header is the primary surface at every width; `rightpanel` draws no
+  title band, so the article starts at the top of the frame. Inside the content only
+  `<h2>` sections exist (`style.Heading()`).
+- **On a phone the hamburger renders the active module's icon** (`navIcon`) instead
+  of a fixed hamburger glyph — "you are here, and from here you change". The
+  `iconMenu` glyph stays as fallback for a module that declares `Icon() == ""`.
 
 ---
 
@@ -213,28 +218,26 @@ Standard two-column layout: Form (left, 66vw) and List (right, 29vw).
 ```flowchart TD
     CV[CrudView] --> L[Left Column: 66vw]
     CV --> R[Right Column: 29vw]
-    L --> T[Title Band]
-    T --> H[Title: h1]
-    T --> CTX[Context slot: dom.Component]
     L --> F[Form: dom.Component]
-    L --> B[CRUD Bar: Buttons]
-    R --> LIST[List: SignalNodes]
+    R --> SC[Scope slot: dom.Component]
     R --> S[Search: local filter]
+    R --> LIST[List: SignalNodes]
+    R --> B[CRUD Bar: Buttons]
 ```
 
-### The `Context` slot — scope, not search
+### The `Scope` slot — which records, not which term
 
-`crudview.Config.Context dom.Component` is a control rendered in the **title band**
-(below the `h1`), for a context/scope selector — "which professional / which área"
-(its ancestor is the legacy Pa100T professional dropdown that re-scoped the whole
-screen). It rides `rightpanel.RightPanel.HeadControls`, the band that already
-existed for that exact purpose.
+`crudview.Config.Scope dom.Component` is a control rendered in the **list header**,
+above the search box, for a selector that decides *which records the list shows* —
+"which professional / which área" (its ancestor is the legacy Pa100T professional
+dropdown that re-scoped the whole screen). A control that is a **value of the record**
+is not a Scope: it is a form field.
 
-Deliberately, `Context` is **not auto-wired to the list filter** even when it
-satisfies `widget.Filterable`: `Filter` (e.g. a calendar) and `Context` (a doctor)
+Deliberately, `Scope` is **not auto-wired to the list filter** even when it
+satisfies `widget.Filterable`: `Filter` (e.g. a calendar) and `Scope` (a doctor)
 write into the same single-term `Presenter.Filter(term)`, so together they could
-not represent "doctor X + day Y". Changing the context **re-scopes the data** — the
-module that composes the `Context` calls its presenter + `CrudView.Reload(done)` —
+not represent "doctor X + day Y". Changing the scope **re-scopes the data** — the
+module that composes the `Scope` calls its presenter + `CrudView.Reload(done)` —
 while `Filter` remains the term filter. `crudview` only renders the slot; wiring
 is the consumer's, by design.
 
@@ -318,7 +321,7 @@ As a policy established in this layer (C4), no public high-level API should be p
 ## Chat Layout (`chatview`)
 
 `chatview` arranges four chat components (`inboxlist`, `presencelist`, `bubblethread`, `composebar`) by composing `rightpanel.RightPanel`:
-- **`Aside`**: a `decktabs.DeckTabs` holding two tabs ("Conversations" and "People").
+- **`Aside`**: a tab strip over a deck (local to `chatview`) holding two tabs ("Conversations" and "People").
 - **`Article`**: a header with the open room's title, `bubblethread.BubbleThread`, and `composebar.ComposeBar`.
 
 ### Data Flow (`Source`)

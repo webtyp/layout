@@ -14,7 +14,7 @@ through unchanged).
 | `crudview` delete dialog — message | "Delete `%s`? This action cannot be undone." | `"Delete"`, `"This"`, `"action"`, `"cannot"`, `"be"`, `"undone."` (`"%s?"` passes through) |
 | `crudview` delete dialog — buttons | "Cancel" / "Delete" | `"Cancel"`, `"Delete"` |
 | `chatview` | tab labels, empty states, compose bar | `"Conversations"`, `"People"`, `"Send"`, `"Write a message"`, … (see `lang.json`) |
-| `CrudView.Title`, `RightPanel.Title`, `Login.Title`/`Subtitle` | your text | the `lang.Text` you pass, exactly as written |
+| `Login.Title`/`Subtitle` | your text | the `lang.Text` you pass, exactly as written |
 
 Fixed UI text is typed `lang.Text` and translated when the component renders;
 data stays `string`. Each argument of `lang.Translate` is one key, exactly as

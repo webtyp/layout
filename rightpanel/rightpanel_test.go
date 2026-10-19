@@ -18,9 +18,6 @@ func (s *stubComponent) Children() []dom.Component { return nil }
 
 func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Title:         "Users",
-		Head:          &stubComponent{"<span>badge</span>"},
-		HeadControls:  &stubComponent{"<select></select>"},
 		Article:       &stubComponent{"<table></table>"},
 		AsideControls: &stubComponent{"<input type=search>"},
 		Aside:         &stubComponent{"<ul></ul>"},
@@ -35,12 +32,6 @@ func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 	}{
 		{"wrapper class", "class='rp'"},
 		{"main class", "class='rp__main'"},
-		{"header class", "class='rp__header'"},
-		{"title row", "class='rp__title-row'"},
-		{"title class", "class='rp__title'"},
-		{"h1 title", "Users</h1>"},
-		{"Head slot", "<span>badge</span>"},
-		{"HeadControls slot", "<select></select>"},
 		{"article class", "class='rp__article'"},
 		{"Article slot", "<table></table>"},
 		{"aside class", "class='rp__aside'"},
@@ -59,9 +50,20 @@ func TestRightPanel_RenderHTML_WithAllSlots(t *testing.T) {
 	}
 }
 
+// The module's name is the platform header's <h1>: the panel draws no title
+// band of its own, so the article starts at the top of the frame.
+func TestRightPanel_HasNoTitleBand(t *testing.T) {
+	html := (&rightpanel.RightPanel{Article: &stubComponent{"<table></table>"}}).Render().String()
+
+	for _, gone := range []string{"<h1", "rp__header", "rp__title", "rp__controls"} {
+		if strings.Contains(html, gone) {
+			t.Errorf("rightpanel must draw no title band, found %q in:\n%s", gone, html)
+		}
+	}
+}
+
 func TestRightPanel_RenderHTML_AsideOmittedWhenNil(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Title:   "Orders",
 		Article: &stubComponent{"<table></table>"},
 		// No AsideControls, no Aside, no AsideFooter
 	}
@@ -75,7 +77,6 @@ func TestRightPanel_RenderHTML_AsideOmittedWhenNil(t *testing.T) {
 
 func TestRightPanel_AsideRendersForFooterAlone(t *testing.T) {
 	panel := &rightpanel.RightPanel{
-		Title:       "Checkout",
 		AsideFooter: &stubComponent{"<button>Buy</button>"},
 	}
 

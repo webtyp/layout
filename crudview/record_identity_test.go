@@ -263,4 +263,3 @@ func TestRecordIdentity_CreatedItemAppearsFirstInList(t *testing.T) {
 		t.Fatalf("expected 2 items after deleting created item, got %d", len(listItemsAfterDelete))
 	}
 }
-

@@ -189,7 +189,7 @@ func (s *slotStub) String() string {
 // sets it and nothing appears. Every exported Component field on RightPanel
 // must show up in the rendered markup when populated.
 func TestEverySlotIsRendered(t *testing.T) {
-	rp := rightpanel.RightPanel{Title: "T"}
+	rp := rightpanel.RightPanel{}
 	tp := reflect.TypeOf(rp)
 	pv := reflect.ValueOf(&rp).Elem()
 	componentType := reflect.TypeOf((*dom.Component)(nil)).Elem()

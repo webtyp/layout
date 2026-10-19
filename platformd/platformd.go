@@ -29,7 +29,12 @@ var (
 	clsBrand           = NamePlatform.Class("brand")
 	clsBrandMark       = NamePlatform.Class("brand-mark")
 	clsBrandName       = NamePlatform.Class("brand-name")
-	clsHeaderBrandName = NamePlatform.Class("header-brand-name")
+	clsBrandMenu       = NamePlatform.Class("brand-menu")
+	clsBrandTrigger    = NamePlatform.Class("brand-trigger")
+	clsBrandPanel      = NamePlatform.Class("brand-panel")
+	clsBrandPanelName  = NamePlatform.Class("brand-panel-name")
+	clsBrandPanelVer   = NamePlatform.Class("brand-panel-version")
+	clsBrandBackdrop   = NamePlatform.Class("brand-backdrop")
 	clsHeaderTitle     = NamePlatform.Class("header-title")
 	clsHeaderTitleText = NamePlatform.Class("header-title-text")
 	clsMsgSlot         = NamePlatform.Class("msg-slot")
@@ -94,6 +99,11 @@ type Platform struct {
 	// all above the drawer's nav.
 	AppName string
 
+	// AppVersion is shown with the app's name in the panel the header's mark
+	// opens (what a support request asks for). Optional: empty shows the name
+	// alone.
+	AppVersion string
+
 	// Brand is what the platform calls itself: the mark and the name at the
 	// header's leading slot, mirrored at the head of the phone drawer where
 	// there is no header to hold it. Tapping it — either surface — is the "go
@@ -148,6 +158,7 @@ type Platform struct {
 	// internal state
 	active              *SignalString
 	menuOpen            *SignalBool
+	brandOpen           *SignalBool // the header's app panel (mark → name and version)
 	expandedGroup       *SignalString
 	notifications       *SignalNodes // desktop toasts (header msg-slot)
 	notificationsMobile *SignalNodes // mobile toasts (msg-stack under the hamburger)
@@ -206,25 +217,30 @@ type notification struct {
 // needs the message text that only Notify has.
 type Duration struct {
 	millis func(msg string) int // nil = persistent
+	auto   bool                 // built by Auto(): the caller left the length to the platform
 }
 
-// Auto sizes the duration to the message: ~350ms per word plus ~1.2s to
-// notice the toast, floored at 2s (a one-word confirmation is fully read in
-// that time) and capped at 8s so a long message cannot hold the screen
-// hostage. One word → 2s; three words → 2.25s; a 15-word error → 6.45s.
+// Auto sizes the duration to the message: ~350ms per word plus ~2.5s to
+// notice the toast and find it, floored at 4s and capped at 10s so a long
+// message cannot hold the screen hostage. Two words → 4s; fifteen → 7.75s.
+// (It was 1.2s and a 2s floor: a toast on a phone, in the corner of the eye,
+// was gone before it was read.)
 func Auto() Duration {
-	return Duration{millis: func(msg string) int {
+	return Duration{auto: true, millis: func(msg string) int {
 		words := Count(msg, " ") + 1
-		ms := 1200 + words*350
-		if ms < 2000 {
-			return 2000
+		ms := 2500 + words*350
+		if ms < 4000 {
+			return 4000
 		}
-		if ms > 8000 {
-			return 8000
+		if ms > 10000 {
+			return 10000
 		}
 		return ms
 	}}
 }
+
+// An error left to Auto() is persistent: the platform, not each caller, owns
+// the rule that an error must not vanish before it is read (see Notify).
 
 // Persistent keeps the notification until the user dismisses it. The case
 // for it is error reporting: a message that vanishes before it is read
@@ -241,6 +257,7 @@ func For(ms int) Duration {
 func (p *Platform) Init(ctx Ctx) {
 	p.active = NewString("")
 	p.menuOpen = NewBool(false)
+	p.brandOpen = NewBool(false)
 	p.expandedGroup = NewString("")
 	p.notifications = NewNodes()
 	p.notificationsMobile = NewNodes()
@@ -493,6 +510,67 @@ func (p *Platform) brand() *Element {
 	return slot
 }
 
+// appMenu is the header's leading control: the app's mark, which opens a small
+// panel with the app's name and version. It follows the user menu's native
+// <details> pattern (no script; a viewport backdrop closes it with a tap
+// anywhere else). The drawer's own brand, on a phone, stays the "go home"
+// control: there the name is the head of the panel, so nothing competes.
+func (p *Platform) appMenu() *Element {
+	name := p.AppName
+	if p.Brand != nil {
+		name = p.Brand.BrandName()
+	}
+
+	trigger := Summary().Set(clsBrandTrigger.AsAttr()).Attr("aria-label", name)
+	if p.Brand != nil {
+		if url := p.Brand.BrandMark(); url != "" {
+			trigger.Child(NewElement("img").
+				Set(clsBrandMark.AsAttr()).
+				Attr("src", url).
+				Attr("alt", "").
+				Attr("loading", "lazy"))
+		} else {
+			trigger.Child(IconBrand.Render(string(clsBrandMark)))
+		}
+	} else {
+		trigger.Child(IconBrand.Render(string(clsBrandMark)))
+	}
+
+	panel := Div().Set(clsBrandPanel.AsAttr()).
+		Child(Span().Set(clsBrandPanelName.AsAttr()).Text(name))
+	if p.AppVersion != "" {
+		panel.Child(Span().Set(clsBrandPanelVer.AsAttr()).Text(p.AppVersion))
+	}
+
+	// Mirrored into a signal because <details> writes its native `open` onto
+	// itself, which the backdrop (a sibling) cannot select on — the user menu's
+	// mechanism, same reason.
+	backdrop := Div().Set(clsBrandBackdrop.AsAttr()).
+		BindStateFunc(widget.Open, func() bool { return p.brandOpen.Get() })
+
+	menu := Details().Set(clsBrandMenu.AsAttr()).
+		Child(trigger).
+		Child(backdrop).
+		Child(panel)
+
+	// The header toggles the phone drawer on any tap: a tap that opens this
+	// panel must not also open the drawer.
+	menu.OnClick(func(e Event) { e.StopPropagation() })
+	menu.OnToggle(func(Event) {
+		if ref, ok := menu.Ref(); ok {
+			p.brandOpen.Set(ref.GetAttr("open") != "<null>")
+		}
+	})
+	backdrop.OnClick(func(Event) {
+		if ref, ok := menu.Ref(); ok {
+			ref.RemoveAttr("open")
+		}
+		p.brandOpen.Set(false)
+	})
+
+	return menu
+}
+
 func (p *Platform) userMenu() Component {
 	var actions Component
 	if p.UserActions != nil {
@@ -542,30 +620,18 @@ func (p *Platform) Render() *Element {
 		BindStateFunc(widget.Open, func() bool { return !p.navStowed.Get() || p.menuOpen.Get() }).
 		OnClick(func(Event) { p.menuOpen.Toggle() })
 
-	// The leading slot: app mark / brand glyph and name.
-	if p.Brand != nil {
-		brandSlot := Div().Set(clsBrand.AsAttr())
-		if url := p.Brand.BrandMark(); url != "" {
-			brandSlot.Child(NewElement("img").
-				Set(clsBrandMark.AsAttr()).
-				Attr("src", url).
-				Attr("alt", p.Brand.BrandName()).
-				Attr("loading", "lazy"))
-		} else {
-			brandSlot.Child(IconBrand.Render(string(clsBrandMark)))
-		}
-		brandSlot.Child(Span().Set(clsHeaderBrandName.AsAttr()).Text(p.Brand.BrandName()))
-		header.Child(brandSlot)
-	} else if p.AppName != "" {
-		brandSlot := Div().Set(clsBrand.AsAttr())
-		brandSlot.Child(IconBrand.Render(string(clsBrandMark)))
-		brandSlot.Child(Span().Set(clsHeaderBrandName.AsAttr()).Text(p.AppName))
-		header.Child(brandSlot)
+	// The leading slot: the app's mark. The app's NAME and version are not
+	// drawn here — they compete with the module's name, which is what the
+	// person is looking at — but are one tap away, in the panel the mark opens.
+	if p.Brand != nil || p.AppName != "" {
+		header.Child(p.appMenu())
 	}
 
-	// The center slot: dynamic active module title.
+	// The module's name, large beside the app's mark on a desktop, centred on a
+	// phone. It is the page's single <h1> (an accessibility contract: one h1 per
+	// page); inside the content only <h2> sections exist.
 	headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
-		Child(Span().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
+		Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
 	header.Child(headerTitle)
 
 	// Chassis singleton: one per page by construction, so a stable global id is
@@ -885,6 +951,30 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 // — hand them Persistent(), or a generous For().
 func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 	p.mu.Lock()
+	// An error whose length was left to the platform stays until dismissed
+	// (WCAG 2.2.1): a message that vanishes before it is read defeats the
+	// report. An explicit For(ms) is the caller's decision and is respected.
+	if t == msgtype.Error && d.auto {
+		d = Persistent()
+	}
+	// The same message already on screen is not stacked again — a failing
+	// auto-save would otherwise pile one identical toast per field commit.
+	// A timed one gets its window restarted instead.
+	for i := range p.rawNotifications {
+		n := &p.rawNotifications[i]
+		if n.Type != t || n.Msg != msg {
+			continue
+		}
+		if n.timer != nil && d.millis != nil {
+			ms := d.millis(msg)
+			n.timer.Stop()
+			id := n.ID
+			n.expiryNs = time.Now() + int64(ms)*1e6
+			n.timer = time.AfterFunc(ms, func() { p.dismiss(id) })
+		}
+		p.mu.Unlock()
+		return
+	}
 	ms := 0
 	if d.millis != nil {
 		ms = d.millis(msg)

@@ -6,7 +6,6 @@ import (
 	"testing"
 
 	"webtyp.com/components/searchbar"
-	"webtyp.com/fmt"
 	"webtyp.com/form"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
@@ -47,11 +46,6 @@ func TestConsumer_Wasm_Render(t *testing.T) {
 	root := v.Render()
 	if root == nil {
 		t.Fatal("expected rendered root element to be non-nil")
-	}
-
-	html := root.String()
-	if !fmt.Contains(html, "Custom Search Title") {
-		t.Errorf("expected html to contain the title, got: %s", html)
 	}
 
 	// The presenter's placeholder travels with the filter control — the

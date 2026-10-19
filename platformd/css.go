@@ -29,10 +29,12 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// A slim bar, not a banner: Space1 padding and the IconMd avatar keep
 		// it near 40px — the header frames the stage, it does not compete
 		// with it.
+		// The primary surface at every width: the header is the app's own chrome
+		// (the module name, the user, the status), and its text reads on-primary.
 		Part(widget.Part("header"),
 			style.Row(style.Space2),
 			style.KeepSize(),
-			style.As(style.Panel),
+			style.As(style.Primary),
 			style.Pad(style.Space1),
 			style.EdgeToEdge(),
 		).
@@ -54,21 +56,64 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.FontWeight(style.WeightBold),
 			style.KeepSize(),
 		).
-		Part(widget.Part("header-brand-name"),
-			style.FontSize(style.TextBase),
-			style.FontWeight(style.WeightBold),
+		// The module's name is the header's one large thing on a desktop (the size
+		// the module's own title band used to have); a phone keeps its smaller,
+		// centred title.
+		Part(widget.Part("header-title"),
+			style.Row(style.Space2),
 			style.KeepSize(),
 		).
-		OnlyOn(css.Mobile, widget.Part("header-title"),
-			style.Row(style.Space2),
+		On(css.Mobile, widget.Part("header-title"),
 			style.CenterContent(),
 			style.Fill(),
 		).
-		OnlyOn(css.Mobile, widget.Part("header-title-text"),
+		Part(widget.Part("header-title-text"),
 			style.Row(style.SpaceNone),
-			style.FontSize(style.TextBase),
+			style.FontSize(style.Text2xl),
 			style.FontWeight(style.WeightBold),
 			style.KeepSize(),
+		).
+		On(css.Mobile, widget.Part("header-title-text"),
+			style.FontSize(style.TextBase),
+		).
+		// The app's mark opens a small panel with its name and version. The panel
+		// hangs from it like the user menu's, with a viewport backdrop that
+		// catches the tap that closes it.
+		Part(widget.Part("brand-menu"),
+			style.Anchor(),
+			style.KeepSize(),
+		).
+		// Just the mark: nothing around it. No Button() recipe — its control box
+		// (the shared control height) is taller than the header bar and drew a
+		// pill behind the icon; the mark sits on the header like the hamburger's
+		// glyph does.
+		Part(widget.Part("brand-trigger"),
+			style.Row(style.SpaceNone),
+			style.CenterContent(),
+			style.As(style.Bare),
+			style.Interactive(style.Bare),
+			style.KeepSize(),
+		).
+		Part(widget.Part("brand-panel"),
+			style.Stack(style.Space1),
+			style.As(style.Panel),
+			style.Round(style.RadiusMd),
+			style.Pad(style.Space3),
+			style.Width(style.Content),
+			style.Raise(style.Floating),
+			style.Flyout(style.SideStart),
+		).
+		Part(widget.Part("brand-panel-name"),
+			style.FontSize(style.TextBase),
+			style.FontWeight(style.WeightBold),
+		).
+		Part(widget.Part("brand-panel-version"),
+			style.FontSize(style.TextXs),
+			style.Glyph(style.Inactive),
+		).
+		Part(widget.Part("brand-backdrop"),
+			style.Backdrop(style.Viewport),
+			style.RevealedBy(widget.Open),
 		).
 
 		// Fill() here is what pushes header-right to the far edge: it grows to
@@ -106,7 +151,12 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// already rely on (a plain-text toast never had an icon to pair the
 		// color with anyway — WCAG 1.4.1 wants a second channel for a
 		// color-coded signal, and there wasn't one).
-		Part(widget.Part("msg"), style.KeepSize(), style.Glyph(style.Primary)).
+		Part(widget.Part("msg"),
+			style.As(style.Inverse),
+			style.Round(style.RadiusSm),
+			style.PadInline(style.Space3),
+			style.KeepSize(),
+		).
 		Part(widget.Part("header-right"),
 			style.Row(style.Space2),
 			style.KeepSize(),
@@ -482,12 +532,16 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// off-screen when the user scrolls down.
 		On(css.Mobile, widget.Part("header"),
 			style.AppBar(widget.Open, style.MotionBase),
-			style.As(style.Primary),
+		).
+		// Off a phone the mark and the user menu must not sit against the frame
+		// edge: the phone's bar is padded by its AppBar, a desktop's is not.
+		On(css.Tablet, widget.Part("header"),
+			style.PadInline(style.Space3),
+		).
+		On(css.Desktop, widget.Part("header"),
+			style.PadInline(style.Space3),
 		).
 		On(css.Mobile, widget.Part("header-right"),
-			style.Hide(),
-		).
-		On(css.Mobile, widget.Part("header-brand-name"),
 			style.Hide(),
 		).
 		On(css.Mobile, widget.Part("msg-slot"),
@@ -540,6 +594,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Stack(style.Space2),
 			style.KeepSize(),
 			style.Docked(style.Viewport, style.EdgeTop, style.SideEnd, style.Space3),
+			style.DockedClear(style.Space12),
 		).
 		OnlyOn(css.Mobile, widget.Part("msg-slot-mobile"),
 			style.Stack(style.Space2),
@@ -570,8 +625,6 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// triplet carries no border, so the chip is a clean fill with no
 		// outline to clash with Raise's shadow.
 		On(css.Mobile, widget.Part("msg"),
-			style.As(style.Primary),
-			style.Round(style.RadiusSm),
 			style.Raise(style.Floating),
 			style.Pad(style.Space2),
 		).

@@ -3,13 +3,13 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.8.30
+	webtyp.com/components v0.8.34
 	webtyp.com/css v0.4.30
 	webtyp.com/date v0.0.9
 	webtyp.com/dom v0.13.26
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
-	webtyp.com/form v0.4.41
+	webtyp.com/form v0.4.43
 	webtyp.com/html v0.0.27
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.20

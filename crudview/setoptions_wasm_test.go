@@ -70,7 +70,8 @@ func TestSetOptions_FillsLiveSelect(t *testing.T) {
 	if sel.IsNull() || sel.IsUndefined() {
 		t.Fatal("select floor_id not rendered")
 	}
-	if n := sel.Get("options").Get("length").Int(); n != 2 {
+	// The select's first option is the "Select an option" prompt; the choices follow.
+	if n := sel.Call("querySelectorAll", "option:not([value=\"\"])").Get("length").Int(); n != 2 {
 		t.Fatalf("live <select> has %d options, want 2", n)
 	}
 }

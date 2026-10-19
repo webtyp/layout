@@ -16,7 +16,6 @@ func TestActionGrowsInsteadOfFillingTheRow(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -37,7 +36,6 @@ func TestFooterButtonsShareTheControlHeight(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -65,7 +63,6 @@ func TestDeleteButtonTurnsRedOnlyWhileDeleting(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -100,7 +97,6 @@ func TestFooterButtonsCentreTheirGlyphWhenRevealed(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}

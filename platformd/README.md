@@ -2,6 +2,12 @@
 
 Shell layout with hash-based routing, nav rail, header, and notifications.
 
+The header is the primary surface at every width and carries the page's single
+`<h1>`: the module's name (inside a `GroupModule`, the active child's label), large,
+beside the app's mark; centred and smaller on a phone. The mark opens a panel with
+the app's name and `Platform.AppVersion` (optional). Modules draw no title of their
+own.
+
 ## Usage
 
 A module is anything satisfying `platformd.UIModule` — `ModelName()` is its id

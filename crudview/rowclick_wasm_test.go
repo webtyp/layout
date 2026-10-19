@@ -32,7 +32,7 @@ func TestRowClick_WritesDataSelected(t *testing.T) {
 	}
 	p := view.New(fb, &Device{})
 
-	v := &CrudView{Title: "Wasm Test", Presenter: p}
+	v := &CrudView{Presenter: p}
 	v.Init(&mockCtxWasm{})
 	v.SetID("cv")
 	v.Reload(nil)

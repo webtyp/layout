@@ -34,7 +34,7 @@ func TestCrudView_DeleteConfirm_Language(t *testing.T) {
 	// In WASM the dialog's body is filled when it is mounted (Show), so it is
 	// mounted and read from the live DOM.
 	openDialog := func() string {
-		v := &CrudView{Title: "Test CRUD"}
+		v := &CrudView{}
 		v.Init(&mockCtx{})
 		v.deleteLabel.Set("Device One")
 		if err := dom.Render("app", v.confirmDelete); err != nil {

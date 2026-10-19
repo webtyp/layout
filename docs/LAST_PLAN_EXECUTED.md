@@ -1,127 +1,127 @@
 ---
-PLAN: "feat: add accordion subnavigation support for group modules in platformd"
-TAG: v0.3.40
+PLAN: "feat(layout)!: module title moves to the platformd header; rightpanel loses its title band; crudview Context → Scope in the list header"
 EXECUTOR: jules
 REVIEWER: none
 ---
 
-> This plan is dispatched via the CodeJob workflow. See skill: agents-workflow.
+> Read AGENTS.md at the repo root before any change.
 
-# Plan: Sub-navegación Acordeón en platformd
+# Plan — the module title belongs to the shell
 
-Este plan implementa soporte nativo para módulos con sub-pantallas jerárquicas en `platformd`. Transforma el botón de navegación del módulo en un acordeón desplegable hacia abajo. Al pulsarlo por primera vez, se abre el acordeón y se activa automáticamente el primer elemento hijo más cercano (de arriba hacia abajo), eliminando clics redundantes. Un segundo clic sobre el padre abierto colapsa el acordeón.
+## Tools — install before anything else
 
----
+```bash
+go install webtyp.com/devflow/cmd/gotest@latest
+```
+
+## Problem
+
+On desktop each module draws its own title band inside the content (`rightpanel`'s `<h1>` "Catálogo"
+in a gradient band, plus `HeadControls` beside it), while the `platformd` header shows the active
+module's name **only on phones**. Modules that do not use `rightpanel` have no title at all, so screens
+look different from each other and the band wastes the top of every screen. Decided (master plan
+`UI_CONSISTENCY`, D6, P12–P15):
+
+- **Phone: unchanged.**
+- **Desktop:** the header shows, at its leading edge, `[mark] [app name] / [active module name]`;
+  the whole header bar uses the primary surface (as it already does on phones), text and icons white
+  (on-primary). The module name is the page's single `<h1>`.
+- For a module inside a `GroupModule`, the name shown is the **active child's** label (what
+  `activeLabel()` already returns).
+- `rightpanel` has no title band any more; the article starts at the top.
+- A control that **filters the list** (which professional's records are shown) lives in the list's
+  header, above the search box — crudview's `Config.Context` becomes `Config.Scope` and moves there.
+  A control that is a **value of the record** is a form field (consumers move it in their own plans).
 
 ## Design gate
 
-### 1. Prior art
-- **Tailwind UI / Shadcn Sidebar:** El sidebar con sub-menús en acordeón (*Collapsible Menu Item*) donde hacer clic en la cabecera del grupo navega o despliega los sub-enlaces jerárquicos.
-- **VS Code Activity Bar / Explorer:** Las secciones en acordeón expanden su contenido y mantienen el contexto activo visible sin invadir la zona central del editor.
-- **Material Design 3 Navigation Drawer:** Sub-niveles de navegación (*Nested Navigation Rail Items*) con indentación y visualización del elemento activo mediante variante visual acentuada.
+1. **Prior art.** Android/Material `TopAppBar` and Flutter `Scaffold.appBar` (the screen title is the
+   shell's; the screen supplies only the body), iOS `UINavigationBar` (`navigationItem.title` drawn by
+   the navigation controller), Polaris `Page title` rendered by the frame. All put the title in the
+   chrome so every screen has it in the same place.
+2. **Novice-name.** `Config.Scope` / `CrudView.Scope`: "the scope of the list" — what the selector
+   does. `Context` described the legacy screen it mirrored, not what it does. No other new name.
+3. **Ledger.**
+   ```
+   Concepts                 −3  (RightPanel.Title, RightPanel.Head, RightPanel.HeadControls)
+   Lines at call site       −1  (no Title per screen)
+   Ways to show a title     2 → 1 (header only)
+   ```
+4. **Where it belongs.** Screen title: `platformd` (it knows the active module). List scope:
+   `crudview`, beside the filter it sits with. `rightpanel` stays a two-column skeleton only.
+5. **What it deletes.** `RightPanel.Title`, `RightPanel.Head`, `RightPanel.HeadControls`, the parts
+   `title-row`, `title`, `controls` and the `header` element of `rightpanel`; `CrudView.Context` and
+   `Config.Context` (renamed, not kept as alias); `CrudView.Title`'s use as a heading (see Stage 2).
 
-### 2. Novice-name test
-`GroupModule` y `NewGroupUIModule`: describe con precisión que el módulo agrupa sub-módulos `UIModule` que cuelgan jerárquicamente de él.
+## Stage 1 — `rightpanel`
 
-### 3. Complexity ledger
-- Introduce la interfaz `GroupModule` (capacidad opcional, sin romper `UIModule`).
-- Añade el helper `NewGroupUIModule(id, label string, icon svg.Icon, children []UIModule) UIModule`.
-- Mantiene compatibilidad regresiva completa: los módulos existentes planos siguen funcionando sin cambios.
+1. `rightpanel.go`: delete the fields `Title`, `Head`, `HeadControls`; delete the header row built in
+   `Render` (`header`, `titleRow`, the `H1`, the `HeadControls` div) and the part constants/classes
+   `partTitleRow`, `partTitle`, `partHeadControls`, `clsHeader`, `clsTitleRow`, `clsTitle`,
+   `clsHeadControls`. `main` now holds only the article. Update the usage comment.
+2. `css.go`: delete the rules for those parts and any comment that refers to them.
+3. Drop the `webtyp.com/lang` import if unused.
 
-### 4. Where it belongs
-Pertenece estrictamente a `webtyp.com/layout/platformd`, el chasis de navegación de aplicaciones.
+## Stage 2 — `crudview`
 
-### 5. What it deletes
-Elimina la necesidad de incrustar widgets de pestañas como `decktabs` dentro del área de trabajo del contenido (`View()`), liberando espacio vertical y unificando la navegación en la barra lateral.
+1. Rename `Config.Context` → `Config.Scope` (`crud.go`) and `CrudView.Context` → `CrudView.Scope`
+   (`crudview.go`). Doc comment: "Scope is a selector that decides which records the list shows (e.g.
+   which professional). It is rendered in the list header above Filter. Changing it re-scopes the data:
+   the composing module reloads its presenter; crudview only renders it. A value that belongs to the
+   record is a form field, never a Scope."
+2. Where `crudview.go` builds `rightpanel.RightPanel` (today `Title: v.Title, … HeadControls:
+   v.Context`): remove `Title` and `HeadControls`; set `AsideControls` to a stack containing `v.Scope`
+   (when non-nil) then `v.Filter` (when non-nil); one of them alone is passed as is, both nil → nil.
+   The stack is a `Div` with a crudview part `scope-controls` styled `Stack(Space2)` in `css.go`.
+3. `CrudView.Title` and `Config`'s title from `Presenter.Title()` stay for non-heading uses (confirm
+   dialog text, aria labels) if any exist; if after step 2 nothing reads `Title`, delete it.
 
----
+## Stage 3 — `platformd` header
 
-## Etapas de Ejecución
+`platformd.go`:
 
-### Etapa 1: Interfaz de Capacidad y Constructor en `platformd`
-- **Archivos a modificar:**
-  - `layout/platformd/capabilities.go`:
-    Definir la interfaz `GroupModule`:
-    ```go
-    // GroupModule is an optional capability of UIModule representing a module containing sub-modules.
-    type GroupModule interface {
-        UIModule
-        Children() []UIModule
-    }
-    ```
-  - `layout/platformd/factory.go`:
-    Implementar el tipo privado `uiGroupModule` y el constructor público:
-    ```go
-    func NewGroupUIModule(id, label string, icon svg.Icon, children []UIModule) UIModule
-    ```
-    Don't panic on empty children. Si se llama a `Activate()`, delega en el primer hijo si está presente.
+1. The header title element becomes an `H1` (today `Span` with `clsHeaderTitleText`) bound to
+   `p.activeLabel` — the page's single `<h1>`.
+2. Order inside the header: brand slot, a separator `Span` with part `header-sep` text `/`, the title,
+   then msg-slot, right, hamburger (unchanged).
 
-### Etapa 2: Estado del Acordeón y Lógica de Interacción en `platformd.go`
-- **Archivos a modificar:**
-  - `layout/platformd/platformd.go`:
-    - Añadir campo interno a `*Platform`:
-      ```go
-      expandedGroup *SignalString // ID del GroupModule actualmente desplegado
-      ```
-    - Inicializar en `Init()`:
-      ```go
-      p.expandedGroup = NewString("")
-      ```
-    - En el renderizado de la barra de navegación (`p.navbar`):
-      - Iterar sobre `p.Modules`.
-      - Si `m` satisface `GroupModule`:
-        - Obtener sus hijos con `m.(GroupModule).Children()`.
-        - Renderizar el disparador del grupo (botón o enlace padre) con clase `clsNavGroup` / `clsNavLink`.
-        - Manejar el evento `OnClick`:
-          - Si `p.expandedGroup.Get() != id`:
-            - Abrir el grupo: `p.expandedGroup.Set(id)`.
-            - Si tiene al menos un hijo: activar inmediatamente el primer hijo `p.Activate(children[0].ModelName())`.
-          - Si `p.expandedGroup.Get() == id`:
-            - Cerrar el grupo: `p.expandedGroup.Set("")`.
-        - Renderizar el sub-menú contenedor `<ul>` con clase `clsSubmenu`.
-        - Vincular el estado de apertura del sub-menú: `BindStateFunc(widget.Open, func() bool { return p.expandedGroup.Get() == id })`.
-        - Renderizar cada hijo como un sub-enlace `clsSubnavLink` con su respectivo ícono y etiqueta, apuntando a `#` + child ID, con `BindStateFunc(widget.Current, func() bool { return p.active.Get() == childID })`.
-      - En el renderizado del escenario principal (`stage`):
-        - Para cada módulo `m`, si es `GroupModule`, montar en el DOM las secciones `<section class="pd__panel">` correspondientes a cada uno de sus hijos.
-    - En `Activate(moduleID)`:
-      - Si `moduleID` corresponde a un hijo de un `GroupModule`, asegurar que `p.expandedGroup.Set(parentID)` se ejecute para mantener el acordeón abierto.
-      - Si `moduleID` corresponde a un módulo plano independiente, cerrar los grupos: `p.expandedGroup.Set("")`.
+`css.go`:
 
-### Etapa 3: Reglas de Estilos en `css.go`
-- **Archivos a modificar:**
-  - `layout/platformd/css.go`:
-    - Definir `PartSubmenu` y `PartSubnavLink`.
-    - Reglas de estilo para el sub-menú:
-      - Colapsado por defecto: oculto cuando no tiene `[data-open="true"]`.
-      - Desplegado: `RevealedBy(widget.Open)` con animación suave de apertura.
-      - Indentación para sub-enlaces (`PadStart(Space3)` en desktop y mobile).
-      - Resaltado de sub-enlace activo con `When(widget.Current, ...)` coherente con el estilo de `platformd`.
+1. Header: `As(style.Primary)` at every width (move it out of the mobile-only rule; the mobile rule
+   keeps `AppBar(...)`).
+2. `header-title` and `header-title-text`: today `OnlyOn(css.Mobile, …)`. Desktop: shown, left-aligned
+   right after the separator, `FontSize(TextBase)`, `FontWeight(WeightBold)`, `KeepSize()`. Mobile: keep
+   the current rules exactly (centred, the brand name hidden).
+3. `header-sep`: shown only on desktop (`OnlyOn(css.Desktop, …)` or the equivalent `Hide()` on
+   mobile used elsewhere in this file), `Glyph(...)` inheriting the on-primary text.
+4. Brand mark, brand name, user menu trigger and status in the header read on the primary surface
+   (on-primary text/glyph). Use the surface's own on-colour; never a hand-written colour.
 
-### Etapa 4: Tests Unitarios
-- **Archivos a modificar:**
-  - `layout/platformd/platformd_test.go`:
-    - Crear test `TestPlatform_GroupModule_Accordion`:
-      - Registrar un `GroupModule` con 2 sub-módulos hijos.
-      - Verificar que al hacer clic en el padre se activa el primer hijo.
-      - Verificar que un segundo clic sobre el padre colapsa el acordeón (`expandedGroup` pasa a vacío).
-      - Verificar que al activar un sub-módulo mediante hash directo `#group.child2`, el acordeón del padre se expande automáticamente y el panel del hijo adquiere el estado `Current`.
+## Stage 4 — tests: behaviour only, never the look
 
----
+- Delete the tests of `Title`/`Head`/`HeadControls` and every assertion on the removed parts' styles
+  (`consumer_stylesheet_test.go` entries included).
+- `crudview`: rename `context_test.go` → `scope_test.go`; keep the behaviour it asserts (the scope
+  control is never wired to the list filter).
+- `platformd`: the page has exactly one `h1` and it holds the active module's label, including the
+  active child of a `GroupModule` (an accessibility contract: one `h1` per page).
+- No test asserts colours, surfaces or CSS declarations.
 
-## Tabla de Entregables de Etapas
+## Stage 5 — docs
 
-| Etapa | Archivo | Acción | Descripción |
-|-------|---------|--------|-------------|
-| 1 | `layout/platformd/capabilities.go` | MODIFICAR | Interfaz `GroupModule` |
-| 1 | `layout/platformd/factory.go` | MODIFICAR | Constructor `NewGroupUIModule` |
-| 2 | `layout/platformd/platformd.go` | MODIFICAR | Lógica de acordeón, click en padre y enrutamiento de hijos |
-| 3 | `layout/platformd/css.go` | MODIFICAR | Estilos para sub-menús e ítems de acordeón |
-| 4 | `layout/platformd/platformd_test.go` | MODIFICAR | Pruebas unitarias de comportamiento y regresión |
+`rightpanel/README.md`, `crudview` docs, `platformd/README.md`, `docs/ARCHITECTURE.md`: remove
+`Title`/`Head`/`HeadControls`/`Context`; document `Scope` with the record-value vs list-scope rule;
+document the desktop header `[mark] [app] / [module]`.
 
----
+## Acceptance
 
-## Criterios de Aceptación
-1. `gotest ./...` ejecuta todos los tests en verde en `webtyp/layout`.
-2. No se rompe la retrocompatibilidad con módulos simples existentes de `UIModule`.
-3. Al despachar este plan, ningún archivo fuera de `webtyp/layout` es alterado.
+- `grep -rn "HeadControls\|\.Context\b\|Config.Context\|partTitleRow" --include=*.go .` → empty.
+- `gotest ./...` green (stdlib + wasm).
 
+| Stage | Files |
+|---|---|
+| 1 | `rightpanel/rightpanel.go`, `rightpanel/css.go` |
+| 2 | `crudview/crud.go`, `crudview/crudview.go`, `crudview/css.go` |
+| 3 | `platformd/platformd.go`, `platformd/css.go` |
+| 4 | `rightpanel/*_test.go`, `crudview/scope_test.go` (from `context_test.go`), `platformd/platformd_test.go`, `*/consumer_stylesheet_test.go` (removed parts) |
+| 5 | `rightpanel/README.md`, `platformd/README.md`, `docs/ARCHITECTURE.md`, crudview docs |

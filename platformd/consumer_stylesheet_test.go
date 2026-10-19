@@ -232,7 +232,7 @@ func TestMsgStackDockedTopEnd(t *testing.T) {
 	if mb == "" {
 		t.Fatal("expected a mobile .pd__msg-stack block carrying the docked top-end pin")
 	}
-	for _, want := range []string{"position: fixed", "inset-block-start: var(--space-3", "inset-inline-end: var(--space-3"} {
+	for _, want := range []string{"position: fixed", "inset-block-start: calc(var(--space-3", "inset-inline-end: var(--space-3"} {
 		if !strings.Contains(mb, want) {
 			t.Errorf(".pd__msg-stack should contain %q, block:\n%s", want, mb)
 		}
@@ -366,6 +366,7 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	// stylesheet rule with no markup behind it.
 	p := &Platform{
 		AppName:     "Test App",
+		AppVersion:  "v1.2.3",
 		Brand:       testBrand{name: "Acme", mark: "https://example.com/logo.svg"},
 		User:        testIdentity{},
 		UserActions: func() dom.Component { return html.Div().Text("actions") },
@@ -378,7 +379,6 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 		},
 	}
 	p.Init(NilCtx())
-
 
 	// Queue notifications of all types so the class-parity check below sees
 	// every toast shape that Notify can produce. Persistent: no timers
@@ -527,31 +527,14 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	}
 }
 
-// TestMessageColorHasOnlyOneSource is the regression net for a reported bug:
-// a success toast read green on desktop and black on mobile, and the delete-
-// confirmation dialog was a third color again, because each surface declared
-// its own. The mobile msg rule (On(css.Mobile, "msg", As(...))) and four
-// severity variants (Part("msg-info"/"-success"/"-warning"/"-error"),
-// Glyph(...)) had equal CSS specificity; since @media rules are grouped and
-// emitted after the base rules regardless of where they are declared in Go,
-// the mobile color always won — every severity read as the same near-black
-// on a phone while desktop still showed its tint.
-//
-// The fix collapsed the four variants into one identity (the system's own
-// Primary blue) instead of reconciling their specificity: a plain-text toast
-// with no icon had no second channel carrying severity to sighted users
-// anyway, so color was the entire signal, and it was already silently broken
-// for every phone. role="status"/"alert" (toastNodes in platformd.go) is what
-// actually carries severity to assistive tech, unaffected by any of this.
-//
-// One identity does not mean one literal CSS declaration, though: desktop
-// keeps text-only blue (Glyph(Primary), no background — a slab would compete
-// with the header it sits on) while mobile fills the chip solid with white
-// text (As(Primary) — the content around it went white in the same pass that
-// caused this report, so a tint-only toast would have blended straight into
-// it). Both are Primary; what this test pins down is that BOTH read the exact
-// same token pair for their role, so a future edit to one cannot quietly
-// leave the other behind the way ColorOnSurface/ColorSuccess/etc. did before.
+// Every notification wears the SAME identity, the inverse surface (body ink as
+// the fill, the page colour as the text), whatever its severity and on every
+// device: it is visible over the primary header, over white content and in the
+// dark theme, which a brand colour is not (the primary toast was lost on the
+// primary header). Severity travels in role="status"/"alert" (toastNodes in
+// platformd.go), never in colour. What this test pins down is that there is ONE
+// source for the colours: the base rule carries them, the phone rule only adds
+// elevation and padding and cannot drift from it.
 func TestMessageColorHasOnlyOneSource(t *testing.T) {
 	p := &Platform{}
 	p.Init(NilCtx())
@@ -568,27 +551,19 @@ func TestMessageColorHasOnlyOneSource(t *testing.T) {
 	} {
 		if Contains(cssStr, sel) {
 			t.Errorf("found %q — severity-specific message styling must not exist; "+
-				"style .pd__msg once and let every device reinterpret the same Primary "+
+				"style .pd__msg once and let every device reinterpret the same "+
 				"identity for its own background", sel)
 		}
 	}
 
-	// Desktop (the first, unconditional ".pd__msg {" rule — Glyph(Primary)
-	// alone, no As(), so nothing here can also set a background): text-only
-	// blue, no fill.
-	desktop := ruleBlock(cssStr, ".pd__msg {")
-	if desktop == "" {
+	base := ruleBlock(cssStr, ".pd__msg {")
+	if base == "" {
 		t.Fatal("expected a base rule for .pd__msg")
 	}
-	if !Contains(desktop, css.ColorPrimary.LightValue()) {
-		t.Errorf(".pd__msg (desktop) must use ColorPrimary (%s) as its text color, block:\n%s",
-			css.ColorPrimary.LightValue(), desktop)
-	}
-	if Contains(desktop, "background-color") {
-		t.Errorf(".pd__msg (desktop) must stay text-only, no background, block:\n%s", desktop)
+	if !Contains(base, "background-color: var(--color-on-surface)") || !Contains(base, "color: var(--color-background)") {
+		t.Errorf(".pd__msg must be the inverse surface (ink fill, page-colour text), block:\n%s", base)
 	}
 
-	// Mobile: the filled counterpart — blue background, white text.
 	maxWIdx := strings.Index(cssStr, "@media (max-width")
 	if maxWIdx == -1 {
 		t.Fatal("expected a mobile (max-width) media query")
@@ -597,26 +572,9 @@ func TestMessageColorHasOnlyOneSource(t *testing.T) {
 	if next := strings.Index(mobileRegion[1:], "@media"); next != -1 {
 		mobileRegion = mobileRegion[:next+1]
 	}
-	mobile := ruleBlock(mobileRegion, ".pd__msg {")
-	if mobile == "" {
-		t.Fatal("expected a mobile rule for .pd__msg")
-	}
-	if !Contains(mobile, "background-color: "+css.ColorPrimary.LightValue()) {
-		t.Errorf(".pd__msg (mobile) must fill with ColorPrimary (%s), block:\n%s",
-			css.ColorPrimary.LightValue(), mobile)
-	}
-	if !Contains(mobile, css.ColorOnPrimary.LightValue()) {
-		t.Errorf(".pd__msg (mobile) must pair the fill with ColorOnPrimary (%s) text, block:\n%s",
-			css.ColorOnPrimary.LightValue(), mobile)
-	}
-
-	// Neither rule may reach for a severity tint or the plain body ink —
-	// both are exactly the bugs this test exists to keep out.
-	for _, b := range []string{desktop, mobile} {
-		for _, tok := range []css.Token{css.ColorSuccess, css.ColorDanger, css.ColorAccent, css.ColorMuted, css.ColorOnSurface} {
-			if Contains(b, tok.LightValue()) {
-				t.Errorf("message rule must not carry %s (%s), block:\n%s", tok.Name, tok.LightValue(), b)
-			}
+	if mobile := ruleBlock(mobileRegion, ".pd__msg {"); mobile != "" {
+		if Contains(mobile, "color:") || Contains(mobile, "background") {
+			t.Errorf(".pd__msg (mobile) must not redeclare colours, block:\n%s", mobile)
 		}
 	}
 }

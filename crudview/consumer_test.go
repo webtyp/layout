@@ -130,7 +130,7 @@ func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text   { return "Searc
 func (f *fakeNoWidgetsPresenter) Record() model.Model            { return f.record }
 func (f *fakeNoWidgetsPresenter) Items() []view.Item             { return nil }
 func (f *fakeNoWidgetsPresenter) Filter(term string) []view.Item { return nil }
-func (f *fakeNoWidgetsPresenter) Reload(done func(error))             { done(nil) }
+func (f *fakeNoWidgetsPresenter) Reload(done func(error))        { done(nil) }
 func (f *fakeNoWidgetsPresenter) Selected() string               { return "" }
 func (f *fakeNoWidgetsPresenter) Select(id string) model.Model   { return nil }
 func (f *fakeNoWidgetsPresenter) Deselect()                      {}

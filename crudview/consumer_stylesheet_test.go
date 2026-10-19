@@ -47,7 +47,6 @@ func TestCrudView_ControlAndEdgeAsserts(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -80,7 +79,6 @@ func TestListDeclaresFloatingChromeOnMobileOnly(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -124,7 +122,7 @@ func TestListDeclaresFloatingChromeOnMobileOnly(t *testing.T) {
 func TestFooterButtonsAre50SquareOnMobile(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
-	v := &CrudView{Title: "CRUD", Presenter: p, Form: html.Div(), Filter: html.Div()}
+	v := &CrudView{Presenter: p, Form: html.Div(), Filter: html.Div()}
 	v.Init(&fakeCtx{})
 	cssStr := v.RenderCSS().String()
 
@@ -166,7 +164,6 @@ func TestNoManualFloatingReservation(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -190,7 +187,6 @@ func TestListCardMatchesFormIndentOnMobile(t *testing.T) {
 	fb := &conformance.FakeLister{}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 	}
@@ -234,7 +230,6 @@ func TestConsumer_StylesheetAsserts(t *testing.T) {
 	fb := &conformance.FakeLister{ActionList: []view.Action{{Op: "apply", Label: "Apply"}}}
 	p := view.New(fb, &Device{})
 	v := &CrudView{
-		Title:     "CRUD",
 		Presenter: p,
 		Form:      html.Div(),
 		Filter:    html.Div(),
@@ -260,7 +255,7 @@ func TestConsumer_StylesheetAsserts(t *testing.T) {
 	html1 := v.Render().String()
 
 	pFull := view.New(&conformance.FakeLister{}, &Device{})
-	vFull := &CrudView{Title: "Full", Form: html.Div(), Presenter: pFull}
+	vFull := &CrudView{Form: html.Div(), Presenter: pFull}
 	vFull.Init(&fakeCtx{})
 	html2 := vFull.Render().String()
 
