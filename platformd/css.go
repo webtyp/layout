@@ -535,10 +535,19 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		).
 		// Off a phone the mark and the user menu must not sit against the frame
 		// edge: the phone's bar is padded by its AppBar, a desktop's is not.
+		// The header keeps its 56px; its CONTENT moves. The frame below is the
+		// same colour and has a gutter on top, so the band the eye sees is
+		// header + gutter: the content is seated in the lower part of the header
+		// (top pad = gutter, no bottom pad) so it centres in that whole band
+		// instead of sitting half a gutter high.
 		On(css.Tablet, widget.Part("header"),
+			style.Pad(style.SpaceNone),
+			style.PadEdge(style.EdgeTop, style.Space2),
 			style.PadInline(style.Space3),
 		).
 		On(css.Desktop, widget.Part("header"),
+			style.Pad(style.SpaceNone),
+			style.PadEdge(style.EdgeTop, style.Space2),
 			style.PadInline(style.Space3),
 		).
 		On(css.Mobile, widget.Part("header-right"),

@@ -178,8 +178,8 @@ func TestNoManualFloatingReservation(t *testing.T) {
 // TestListCardMatchesFormIndentOnMobile is the net for the indent budget:
 // fields and list carry the same cardInset on mobile as on desktop, so the
 // distance from the panel border to the content is identical in both columns
-// (rightpanel 4 + cardInset 4 + targetlist's own 8 = 16px, the same 16px as
-// the form column). The old mobile flush was a scoped exception buying room
+// (the list gets there in two steps, cardInset on the card plus targetlist's
+// own list pad; the form takes their sum, contentInset, in one). The old mobile flush was a scoped exception buying room
 // for the ⋮ menu in the master-detail sliver; the sliver no longer has to fit
 // the ⋮ (see targetlist/css.go's PartList comment), so the exception is
 // retired with the premise that justified it.
@@ -201,16 +201,17 @@ func TestListCardMatchesFormIndentOnMobile(t *testing.T) {
 	mobileRegion := cssStr[mediaIdx:]
 
 	// The list declares its own cardInset on mobile (it used to flush to 0);
-	// fields relies on its base rule's cardInset, which applies everywhere.
+	// fields relies on its base rule's contentInset, which applies everywhere.
 	if b := ruleBlock(mobileRegion, ".crudview__list {"); !fmt.Contains(b, "padding: var(--space-1") {
 		t.Errorf(".crudview__list must carry cardInset (padding: var(--space-1...)) on mobile, block:\n%s", b)
 	}
 	// The base rules (every breakpoint) must also still carry the pad, so the
-	// mobile list override cannot have silenced it. fields keeps cardInset on
-	// its INLINE axis (the indent budget this test guards); its block inset is
+	// mobile list override cannot have silenced it. fields carries contentInset
+	// (cardInset twice, as the list does) on its INLINE axis, the indent budget
+	// this test guards; its block inset is
 	// the larger formGap, for the legend chips the list column does not have.
-	if b := ruleBlock(cssStr, ".crudview__fields {"); !fmt.Contains(b, "padding-inline: var(--space-1") {
-		t.Errorf(".crudview__fields base rule must carry cardInset on its inline axis, block:\n%s", b)
+	if b := ruleBlock(cssStr, ".crudview__fields {"); !fmt.Contains(b, "padding-inline: var(--space-2") {
+		t.Errorf(".crudview__fields base rule must carry contentInset on its inline axis, block:\n%s", b)
 	}
 	if b := ruleBlock(cssStr, ".crudview__list {"); !fmt.Contains(b, "padding: var(--space-1") {
 		t.Errorf(".crudview__list base rule must carry cardInset, block:\n%s", b)

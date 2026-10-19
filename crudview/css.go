@@ -15,6 +15,13 @@ import (
 // list has no such overhang, so its block inset stays cardInset too.
 const cardInset = style.Space1
 
+// contentInset is the distance from a card's border to its content, the same on
+// the form and on the list. The list reaches it in two steps (cardInset on the
+// card + targetlist's own list pad, one Space1 each); the form has no inner
+// step, so it takes the sum in one. Declaring it here is what keeps the inputs
+// and the rows the same distance from their panel edge.
+const contentInset = style.Space2
+
 // formGap is the one spacing value inside the fields card: the block inset from
 // the card border, AND the gap between consecutive fields (fieldset puts it on
 // the <form> container). Every visible gap in the form — card edge to first
@@ -35,7 +42,7 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		Part(widget.Part("fields"),
 			style.As(style.Inset),
 			style.Pad(formGap),
-			style.PadInline(cardInset),
+			style.PadInline(contentInset),
 			style.Scroll(),
 			style.Round(style.RadiusMd),
 			style.Fill(),
