@@ -19,7 +19,7 @@ require (
 	webtyp.com/svg v0.3.28
 	webtyp.com/time v0.5.7
 	webtyp.com/view v0.6.27
-	webtyp.com/widget v0.6.42
+	webtyp.com/widget v0.6.43
 )
 
 require (
@@ -40,3 +40,5 @@ require (
 	webtyp.com/json v0.5.29
 	webtyp.com/router v0.4.3
 )
+
+// TEMP local verification (toast, master-detail) — remove before commit.
