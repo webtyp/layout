@@ -2,8 +2,10 @@
 PLAN: "feat(platformd): Described and AlertedModule capability interfaces (types only, no wiring)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 17491794384523155737
+PR: https://github.com/webtyp/layout/pull/43
+REVIEWED_COMMIT: 3c714549d55b3bfa84f19fdb9f73214c31e22b49
 ---
 
 > Read AGENTS.md at the repo root before any change. This plan is complete: do not guess; if something does
