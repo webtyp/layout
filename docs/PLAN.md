@@ -108,3 +108,10 @@ check the actual path first): document both displays next to `CrudView`'s existi
 | 2 | `crudview/crudview.go` | empty-message element, bound to `v.hasRows` |
 | 3 | `crudview/tests/*` | presence/absence across all four states |
 | 4 | `crudview/docs/ARCHITECTURE.md`/`README.md` | document both displays |
+
+## Executor notes
+- Added `Description` to the left article area inside `boxContent`, bound to `!v.active()` to hide it when an item is selected or a draft is being composed.
+- Added `EmptyMessage` to the list aside panel inside `asideContent`, bound to `!v.hasRows.Get()` to show it when the list is empty.
+- Updated `crudview/consumer_test.go` to have `fakeNoWidgetsSaver` implement `Description()` and `EmptyMessage()`.
+- Wrote new tests in `crudview/crudview_empty_wasm_test.go` asserting visibility based on the presence of the `data-open='true'` attribute.
+- Appended `Description` and `EmptyMessage` nodes to the flowchart in `docs/ARCHITECTURE.md`.

@@ -997,6 +997,14 @@ func (v *CrudView) Render() *Element {
 	// (the skeleton's Part("article")) — crudview paints no frame, so the form
 	// area is exactly one layer, not a card nested in a card.
 	boxContent := Div().Set(clsBoxContent.AsAttr())
+	if hasSource {
+		if desc := v.Presenter.Description(); desc != "" {
+			boxContent.Child(
+				P().Text(lang.Translate(desc).String()).
+					BindStateFunc(widget.Open, func() bool { return !v.active() }),
+			)
+		}
+	}
 	if v.Form != nil {
 		boxContent.Child(v.Form)
 	}
@@ -1007,8 +1015,17 @@ func (v *CrudView) Render() *Element {
 
 	if hasSource {
 		// The list — its own inset card inside the aside's content band.
-		v.panel.Aside = Div().Set(clsListaBox.AsAttr()).
+		asideContent := Div().Set(clsListaBox.AsAttr()).
 			Child(v.list)
+
+		if emptyMsg := v.Presenter.EmptyMessage(); emptyMsg != "" {
+			asideContent.Child(
+				P().Text(lang.Translate(emptyMsg).String()).
+					BindStateFunc(widget.Open, func() bool { return !v.hasRows.Get() }),
+			)
+		}
+
+		v.panel.Aside = asideContent
 
 		// The list header: the scope selector (which records), then the filter
 		// (which of them), then the actions band. crudview supplies no card

@@ -227,10 +227,12 @@ Standard two-column layout: Form (left, 66vw) and List (right, 29vw).
 ```flowchart TD
     CV[CrudView] --> L[Left Column: 66vw]
     CV --> R[Right Column: 29vw]
+    L --> D[Description: shown when no record is selected]
     L --> F[Form: dom.Component]
     R --> SC[Scope slot: dom.Component]
     R --> S[Search: local filter]
     R --> LIST[List: SignalNodes]
+    R --> EM[EmptyMessage: shown when list has no records]
     R --> B[CRUD Bar: Buttons]
 ```
 
