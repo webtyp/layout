@@ -2,6 +2,8 @@
 PLAN: "feat(crudview): show the view's Description when nothing is selected, EmptyMessage when the list is empty"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 5760051894124108464
 ---
 
 > Read AGENTS.md at the repo root before any change (same repo as `platformd`: no conditional mounting,
