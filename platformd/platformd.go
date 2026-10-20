@@ -204,10 +204,10 @@ type notification struct {
 	Type msgtype.Type
 	Msg  string
 	ID   string
-	// expiryNs is the auto-dismiss deadline (UnixNano); 0 = persistent. The
+	// expiryNs is the auto-dismiss deadline; 0 = persistent. The
 	// timer is stored on the notification so pause/resume can cancel and
 	// re-arm it — see pauseToast/resumeToast.
-	expiryNs int64
+	expiryNs time.Nano
 	timer    time.Timer
 }
 
@@ -969,7 +969,7 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 			ms := d.millis(msg)
 			n.timer.Stop()
 			id := n.ID
-			n.expiryNs = time.Now() + int64(ms)*1e6
+			n.expiryNs = time.NowNano() + time.Nano(ms)*nanosPerMilli
 			n.timer = time.AfterFunc(ms, func() { p.dismiss(id) })
 		}
 		p.mu.Unlock()
@@ -982,10 +982,10 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 	n := notification{
 		Type: t,
 		Msg:  msg,
-		ID:   "pd-notification-" + p.GetID() + "-" + Sprint(time.Now()),
+		ID:   "pd-notification-" + p.GetID() + "-" + Sprint(int64(time.NowNano())),
 	}
 	if ms > 0 {
-		n.expiryNs = time.Now() + int64(ms)*1e6
+		n.expiryNs = time.NowNano() + time.Nano(ms)*nanosPerMilli
 		n.timer = time.AfterFunc(ms, func() { p.dismiss(n.ID) })
 	}
 	p.rawNotifications = append(p.rawNotifications, n)
@@ -1048,8 +1048,8 @@ func (p *Platform) resumeToast(id string) {
 			continue
 		}
 		if n.expiryNs > 0 && n.timer == nil {
-			if remaining := n.expiryNs - time.Now(); remaining > 0 {
-				n.timer = time.AfterFunc(int(remaining/1e6), func() { p.dismiss(n.ID) })
+			if remaining := n.expiryNs - time.NowNano(); remaining > 0 {
+				n.timer = time.AfterFunc(int(remaining/nanosPerMilli), func() { p.dismiss(n.ID) })
 			}
 		}
 		break
@@ -1142,3 +1142,6 @@ func (p *Platform) Activate(moduleID string) {
 		SetHash("#" + moduleID)
 	}
 }
+
+// nanosPerMilli converts the milliseconds of a toast's life (time.AfterFunc) to the nanoseconds of its deadline.
+const nanosPerMilli time.Nano = 1000000

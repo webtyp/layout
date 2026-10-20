@@ -3,9 +3,9 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/components v0.8.34
+	webtyp.com/calendar v0.1.0
+	webtyp.com/components v0.8.38
 	webtyp.com/css v0.4.30
-	webtyp.com/date v0.0.11
 	webtyp.com/dom v0.13.26
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
@@ -17,7 +17,7 @@ require (
 	webtyp.com/model v0.2.4
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/svg v0.3.28
-	webtyp.com/time v0.5.7
+	webtyp.com/time v0.6.2
 	webtyp.com/view v0.6.27
 	webtyp.com/widget v0.6.43
 )
@@ -37,7 +37,7 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/icons v0.0.7
 	webtyp.com/js v0.1.1 // indirect
-	webtyp.com/json v0.5.29
+	webtyp.com/json v0.5.30
 	webtyp.com/router v0.4.3
 )
 
