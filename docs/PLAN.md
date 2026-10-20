@@ -2,6 +2,8 @@
 PLAN: "feat(platformd): Described and AlertedModule capability interfaces (types only, no wiring)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 17491794384523155737
 ---
 
 > Read AGENTS.md at the repo root before any change. This plan is complete: do not guess; if something does
