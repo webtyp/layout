@@ -1,10 +1,15 @@
 ---
-PLAN: "feat(platformd): a module explains itself — description + \\\"?\\\" button, welcome card with steps, alert strip"
+PLAN: "feat(platformd): a module explains itself — description + help button, welcome card with steps, alert strip"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
-SESSION: 9966520886253081938
 ---
+
+> **Note to the next executor (redispatch after a failed session):** a previous attempt failed with no
+> pushed work. The plan below was tightened after reading `AGENTS.md`'s "Component Contract" section
+> closely: this repo has **no conditional mounting** — visibility is always a `*SignalBool` driving
+> `BindStateFunc(widget.Open, ...)` on an always-present element, never a Go-level `if` around a `Div`. Every
+> new piece below follows that exact construction, modeled on `menuOpen`/`brandOpen`/`msgSlot`, which already
+> exist in `platformd.go` — read those three before writing anything new.
 
 > Read AGENTS.md at the repo root before any change. This plan is complete: do not guess; if something does
 > not fit, stop and ask in the PR. Design history: `webtyp/docs/MODULE_GUIDANCE_MASTER_PLAN.md` (D1 closes
@@ -83,32 +88,57 @@ Add an `activeDescribed() (Described, bool)` helper right after `activeLabel` (s
 Groups pattern `activeIcon`/`activeLabel` already use — do not refactor those two into it, just copy the
 walk).
 
-In the `headerTitle` construction (`platformd.go:~631-634`), after the `H1`, conditionally add a button:
+This repo's reactive model (`AGENTS.md` → "Component Contract") has **no conditional mounting**: an
+element is always in the tree and a `*SignalBool` drives its CSS-visible state via
+`BindStateFunc(widget.Open, func() bool { return someSignal.Get() })`, exactly like `p.menuOpen` already
+toggles the nav drawer (`platformd.go:~620,680,732`) and `p.brandOpen` toggles the brand panel
+(`platformd.go:~549`). The welcome card and the "?" button follow that **same** construction, not a Go-level
+`if`.
+
+Add fields next to `menuOpen`/`brandOpen`'s own declaration and initialization (`platformd.go:~160`,
+`~259-265`): `welcomeOpen *SignalBool` / `p.welcomeOpen = NewBool(false)`.
+
+In the `headerTitle` construction (`platformd.go:631-634`, exact current code):
 
 ```go
-headerTitle := Div().Set(clsHeaderTitleText.AsAttr()). // existing wrapper, name may differ slightly — read the current code
+headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
 	Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
-if d, ok := p.activeDescribed(); ok {
-	_ = d
-	headerTitle.Child(
-		Button().Set(clsHelpButton.AsAttr()). // new class — add its recipe in css.go, follow style.Button's own recipe, never hand-composed (widget-styling: "a missing recipe is a defect in widget/style" — if style has no fitting recipe, use style.Button(Subtle) or whatever this repo's css.go already uses for a small icon-only control, and say in the PR which you picked and why)
-			Attr("aria-label", "Help").
-			OnClick(func(e Event) { e.StopPropagation(); p.openWelcome.Set(true) }).
-			Child(Text("?")))
-}
+header.Child(headerTitle)
 ```
 
-Add `p.openWelcome = NewBool(false)` next to `p.active`/`p.navStowed`'s own initialization (same
-`BindState`-style reactive field this file already uses throughout — grep `NewBool`/`NewString` for the
-exact constructor name and follow it).
+Add the "?" button as a sibling of the `H1` inside `headerTitle`, always present (its own CSS hides it when
+there is nothing to describe — see below), mirroring how `header.Child(msgSlot)` is unconditionally added
+right after:
 
-The welcome card: a `Div` bound to render only `if d, ok := p.activeDescribed(); ok && p.openWelcome.Get()`,
-drawn as a dismissible panel over or beside the module's content (pick the placement that doesn't fight the
-phone-strip rule in `ui-consistency` — a module's content strip on phone is full-width, so the welcome card
-docks the same way a toast does: `style.DockedClear`, see `ui-consistency` → "Messages and the phone strip").
-Contents: `d.Description()` as body text, then — if `d.Steps()` is non-empty — a vertical list, each `Step`
-rendered with a ✓ (done) or an empty circle (not done), text struck through or dimmed when `Done`. A "Got
-it"/dismiss control sets `p.openWelcome.Set(false)`.
+```go
+headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
+	Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel)).
+	Child(Button().Set(clsHelpButton.AsAttr()).
+		Attr("aria-label", "Help").
+		OnClick(func(e Event) { e.StopPropagation(); p.welcomeOpen.Set(true) }).
+		Child(Text("?")))
+header.Child(headerTitle)
+```
+
+`clsHelpButton`'s `css.go` recipe hides the button entirely (`display: none`) unless the active module
+implements `Described` — drive that from a bound state, not a Go conditional: add a
+`BindStateFunc(widget.Current /* or a new widget.State if none fits — check widget's existing states before
+adding one */, func() bool { _, ok := p.activeDescribed(); return ok })` on the button, and write the CSS
+rule keyed on that state. If no existing `widget.State` fits this "is describable" concept, say so in the
+PR with the two states you considered, and use the cheapest one — do not invent one without checking.
+
+**The welcome card**, same construction as `msgSlot` (`platformd.go:~635-640`, a `Div` with a stable
+`ID()` and `BindChildren` on a `SignalNodes`) crossed with `menuOpen`'s open/closed toggle
+(`BindStateFunc(widget.Open, func() bool { return p.welcomeOpen.Get() })`): a single `Div`, always
+mounted, placed in the header region near `msgSlot`, whose **content** (description + steps) is rebuilt
+via `BindChildren` driven by a `SignalNodes` that `activeDescribed()`'s result populates whenever
+`p.active` changes (hook into wherever `p.active.Set(...)` already runs — grep every call site — so the
+card's content tracks the active module without a new signal subscription mechanism). Its open/closed
+state is `p.welcomeOpen`, following the `menuOpen` pattern exactly, docked the same way a toast is
+(`style.DockedClear`, see `ui-consistency` → "Messages and the phone strip"). A dismiss control calls
+`p.welcomeOpen.Set(false)`.
+
+Steps render as a list, each `Step` with a ✓ (done) or empty circle (not done), text dimmed when `Done`.
 
 **First-visit auto-open (D3):** the welcome card opens automatically the first time a person visits a module
 that implements `Described`, remembered per person in the browser (`localStorage`, keyed by module id —
@@ -119,14 +149,18 @@ and no-op on the server side). Do not block render on it; treat a storage read f
 
 ## Stage 3 — the alert strip
 
-A `Div`, placed above the module's content area (same header region a `platformd.Auto()` toast already
-docks to — reuse that placement, do not invent a second one), bound to render only when
-`activeAlerted()` (same walk-pattern helper as `activeDescribed`) returns a non-empty `UnseenAlerts()`. Each
-row: `Subject`, a "Ver" button calling `OnView`, a "Marcar visto" button calling `OnSeen` then removing that
-row from the rendered list (the chassis does not re-fetch — the module that produced `ModuleAlert` owns
-re-rendering `UnseenAlerts()` on its next read, typically after its own `OnSeen` closure updates its state
-and asks the chassis to redraw, following whatever reactive-redraw mechanism `BindChildren` already uses
-elsewhere in this file).
+Same construction as `msgSlot` exactly (`platformd.go:~635-640`): a `Div` with a stable `ID()`, its rows
+driven by `BindChildren` on a new `*SignalNodes` field (`p.alertRows`, initialized next to
+`p.notifications`), placed in the same header region `msgSlot` already docks to. Each row: `Subject`, a
+"Ver" button calling `OnView`, a "Marcar visto" button that calls `OnSeen` and then removes that row from
+`p.alertRows` directly (`p.alertRows.Set(...)` with the row filtered out — the same "mutate the signal, the
+bound DOM patches surgically" rule as `menuOpen.Toggle()`; never a full re-render).
+
+Rebuild `p.alertRows` from `activeAlerted()` (same walk-pattern helper as `activeDescribed`) at the same
+point(s) the welcome card's content is rebuilt — whenever `p.active` changes (same call sites you hooked in
+Stage 2). An empty `UnseenAlerts()` means an empty `p.alertRows`, which renders nothing — no separate
+show/hide state needed, unlike the welcome card (a strip with zero rows already takes zero visual space, so
+there is no `*SignalBool` for this one).
 
 ## Stage 4 — tests
 
