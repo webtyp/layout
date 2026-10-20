@@ -69,6 +69,15 @@ what the construction harness has to say about it.
 
 ---
 
+
+## Platform Capabilities
+
+Modules can declare optional capabilities by implementing interfaces defined in `platformd/capabilities.go`:
+
+- **`Badged`**: A count the nav rail draws over the module's entry.
+- **`Described`**: What the module is for (in plain words) and optional first-steps guidance (`Step`). Chassis wiring for this is a separate, later plan.
+- **`AlertedModule`**: Alerts a person has not seen yet (`ModuleAlert`). Chassis wiring for this is a separate, later plan.
+
 ## Platform Lifecycle (`platformd`)
 
 `Platform` implements `Init(ctx dom.Ctx)` + `Render() *dom.Element`. The framework calls `Init` exactly once when the component is first mounted — no `mounted` guard is needed.

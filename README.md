@@ -52,6 +52,8 @@ down.
 
 - `NewUIModule(id, label, iconID, view)`: helper to create modules.
 - `CanView`: function field to gate module access.
+
+- **Capabilities**: Modules can implement interfaces like `Badged`, `Described` (with `Step`s), and `AlertedModule` (with `ModuleAlert`s) for optional chassis features. Note that chassis wiring for `Described` and `AlertedModule` is a separate, later plan.
 - `Platform.Brand` (`BrandName()`/`BrandMark()`): optional leading header slot; empty mark falls back to the shell's default glyph.
 
 The reference demo — `devices`, `medicalhistory` and `about` modules on this
