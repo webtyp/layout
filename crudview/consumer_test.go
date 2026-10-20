@@ -166,6 +166,8 @@ func fieldErrorText(t *testing.T, v *CrudView, field string) string {
 type fakeNoWidgetsSaver struct{ *fakeNoWidgetsPresenter }
 
 func (f *fakeNoWidgetsSaver) Save(recs []model.Model, done func(error)) { done(nil) }
+func (f *fakeNoWidgetsSaver) Description() lang.Text                    { return "" }
+func (f *fakeNoWidgetsSaver) EmptyMessage() lang.Text                   { return "" }
 
 func TestConsumer_NewNoWidgets(t *testing.T) {
 	p := &fakeNoWidgetsSaver{&fakeNoWidgetsPresenter{record: &DeviceNoWidgets{}}}
