@@ -2,8 +2,10 @@
 PLAN: "feat(crudview): show the view's Description when nothing is selected, EmptyMessage when the list is empty"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 5760051894124108464
+PR: https://github.com/webtyp/layout/pull/44
+REVIEWED_COMMIT: d5dd803912199dc75ea7769a39c7d2b9c457f75c
 ---
 
 > Read AGENTS.md at the repo root before any change (same repo as `platformd`: no conditional mounting,
