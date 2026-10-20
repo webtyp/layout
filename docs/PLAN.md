@@ -2,6 +2,8 @@
 PLAN: "feat(platformd): a module explains itself — description + help button, welcome card with steps, alert strip"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 13939708736157451254
 ---
 
 > **Note to the next executor (redispatch after a failed session):** a previous attempt failed with no
