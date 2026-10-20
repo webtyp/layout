@@ -1,7 +1,9 @@
 ---
-PLAN: "feat(platformd): a module explains itself — description + \"?\" button, welcome card with steps, alert strip"
+PLAN: "feat(platformd): a module explains itself — description + \\\"?\\\" button, welcome card with steps, alert strip"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 9966520886253081938
 ---
 
 > Read AGENTS.md at the repo root before any change. This plan is complete: do not guess; if something does
