@@ -1,7 +1,3 @@
-> **Parked** — `docs/PLAN.md` already has a plan running (H2a, capability types in `platformd`). Merge this
-> into `docs/PLAN.md` as its next stage once H2a closes (**agents-workflow** → «A repo that already has a
-> plan»), or dispatch it standalone once H2a's slot frees up — do not dispatch two plans in this repo at once.
-
 ---
 PLAN: "feat(crudview): show the view's Description when nothing is selected, EmptyMessage when the list is empty"
 EXECUTOR: jules
