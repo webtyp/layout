@@ -2,8 +2,10 @@
 PLAN: "feat(platformd): help button beside the module title (Described) and alert strip above the content (AlertedModule)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: done
+STATUS: review
 SESSION: 13023297444321200271
+PR: https://github.com/webtyp/layout/pull/45
+REVIEWED_COMMIT: 1b443e2b48016d830061fa50bafd83f4efcb1166
 ---
 
 > Read AGENTS.md at the repo root before any change.
