@@ -371,14 +371,20 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 		User:        testIdentity{},
 		UserActions: func() dom.Component { return html.Div().Text("actions") },
 		Modules: []UIModule{
-			&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")},
-			&mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
+			Describe(&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")}, "Desc"),
+			&alertedModule{
+				mockModule: mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
+				alerts: []ModuleAlert{{ID: "1", Subject: "Alert", OnView: func() {}, OnSeen: func() {}}},
+			},
 			NewGroupUIModule("group1", "Group 1", svg.Icon("folder"), []UIModule{
 				&mockModule{id: "sub1", label: "Sub 1", icon: svg.Icon("file")},
 			}),
 		},
 	}
 	p.Init(NilCtx())
+	p.Activate("mod1")
+	p.helpOpen.Set(true)
+	p.Activate("mod2")
 
 	// Queue notifications of all types so the class-parity check below sees
 	// every toast shape that Notify can produce. Persistent: no timers

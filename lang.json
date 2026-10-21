@@ -30,6 +30,9 @@
     "Failed to decode routes": [
       "No se pudieron leer las rutas"
     ],
+    "Mark as seen": [
+      "Marcar como visto"
+    ],
     "No conversations yet": [
       "Aún no hay conversaciones"
     ],
@@ -71,6 +74,12 @@
     ],
     "This": [
       "Esta"
+    ],
+    "View": [
+      "Ver"
+    ],
+    "What is this module?": [
+      "¿Qué es este módulo?"
     ],
     "Write a message": [
       "Escribe un mensaje"
