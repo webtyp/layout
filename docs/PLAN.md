@@ -2,8 +2,10 @@
 PLAN: "feat(platformd): welcome card with Steps() and first-visit memory"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 14992285505495030673
+PR: https://github.com/webtyp/layout/pull/46
+REVIEWED_COMMIT: f7724864e0e75d3f370dc6a6c9b955f147f0437c
 ---
 
 > Read AGENTS.md at the repo root before any change.
