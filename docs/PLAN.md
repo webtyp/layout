@@ -2,6 +2,8 @@
 PLAN: "feat(platformd): help button beside the module title (Described) and alert strip above the content (AlertedModule)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 13023297444321200271
 ---
 
 > Read AGENTS.md at the repo root before any change.
