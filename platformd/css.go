@@ -665,6 +665,27 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Pad(style.Space3),
 			style.RevealedBy(widget.Open),
 		).
+		Part(widget.Part("welcome-steps"),
+			style.Stack(style.Space2),
+			style.PadEdge(style.EdgeTop, style.Space2),
+			style.PadEdge(style.EdgeBottom, style.Space2),
+		).
+		Part(widget.Part("welcome-step"),
+			style.Row(style.Space2),
+			style.CenterContent(),
+		).
+		Part(widget.Part("welcome-step-done"),
+			style.Glyph(style.Subtle),
+		).
+		Part(widget.Part("welcome-step-check"),
+			style.Glyph(style.Success),
+		).
+		Part(widget.Part("welcome-dismiss"),
+			style.As(style.Primary),
+			style.Round(style.RadiusSm),
+			style.PadInline(style.Space3),
+			style.ControlBox(),
+		).
 		Part(widget.Part("alert-strip"),
 			style.Stack(style.Space1),
 		).
