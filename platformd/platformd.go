@@ -64,6 +64,11 @@ var (
 	clsNavActiveIcon   = NamePlatform.Class("nav-active-icon")
 	clsHelpBtn         = NamePlatform.Class("help-btn")
 	clsHelpPanel       = NamePlatform.Class("help-panel")
+	clsWelcomeSteps    = NamePlatform.Class("welcome-steps")
+	clsWelcomeStep     = NamePlatform.Class("welcome-step")
+	clsWelcomeStepDone = NamePlatform.Class("welcome-step-done")
+	clsWelcomeStepCheck = NamePlatform.Class("welcome-step-check")
+	clsWelcomeDismiss  = NamePlatform.Class("welcome-dismiss")
 	clsAlertStrip      = NamePlatform.Class("alert-strip")
 	clsAlertRow        = NamePlatform.Class("alert-row")
 	clsAlertSubject    = NamePlatform.Class("alert-subject")
@@ -71,9 +76,11 @@ var (
 )
 
 const (
-	textHelp      = "What is this module?"
-	textAlertView = "View"
-	textAlertSeen = "Mark as seen"
+	textHelp           = "What is this module?"
+	textWelcomeDismiss = "Got it"
+	textGettingStarted = "Getting started"
+	textAlertView      = "View"
+	textAlertSeen      = "Mark as seen"
 )
 
 const (
@@ -1206,20 +1213,64 @@ func (p *Platform) moduleByID(id string) UIModule {
 }
 
 func (p *Platform) refreshHelp(m UIModule) {
-	p.helpOpen.Set(false)
 	d, ok := m.(Described)
 	if !ok || d.Description() == "" {
+		p.helpOpen.Set(false)
 		p.helpSlot.Set(nil)
 		p.helpPanel.Set(nil)
 		return
 	}
+
+	key := "pd-welcome-" + m.ModelName()
+	firstVisit := false
+	if len(d.Steps()) > 0 && LocalStorageAvailable() {
+		if val, err := LocalStorageGet(key); err == nil && val == "" {
+			firstVisit = true
+		}
+	}
+	if firstVisit {
+		p.helpOpen.Set(true)
+	} else {
+		p.helpOpen.Set(false)
+	}
+
 	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-" + m.ModelName()).
 		Attr("aria-label", lang.Translate(textHelp).String()).
 		Text("?").
 		OnClick(func(e Event) { e.StopPropagation(); p.helpOpen.Toggle() })
-	text := P().Key("helpt-" + m.ModelName()).Text(lang.Translate(d.Description()).String())
+
+	panelNodes := []*Element{
+		P().Key("helpt-" + m.ModelName()).Text(lang.Translate(d.Description()).String()),
+	}
+
+	if len(d.Steps()) > 0 {
+		panelNodes = append(panelNodes, H2().Text(lang.Translate(textGettingStarted).String()))
+		stepsContainer := Div().Set(clsWelcomeSteps.AsAttr())
+		for _, s := range d.Steps() {
+			row := Div().Set(clsWelcomeStep.AsAttr())
+			if s.Done {
+				row.Set(clsWelcomeStepDone.AsAttr())
+				row.Child(Span().Set(clsWelcomeStepCheck.AsAttr()).Text("✓ "))
+			}
+			row.Child(Span().Text(lang.Translate(s.Label).String()))
+			stepsContainer.Child(row)
+		}
+		panelNodes = append(panelNodes, stepsContainer)
+
+		dismissBtn := Button().Set(clsWelcomeDismiss.AsAttr()).
+			Text(lang.Translate(textWelcomeDismiss).String()).
+			OnClick(func(e Event) {
+				e.StopPropagation()
+				if LocalStorageAvailable() {
+					_ = LocalStorageSet(key, "seen")
+				}
+				p.helpOpen.Set(false)
+			})
+		panelNodes = append(panelNodes, dismissBtn)
+	}
+
 	p.helpSlot.Set([]*Element{button})
-	p.helpPanel.Set([]*Element{text})
+	p.helpPanel.Set(panelNodes)
 }
 
 func (p *Platform) refreshAlerts(m UIModule) {

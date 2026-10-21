@@ -75,7 +75,7 @@ what the construction harness has to say about it.
 Modules can declare optional capabilities by implementing interfaces defined in `platformd/capabilities.go`:
 
 - **`Badged`**: A count the nav rail draws over the module's entry.
-- **`Described`**: What the module is for (in plain words). The chassis draws a «?» help button beside the module title.
+- **`Described`**: What the module is for (in plain words). The chassis draws a «?» help button beside the module title. When the module has steps, they are drawn in the panel and the panel opens automatically as a welcome card on first visit using localStorage memory.
 - **`AlertedModule`**: Alerts a person has not seen yet (`ModuleAlert`). The chassis draws an alert strip above the active module's content.
 
 ## Platform Lifecycle (`platformd`)

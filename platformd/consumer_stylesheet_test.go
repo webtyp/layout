@@ -371,7 +371,7 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 		User:        testIdentity{},
 		UserActions: func() dom.Component { return html.Div().Text("actions") },
 		Modules: []UIModule{
-			Describe(&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")}, "Desc"),
+			Describe(&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")}, "Desc", Step{Label: "Step 1", Done: true}),
 			&alertedModule{
 				mockModule: mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
 				alerts: []ModuleAlert{{ID: "1", Subject: "Alert", OnView: func() {}, OnSeen: func() {}}},
