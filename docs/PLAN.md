@@ -2,7 +2,8 @@
 PLAN: "feat(platformd): welcome card with Steps() and first-visit memory"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: dispatch
+STATUS: running
+SESSION: 14992285505495030673
 ---
 
 > Read AGENTS.md at the repo root before any change.
