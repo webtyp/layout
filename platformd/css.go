@@ -651,6 +651,38 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Stack(style.Space1),
 			style.As(style.Primary),
 			style.RevealedBy(widget.Open),
+		).
+		Part(widget.Part("help-btn"),
+			style.Row(style.SpaceNone),
+			style.CenterContent(),
+			style.As(style.Bare),
+			style.Interactive(style.Bare),
+			style.KeepSize(),
+		).
+		Part(widget.Part("help-panel"),
+			style.Stack(style.Space1),
+			style.As(style.Panel),
+			style.Pad(style.Space3),
+			style.RevealedBy(widget.Open),
+		).
+		Part(widget.Part("alert-strip"),
+			style.Stack(style.Space1),
+		).
+		Part(widget.Part("alert-row"),
+			style.Row(style.Space2),
+			style.As(style.Inverse),
+			style.Round(style.RadiusSm),
+			style.PadInline(style.Space3),
+		).
+		Part(widget.Part("alert-subject"),
+			style.Fill(),
+		).
+		Part(widget.Part("alert-action"),
+			style.Row(style.SpaceNone),
+			style.CenterContent(),
+			style.As(style.Bare),
+			style.Interactive(style.Bare),
+			style.KeepSize(),
 		)
 }
 

@@ -7,6 +7,7 @@ import (
 
 	"webtyp.com/components/themetoggle"
 	"webtyp.com/components/usermenu"
+	"webtyp.com/lang"
 	"webtyp.com/layout"
 	"webtyp.com/svg"
 	"webtyp.com/widget"
@@ -61,6 +62,18 @@ var (
 	clsNavParent       = NamePlatform.Class("nav-parent")
 	clsNavGroupIcon    = NamePlatform.Class("nav-group-icon")
 	clsNavActiveIcon   = NamePlatform.Class("nav-active-icon")
+	clsHelpBtn         = NamePlatform.Class("help-btn")
+	clsHelpPanel       = NamePlatform.Class("help-panel")
+	clsAlertStrip      = NamePlatform.Class("alert-strip")
+	clsAlertRow        = NamePlatform.Class("alert-row")
+	clsAlertSubject    = NamePlatform.Class("alert-subject")
+	clsAlertAction     = NamePlatform.Class("alert-action")
+)
+
+const (
+	textHelp      = "What is this module?"
+	textAlertView = "View"
+	textAlertSeen = "Mark as seen"
 )
 
 const (
@@ -166,6 +179,10 @@ type Platform struct {
 	navStowed           *SignalBool
 	idleTimer           time.Timer
 	groupActiveIcons    []groupIconSlot
+	helpOpen            *SignalBool
+	helpSlot            *SignalNodes
+	helpPanel           *SignalNodes
+	alertStrip          *SignalNodes
 
 	rawNotifications []notification
 	mu               sync.Mutex
@@ -264,6 +281,10 @@ func (p *Platform) Init(ctx Ctx) {
 	p.navIcon = NewNodes()
 	p.navStowed = NewBool(false)
 	p.groupActiveIcons = nil
+	p.helpOpen = NewBool(false)
+	p.helpSlot = NewNodes()
+	p.helpPanel = NewNodes()
+	p.alertStrip = NewNodes()
 
 	for _, m := range p.Modules {
 		if gm, ok := m.(GroupModule); ok {
@@ -632,6 +653,12 @@ func (p *Platform) Render() *Element {
 	// page); inside the content only <h2> sections exist.
 	headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
 		Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
+
+	helpSlotSpan := Span().BindChildren(p.helpSlot)
+	for _, n := range p.helpSlot.Get() {
+		helpSlotSpan.Child(n)
+	}
+	headerTitle.Child(helpSlotSpan)
 	header.Child(headerTitle)
 
 	// Chassis singleton: one per page by construction, so a stable global id is
@@ -663,6 +690,15 @@ func (p *Platform) Render() *Element {
 
 	root.Child(header)
 
+	helpPanelDiv := Div().Set(clsHelpPanel.AsAttr()).
+		Attr("role", "note").
+		BindStateFunc(widget.Open, func() bool { return p.helpOpen.Get() }).
+		BindChildren(p.helpPanel)
+	for _, n := range p.helpPanel.Get() {
+		helpPanelDiv.Child(n)
+	}
+	root.Child(helpPanelDiv)
+
 	// ── mobile message stack (mobile only) ─────────────────────────────────
 	// The toasts' phone home, docked to the top-end.
 	msgStack := Div().Set(clsMsgStack.AsAttr())
@@ -688,6 +724,12 @@ func (p *Platform) Render() *Element {
 
 	// ── main stage ───────────────────────────────────────────────────────────
 	stage := Main().Set(clsStage.AsAttr())
+
+	alertStripDiv := Div().Set(clsAlertStrip.AsAttr()).Attr("role", "status").BindChildren(p.alertStrip)
+	for _, n := range p.alertStrip.Get() {
+		alertStripDiv.Child(n)
+	}
+	stage.Child(alertStripDiv)
 
 	for _, m := range p.Modules {
 		m := m
@@ -1083,20 +1125,17 @@ func (p *Platform) Activate(moduleID string) {
 	}
 
 	var foundParentID string
-	var targetModule UIModule
-
-	for _, m := range p.Modules {
-		if gm, ok := m.(GroupModule); ok {
-			for _, ch := range gm.Children() {
-				if ch.ModelName() == moduleID {
-					foundParentID = gm.ModelName()
-					targetModule = ch
-					break
+	targetModule := p.moduleByID(moduleID)
+	if targetModule != nil {
+		for _, m := range p.Modules {
+			if gm, ok := m.(GroupModule); ok {
+				for _, ch := range gm.Children() {
+					if ch.ModelName() == moduleID {
+						foundParentID = gm.ModelName()
+						break
+					}
 				}
 			}
-		}
-		if m.ModelName() == moduleID {
-			targetModule = m
 		}
 	}
 
@@ -1115,6 +1154,13 @@ func (p *Platform) Activate(moduleID string) {
 
 	if targetModule != nil {
 		targetModule.Activate()
+		p.refreshHelp(targetModule)
+		p.refreshAlerts(targetModule)
+	} else {
+		p.helpOpen.Set(false)
+		p.helpSlot.Set(nil)
+		p.helpPanel.Set(nil)
+		p.alertStrip.Set(nil)
 	}
 
 	p.navIcon.Set([]*Element{p.activeIcon().Render(string(ClsNavIcon)).Key("hmod-" + moduleID)})
@@ -1141,6 +1187,68 @@ func (p *Platform) Activate(moduleID string) {
 	if GetHash() != "#"+moduleID {
 		SetHash("#" + moduleID)
 	}
+}
+
+func (p *Platform) moduleByID(id string) UIModule {
+	for _, m := range p.Modules {
+		if gm, ok := m.(GroupModule); ok {
+			for _, ch := range gm.Children() {
+				if ch.ModelName() == id {
+					return ch
+				}
+			}
+		}
+		if m.ModelName() == id {
+			return m
+		}
+	}
+	return nil
+}
+
+func (p *Platform) refreshHelp(m UIModule) {
+	p.helpOpen.Set(false)
+	d, ok := m.(Described)
+	if !ok || d.Description() == "" {
+		p.helpSlot.Set(nil)
+		p.helpPanel.Set(nil)
+		return
+	}
+	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-" + m.ModelName()).
+		Attr("aria-label", lang.Translate(textHelp).String()).
+		Text("?").
+		OnClick(func(e Event) { e.StopPropagation(); p.helpOpen.Toggle() })
+	text := P().Key("helpt-" + m.ModelName()).Text(lang.Translate(d.Description()).String())
+	p.helpSlot.Set([]*Element{button})
+	p.helpPanel.Set([]*Element{text})
+}
+
+func (p *Platform) refreshAlerts(m UIModule) {
+	a, ok := m.(AlertedModule)
+	if !ok {
+		p.alertStrip.Set(nil)
+		return
+	}
+	alerts := a.UnseenAlerts()
+	var rows []*Element
+	for _, al := range alerts {
+		al := al
+		row := Div().Set(clsAlertRow.AsAttr()).Key("alert-" + al.ID)
+		row.Child(Span().Set(clsAlertSubject.AsAttr()).Text(al.Subject))
+		if al.OnView != nil {
+			row.Child(Button().Set(clsAlertAction.AsAttr()).Text(lang.Translate(textAlertView).String()).OnClick(func(e Event) {
+				al.OnView()
+				p.refreshAlerts(m)
+			}))
+		}
+		if al.OnSeen != nil {
+			row.Child(Button().Set(clsAlertAction.AsAttr()).Text(lang.Translate(textAlertSeen).String()).OnClick(func(e Event) {
+				al.OnSeen()
+				p.refreshAlerts(m)
+			}))
+		}
+		rows = append(rows, row)
+	}
+	p.alertStrip.Set(rows)
 }
 
 // nanosPerMilli converts the milliseconds of a toast's life (time.AfterFunc) to the nanoseconds of its deadline.

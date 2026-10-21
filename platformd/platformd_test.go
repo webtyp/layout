@@ -28,6 +28,27 @@ func (m *mockModule) Icon() svg.Icon    { return m.icon }
 func (m *mockModule) View() Component   { return m.view }
 func (m *mockModule) Activate()         {}
 
+type alertedModule struct {
+	mockModule
+	alerts []ModuleAlert
+}
+
+func (m *alertedModule) UnseenAlerts() []ModuleAlert { return m.alerts }
+
+func (p *Platform) seeAlert(m UIModule, al ModuleAlert) {
+	if al.OnSeen != nil {
+		al.OnSeen()
+		p.refreshAlerts(m)
+	}
+}
+
+func (p *Platform) viewAlert(m UIModule, al ModuleAlert) {
+	if al.OnView != nil {
+		al.OnView()
+		p.refreshAlerts(m)
+	}
+}
+
 func TestPlatform_Render(t *testing.T) {
 	p := &Platform{
 		AppName: "Test App",
@@ -820,4 +841,230 @@ func count(s, sub string) int {
 		}
 	}
 	return n
+}
+
+func TestPlatform_HelpButton_H1(t *testing.T) {
+	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
+	modB := &mockModule{id: "b"}
+	p := &Platform{
+		Modules: []UIModule{modA, modB},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	html := p.Render().String()
+	if !Contains(html, `aria-label='What is this module?'`) {
+		t.Errorf("Expected help button aria-label")
+	}
+	if !Contains(html, "Keeps the clinic") {
+		t.Errorf("Expected description text")
+	}
+}
+
+func TestPlatform_HelpButton_H2(t *testing.T) {
+	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
+	modB := &mockModule{id: "b"}
+	p := &Platform{
+		Modules: []UIModule{modA, modB},
+	}
+	p.Init(NilCtx())
+	p.Activate("b")
+
+	html := p.Render().String()
+	if Contains(html, "What is this module?") {
+		t.Errorf("Did not expect help button for plain module")
+	}
+}
+
+func TestPlatform_HelpButton_H3(t *testing.T) {
+	modA := Describe(&mockModule{id: "a"}, "")
+	p := &Platform{
+		Modules: []UIModule{modA},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	html := p.Render().String()
+	if Contains(html, "What is this module?") {
+		t.Errorf("Did not expect help button for empty description")
+	}
+}
+
+func TestPlatform_HelpButton_H4(t *testing.T) {
+	modA := Describe(&mockModule{id: "a"}, "Desc")
+	modB := &mockModule{id: "b"}
+	p := &Platform{
+		Modules: []UIModule{modA, modB},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+	p.helpOpen.Toggle()
+
+	if p.helpOpen.Get() != true {
+		t.Errorf("Expected help panel to be open")
+	}
+
+	p.Activate("b")
+	p.Activate("a")
+	if p.helpOpen.Get() != false {
+		t.Errorf("Expected help panel to close on module switch")
+	}
+}
+
+func TestDescribe_D1(t *testing.T) {
+	m := NewUIModule("m1", "Label", "", nil)
+	d := Describe(m, "Desc")
+	if _, ok := d.(Described); !ok {
+		t.Errorf("Expected Describe to satisfy Described")
+	}
+	if _, ok := d.(UsesNotifier); !ok {
+		t.Errorf("Expected Describe to satisfy UsesNotifier")
+	}
+}
+
+func TestDescribe_D2(t *testing.T) {
+	gm := NewGroupUIModule("gm", "Group", "", []UIModule{})
+	d := Describe(gm, "Desc")
+	if g, ok := d.(GroupModule); !ok {
+		t.Errorf("Expected Describe on group to satisfy GroupModule")
+	} else {
+		if len(g.Children()) != 0 {
+			t.Errorf("Expected same children")
+		}
+	}
+}
+
+type mockBadged struct {
+	mockModule
+}
+
+func (m *mockBadged) Badge() *countbadge.CountBadge {
+	b := &countbadge.CountBadge{Count: NewString("5"), Visible: NewBool(true)}
+	return b
+}
+
+func TestDescribe_D3(t *testing.T) {
+	m := Describe(&mockBadged{mockModule{id: "m"}}, "Desc")
+	if b, ok := m.(Badged); !ok || b.Badge() == nil {
+		t.Errorf("Expected Describe to preserve Badged capability")
+	}
+}
+
+func TestPlatform_HelpButton_D4(t *testing.T) {
+	child := Describe(&mockModule{id: "child"}, "Child desc")
+	gm := NewGroupUIModule("g", "Group", "", []UIModule{child})
+	p := &Platform{
+		Modules: []UIModule{gm},
+	}
+	p.Init(NilCtx())
+	p.Activate("child")
+
+	html := p.Render().String()
+	if !Contains(html, "Child desc") {
+		t.Errorf("Expected help text for group child")
+	}
+}
+
+func TestPlatform_Alerts_H5(t *testing.T) {
+	al := ModuleAlert{ID: "1", Subject: "Stock below minimum", OnView: func() {}, OnSeen: func() {}}
+	m := &alertedModule{
+		mockModule: mockModule{id: "a"},
+		alerts:     []ModuleAlert{al},
+	}
+	p := &Platform{
+		Modules: []UIModule{m},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	html := p.Render().String()
+	if !Contains(html, "Stock below minimum") {
+		t.Errorf("Expected alert subject")
+	}
+	if !Contains(html, ">View<") {
+		t.Errorf("Expected View button")
+	}
+	if !Contains(html, ">Mark as seen<") {
+		t.Errorf("Expected Mark as seen button")
+	}
+}
+
+func TestPlatform_Alerts_H6(t *testing.T) {
+	seenFlag := false
+	var m *alertedModule
+	al := ModuleAlert{ID: "1", Subject: "Stock below minimum", OnView: func() {}, OnSeen: func() {
+		m.alerts = nil
+		seenFlag = true
+	}}
+	m = &alertedModule{
+		mockModule: mockModule{id: "a"},
+		alerts:     []ModuleAlert{al},
+	}
+	p := &Platform{
+		Modules: []UIModule{m},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	p.seeAlert(m, al)
+
+	if !seenFlag {
+		t.Errorf("Expected OnSeen callback to trigger")
+	}
+
+	html := p.Render().String()
+	if Contains(html, "Stock below minimum") {
+		t.Errorf("Did not expect alert subject after being seen")
+	}
+}
+
+func TestPlatform_Alerts_H7(t *testing.T) {
+	al := ModuleAlert{ID: "1", Subject: "Stock below minimum", OnView: nil, OnSeen: func() {}}
+	m := &alertedModule{
+		mockModule: mockModule{id: "a"},
+		alerts:     []ModuleAlert{al},
+	}
+	p := &Platform{
+		Modules: []UIModule{m},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	html := p.Render().String()
+	if Contains(html, ">View<") {
+		t.Errorf("Did not expect View button when OnView is nil")
+	}
+}
+
+func TestPlatform_Alerts_H8(t *testing.T) {
+	mAlerted := &alertedModule{
+		mockModule: mockModule{id: "a"},
+		alerts:     nil,
+	}
+	mPlain := &mockModule{id: "b"}
+	p := &Platform{
+		Modules: []UIModule{mAlerted, mPlain},
+	}
+	p.Init(NilCtx())
+	p.Activate("b")
+
+	html := p.Render().String()
+	if Contains(html, "pd-alert-row") {
+		t.Errorf("Did not expect alert row class on plain module")
+	}
+}
+
+func TestPlatform_HelpButton_H9(t *testing.T) {
+	child := Describe(&mockModule{id: "child"}, "Child desc")
+	gm := NewGroupUIModule("g", "Group", "", []UIModule{child})
+	p := &Platform{
+		Modules: []UIModule{gm},
+	}
+	p.Init(NilCtx())
+	p.Activate("child")
+
+	html := p.Render().String()
+	if !Contains(html, `aria-label='What is this module?'`) {
+		t.Errorf("Expected help button aria-label for group child")
+	}
 }

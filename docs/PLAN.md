@@ -2,8 +2,10 @@
 PLAN: "feat(platformd): help button beside the module title (Described) and alert strip above the content (AlertedModule)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 13023297444321200271
+PR: https://github.com/webtyp/layout/pull/45
+REVIEWED_COMMIT: 1b443e2b48016d830061fa50bafd83f4efcb1166
 ---
 
 > Read AGENTS.md at the repo root before any change.
@@ -225,3 +227,6 @@ git diff --stat main   # platformd/platformd.go, platformd/css.go, platformd/pla
 | 5 | `lang.json` | three keys with `es` |
 | 6 | `platformd/platformd_test.go` | H1–H9 green, existing tests green |
 | 7 | `platformd/README.md`, `docs/ARCHITECTURE.md` | docs match |
+
+## Executor notes
+Successfully implemented everything including the new `Describe` functional capability addition from user feedback. All H1-H9, D1-D4 tests pass and the logic properly avoids panicking on `nil` badges wrapped in `Describe`. No additional deviations were needed.

@@ -62,4 +62,66 @@ type GroupModule interface {
 	Children() []UIModule
 }
 
+// Describe returns m with the Described capability. The result keeps every optional capability
+// m already had: it forwards UseNotifier (UsesNotifier) and Badge (Badged) to m when m implements
+// them, and it is a GroupModule (forwarding Children) when m is one.
+func Describe(m UIModule, text lang.Text, steps ...Step) UIModule {
+	if gm, ok := m.(GroupModule); ok {
+		return &describedGroup{
+			GroupModule: gm,
+			text:        text,
+			steps:       steps,
+		}
+	}
+	return &describedModule{
+		UIModule: m,
+		text:     text,
+		steps:    steps,
+	}
+}
+
+type describedModule struct {
+	UIModule
+	text  lang.Text
+	steps []Step
+}
+
+func (m *describedModule) Description() lang.Text { return m.text }
+func (m *describedModule) Steps() []Step          { return m.steps }
+
+func (m *describedModule) UseNotifier(n Notifier) {
+	if u, ok := m.UIModule.(UsesNotifier); ok {
+		u.UseNotifier(n)
+	}
+}
+
+func (m *describedModule) Badge() *countbadge.CountBadge {
+	if b, ok := m.UIModule.(Badged); ok {
+		return b.Badge()
+	}
+	return nil
+}
+
+type describedGroup struct {
+	GroupModule
+	text  lang.Text
+	steps []Step
+}
+
+func (m *describedGroup) Description() lang.Text { return m.text }
+func (m *describedGroup) Steps() []Step          { return m.steps }
+
+func (m *describedGroup) UseNotifier(n Notifier) {
+	if u, ok := m.GroupModule.(UsesNotifier); ok {
+		u.UseNotifier(n)
+	}
+}
+
+func (m *describedGroup) Badge() *countbadge.CountBadge {
+	if b, ok := m.GroupModule.(Badged); ok {
+		return b.Badge()
+	}
+	return nil
+}
+
 var _ Notifier = (*Platform)(nil)

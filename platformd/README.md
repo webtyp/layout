@@ -38,6 +38,12 @@ Modules can optionally implement capabilities detected by `platformd`:
 - **`Badged`**: a count the nav rail draws over the module's entry (`Badge() *countbadge.CountBadge`).
 - **`UsesNotifier`**: the chassis hands itself (`Notifier`) over once in `Init` before any module renders (`UseNotifier(n platformd.Notifier)`).
 
+### Help and alerts
+
+Two capabilities exist for explaining and warning users:
+- **`Described`**: a module can implement `Description() lang.Text` and optionally `Steps() []Step`. When the active module is `Described` and the description text is not empty, a «?» help button appears beside the module title. Tapping it reveals a panel with the description text (`Steps()` are not drawn yet). Alternatively, use `Describe(module, "Text")` to add this capability functionally.
+- **`AlertedModule`**: a module can implement `UnseenAlerts() []ModuleAlert`. When the active module has unseen alerts, an alert strip appears above its content on the stage. The strip lists the alerts by subject, with optional "View" and "Mark as seen" actions.
+
 ```go
 type chatModule struct {
 	platformd.UIModule
@@ -47,6 +53,8 @@ type chatModule struct {
 
 func (m *chatModule) Badge() *countbadge.CountBadge { return m.badge }
 func (m *chatModule) UseNotifier(n platformd.Notifier) { m.notify = n }
+func (m *chatModule) Description() lang.Text { return lang.Text("Chat interface.") }
+func (m *chatModule) Steps() []platformd.Step { return nil }
 ```
 
 ## Fields
