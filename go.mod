@@ -10,7 +10,7 @@ require (
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.43
-	webtyp.com/html v0.0.28
+	webtyp.com/html v0.0.29
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.20
 	webtyp.com/lang v0.1.7
