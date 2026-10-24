@@ -2,8 +2,10 @@
 PLAN: "fix(platformd): the «?» help button looks like a button (style.Button recipe)"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 973127655997276457
+PR: https://github.com/webtyp/layout/pull/47
+REVIEWED_COMMIT: f5f20aecc7806e25c8fa1f7aec19be7b3395763a
 ---
 
 > Read AGENTS.md at the repo root before any change.
