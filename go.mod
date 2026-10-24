@@ -4,7 +4,7 @@ go 1.26.8
 
 require (
 	webtyp.com/calendar v0.1.0
-	webtyp.com/components v0.8.38
+	webtyp.com/components v0.8.51
 	webtyp.com/css v0.4.30
 	webtyp.com/dom v0.13.28
 	webtyp.com/fetch v0.1.29
@@ -38,7 +38,7 @@ require (
 	webtyp.com/icons v0.0.33
 	webtyp.com/js v0.1.3 // indirect
 	webtyp.com/json v0.5.30
-	webtyp.com/router v0.4.3
+	webtyp.com/router v0.4.6
 )
 
 // TEMP local verification (toast, master-detail) — remove before commit.
