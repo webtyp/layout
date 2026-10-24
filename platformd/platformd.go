@@ -662,9 +662,6 @@ func (p *Platform) Render() *Element {
 		Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
 
 	helpSlotSpan := Span().BindChildren(p.helpSlot)
-	for _, n := range p.helpSlot.Get() {
-		helpSlotSpan.Child(n)
-	}
 	headerTitle.Child(helpSlotSpan)
 	header.Child(headerTitle)
 
@@ -672,10 +669,6 @@ func (p *Platform) Render() *Element {
 	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
 	msgSlot := Div().Set(clsMsgSlot.AsAttr()).ID("pd-msg-slot").
 		BindChildren(p.notifications)
-	// Because elementToHTML/SSR doesn't process "children" bindings, initial nodes must be manually added
-	for _, n := range p.notifications.Get() {
-		msgSlot.Child(n)
-	}
 	header.Child(msgSlot)
 
 	right := Div().Set(clsHeaderRight.AsAttr()).
@@ -701,9 +694,6 @@ func (p *Platform) Render() *Element {
 		Attr("role", "note").
 		BindStateFunc(widget.Open, func() bool { return p.helpOpen.Get() }).
 		BindChildren(p.helpPanel)
-	for _, n := range p.helpPanel.Get() {
-		helpPanelDiv.Child(n)
-	}
 	root.Child(helpPanelDiv)
 
 	// ── mobile message stack (mobile only) ─────────────────────────────────
@@ -711,9 +701,6 @@ func (p *Platform) Render() *Element {
 	msgStack := Div().Set(clsMsgStack.AsAttr())
 	msgSlotMobile := Div().Set(clsMsgSlotMobile.AsAttr()).
 		BindChildren(p.notificationsMobile)
-	for _, n := range p.notificationsMobile.Get() {
-		msgSlotMobile.Child(n)
-	}
 	msgStack.Child(msgSlotMobile)
 	// Added as the root's LAST child below — see that site for why DOM order
 	// matters there (the stack ties with the drawer/overlay at --z-dropdown).
@@ -733,9 +720,6 @@ func (p *Platform) Render() *Element {
 	stage := Main().Set(clsStage.AsAttr())
 
 	alertStripDiv := Div().Set(clsAlertStrip.AsAttr()).Attr("role", "status").BindChildren(p.alertStrip)
-	for _, n := range p.alertStrip.Get() {
-		alertStripDiv.Child(n)
-	}
 	stage.Child(alertStripDiv)
 
 	for _, m := range p.Modules {

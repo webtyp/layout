@@ -861,6 +861,27 @@ func TestPlatform_HelpButton_H1(t *testing.T) {
 	}
 }
 
+// The start screen is described: its «?» button and its text are drawn once.
+// The slots used to copy their signal's nodes into Child(...) as well, which
+// drew them twice in the browser and stopped the app (dom claimID panic).
+func TestPlatform_DescribedStartScreen_HelpDrawnOnce(t *testing.T) {
+	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
+	p := &Platform{
+		Modules:   []UIModule{modA},
+		DefaultID: "a",
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	html := p.Render().String()
+	if n := Count(html, `aria-label='What is this module?'`); n != 1 {
+		t.Errorf("help button drawn %d times, want 1", n)
+	}
+	if n := Count(html, "Keeps the clinic"); n != 1 {
+		t.Errorf("description drawn %d times, want 1", n)
+	}
+}
+
 func TestPlatform_HelpButton_H2(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
 	modB := &mockModule{id: "b"}
