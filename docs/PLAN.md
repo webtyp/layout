@@ -2,6 +2,8 @@
 PLAN: "fix(platformd): the «?» help button looks like a button (style.Button recipe)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 973127655997276457
 ---
 
 > Read AGENTS.md at the repo root before any change.
