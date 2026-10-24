@@ -6,7 +6,7 @@ require (
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.51
 	webtyp.com/css v0.4.30
-	webtyp.com/dom v0.13.28
+	webtyp.com/dom v0.13.29
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.52
