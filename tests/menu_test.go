@@ -7,10 +7,13 @@ import (
 	"webtyp.com/layout"
 	"webtyp.com/layout/app"
 	"webtyp.com/model"
-	"webtyp.com/unixid"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
+
+type testIDGen struct{}
+
+func (testIDGen) NewID() string { return "test-id" }
 
 func TestBuildMenu_InvalidScreenIsAnError(t *testing.T) {
 	// A leaf without a permission
@@ -22,7 +25,7 @@ func TestBuildMenu_InvalidScreenIsAnError(t *testing.T) {
 			Presenter: view.New(&conformance.FakeLister{}, &conformance.MockRecord{}),
 		},
 	}
-	ids, _ := unixid.NewUnixID()
+	ids := testIDGen{}
 	_, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true })
 	if err == nil {
 		t.Fatal("expected error for leaf screen without Permission, got nil")
@@ -42,7 +45,7 @@ func TestBuildMenu_LeafVisibleByItsPermission(t *testing.T) {
 			Presenter:  view.New(&conformance.FakeLister{}, &conformance.MockRecord{}),
 		},
 	}
-	ids, _ := unixid.NewUnixID()
+	ids := testIDGen{}
 
 	// allows true only for "service"
 	allowsService := func(r model.Resource) bool { return string(r) == "service" }
@@ -83,7 +86,7 @@ func TestBuildMenu_GroupHasNoOwnPermission(t *testing.T) {
 			},
 		},
 	}
-	ids, _ := unixid.NewUnixID()
+	ids := testIDGen{}
 
 	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return string(r) == "a" })
 	if err != nil {
@@ -121,7 +124,7 @@ func TestBuildMenu_DescriptionFromPresenter(t *testing.T) {
 			Presenter:  presenter,
 		},
 	}
-	ids, _ := unixid.NewUnixID()
+	ids := testIDGen{}
 
 	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true })
 	if err != nil {
