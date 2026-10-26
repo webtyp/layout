@@ -2,6 +2,8 @@
 PLAN: "feat: promote UIModule contracts to root layout package and add layout/app.BuildMenu"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 10323412434008975531
 ---
 > Read AGENTS.md at the repo root before any change.
 
