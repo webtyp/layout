@@ -2,8 +2,10 @@
 PLAN: "feat: promote UIModule contracts to root layout package and add layout/app.BuildMenu"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 10323412434008975531
+PR: https://github.com/webtyp/layout/pull/48
+REVIEWED_COMMIT: 27256583f66ffd2a9dc8e815d612dd514e4abf81
 ---
 > Read AGENTS.md at the repo root before any change.
 

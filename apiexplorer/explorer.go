@@ -12,13 +12,13 @@ import (
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
 	"webtyp.com/lang"
-	"webtyp.com/layout/platformd"
+	"webtyp.com/layout"
 	"webtyp.com/model"
 	"webtyp.com/svg"
 )
 
 // Explorer is a module of the platform shell: proven at compile time.
-var _ platformd.UIModule = (*Explorer)(nil)
+var _ layout.UIModule = (*Explorer)(nil)
 
 const NameAPIExplorer widget.Name = "apiexplorer"
 

@@ -42,6 +42,12 @@ a solid colour: a gradient never reaches an icon, by design.
 
 ## Packages
 
+### layout & layout/app
+
+The `layout` package defines the root chassis contracts: `UIModule` (identity, presentation, activation), `GroupModule` (nested children), `Described` (help strings and steps), and `Notifier`. These allow a module to declare its capabilities without importing a specific shell.
+
+The `webtyp.com/layout/app` subpackage (`app.BuildMenu`) turns a tree of `view.Screen` into a layout-agnostic `[]layout.UIModule` plus a `CanView` rule for visibility based on user permissions, usable with `platformd` or any custom layout chassis.
+
 ### platformd
 
 The platform shell, providing the header, navigation rail, and module hosting.
@@ -50,10 +56,6 @@ in left→right, and a swipe inside a module can never chain onto the stage. On 
 phone the hamburger carries the active module's icon and stows while you scroll
 down.
 
-- `NewUIModule(id, label, iconID, view)`: helper to create modules.
-- `CanView`: function field to gate module access.
-
-- **Capabilities**: Modules can implement interfaces like `Badged`, `Described` (with `Step`s), and `AlertedModule` (with `ModuleAlert`s) for optional chassis features. Note that chassis wiring for `Described` and `AlertedModule` is a separate, later plan.
 - `Platform.Brand` (`BrandName()`/`BrandMark()`): optional leading header slot; empty mark falls back to the shell's default glyph.
 
 The reference demo — `devices`, `medicalhistory` and `about` modules on this
