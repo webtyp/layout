@@ -653,11 +653,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.RevealedBy(widget.Open),
 		).
 		Part(widget.Part("help-btn"),
-			style.Row(style.SpaceNone),
-			style.CenterContent(),
-			style.As(style.Bare),
-			style.Interactive(style.Bare),
-			style.KeepSize(),
+			style.Button(style.Secondary),
 		).
 		Part(widget.Part("help-panel"),
 			style.Stack(style.Space1),
