@@ -13,12 +13,13 @@ require (
 	webtyp.com/html v0.0.30
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.20
-	webtyp.com/lang v0.1.9
+	webtyp.com/lang v0.1.10
 	webtyp.com/model v0.2.6
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.2
-	webtyp.com/view v0.6.44
+	webtyp.com/unixid v0.3.1
+	webtyp.com/view v0.6.45
 	webtyp.com/widget v0.6.44
 )
 
@@ -38,7 +39,7 @@ require (
 	webtyp.com/icons v0.0.33
 	webtyp.com/js v0.1.3 // indirect
 	webtyp.com/json v0.5.30
-	webtyp.com/router v0.4.6
+	webtyp.com/router v0.4.8
 )
 
 // TEMP local verification (toast, master-detail) — remove before commit.

@@ -551,7 +551,7 @@ func TestPlatform_Badged(t *testing.T) {
 }
 
 func autoMillis(msg string) int {
-	return Auto().millis(msg)
+	return Auto().Millis(msg)
 }
 
 func TestRenderCSS_NonEmpty(t *testing.T) {

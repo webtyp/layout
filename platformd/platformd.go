@@ -93,13 +93,7 @@ const (
 // UIModule is a module that provides its UI to the platform chassis.
 // The chassis takes id/hash/route from ModelName() and the rest of the
 // presentation from these methods.
-type UIModule interface {
-	layout.Module    // identity: ModelName() → used as ID
-	Label() string   // text in the nav rail
-	Icon() svg.Icon  // chassis renders via the sprite
-	View() Component // module content (often a *rightpanel.RightPanel)
-	Activate()       // called by chassis when the module is activated (on-demand loading)
-}
+type UIModule = layout.UIModule
 
 func (p *Platform) WidgetName() widget.Name { return NamePlatform }
 func (p *Platform) WidgetKind() widget.Kind { return widget.Menu }
@@ -237,46 +231,6 @@ type notification struct {
 
 // Duration is how long a notification stays before dismissing itself. A
 // Duration is a DECISION, not a number: 0-as-persistent and -1-as-automatic
-// were magic numbers nobody could read at the call site, and auto-sizing
-// needs the message text that only Notify has.
-type Duration struct {
-	millis func(msg string) int // nil = persistent
-	auto   bool                 // built by Auto(): the caller left the length to the platform
-}
-
-// Auto sizes the duration to the message: ~350ms per word plus ~2.5s to
-// notice the toast and find it, floored at 4s and capped at 10s so a long
-// message cannot hold the screen hostage. Two words → 4s; fifteen → 7.75s.
-// (It was 1.2s and a 2s floor: a toast on a phone, in the corner of the eye,
-// was gone before it was read.)
-func Auto() Duration {
-	return Duration{auto: true, millis: func(msg string) int {
-		words := Count(msg, " ") + 1
-		ms := 2500 + words*350
-		if ms < 4000 {
-			return 4000
-		}
-		if ms > 10000 {
-			return 10000
-		}
-		return ms
-	}}
-}
-
-// An error left to Auto() is persistent: the platform, not each caller, owns
-// the rule that an error must not vanish before it is read (see Notify).
-
-// Persistent keeps the notification until the user dismisses it. The case
-// for it is error reporting: a message that vanishes before it is read
-// defeats the report (WCAG 2.2.1, Timing Adjustable — the user must be able
-// to extend or disable a time limit).
-func Persistent() Duration { return Duration{} }
-
-// For pins an exact duration in milliseconds.
-func For(ms int) Duration {
-	return Duration{millis: func(string) int { return ms }}
-}
-
 // Init initializes the platform state and routing.
 func (p *Platform) Init(ctx Ctx) {
 	p.active = NewString("")
@@ -987,7 +941,7 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 	// An error whose length was left to the platform stays until dismissed
 	// (WCAG 2.2.1): a message that vanishes before it is read defeats the
 	// report. An explicit For(ms) is the caller's decision and is respected.
-	if t == msgtype.Error && d.auto {
+	if t == msgtype.Error && d.IsAuto() {
 		d = Persistent()
 	}
 	// The same message already on screen is not stacked again — a failing
@@ -998,8 +952,8 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 		if n.Type != t || n.Msg != msg {
 			continue
 		}
-		if n.timer != nil && d.millis != nil {
-			ms := d.millis(msg)
+		if n.timer != nil && d.HasTimer() {
+			ms := d.Millis(msg)
 			n.timer.Stop()
 			id := n.ID
 			n.expiryNs = time.NowNano() + time.Nano(ms)*nanosPerMilli
@@ -1009,8 +963,8 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 		return
 	}
 	ms := 0
-	if d.millis != nil {
-		ms = d.millis(msg)
+	if d.HasTimer() {
+		ms = d.Millis(msg)
 	}
 	n := notification{
 		Type: t,
