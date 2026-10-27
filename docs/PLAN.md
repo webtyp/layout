@@ -3,6 +3,8 @@ PLAN: "feat!: lists and selects follow the shared records (view.Records); no rel
 TAG: v0.3.78
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 11831450411581804107
 ---
 
 > Read AGENTS.md at the repo root before any change.
