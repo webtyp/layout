@@ -67,7 +67,9 @@ package `layout` (aliased in `platformd`), so `crudview` and `apiexplorer` do no
 app may bring its own chassis.
 
 `layout/app.BuildMenu(screens []view.Screen, ids, allows)` turns the screens modules declare as data
-(`view.Screen`) into `[]layout.UIModule` plus a `CanView` rule, without depending on `platformd`. Modules
+(`view.Screen`) into `[]layout.UIModule` plus a `CanView` rule, without depending on `platformd`. A leaf
+is a list (`Presenter`) or a component (`Component` + `Help`), and `BuildMenu` adds the API explorer last
+under `router.ResourceIntrospection`. `Platform.CanView == nil` shows nothing. Modules
 declare screens in `webtyp/view` and do not import `layout`, so a `layout` release does not force a module
 release — except a module whose `Component` screen is built with `chatview` or `crudview` (it imports them). A group has no permission of its own: it is shown only when the user may see at least one child,
 and opening it opens the first visible child.

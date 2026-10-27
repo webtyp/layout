@@ -3,8 +3,10 @@ PLAN: "feat: menu draws Component screens, ships the API explorer by itself and 
 TAG: v0.3.77
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 12902786279715637843
+PR: https://github.com/webtyp/layout/pull/49
+REVIEWED_COMMIT: aedc1d41a51998a7fbce102348a90150b6485fb0
 ---
 
 > Read AGENTS.md at the repo root before any change.

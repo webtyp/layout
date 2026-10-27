@@ -148,7 +148,8 @@ type Platform struct {
 	// Modules registered in order — appearance order in the nav rail.
 	Modules []UIModule
 
-	// CanView filters which modules the shell presents. nil = show all.
+	// CanView decides which modules the shell presents. nil = none (closed by default):
+	// pass layout/app's Menu.CanView, or your own rule.
 	CanView func(resource string) bool
 
 	// DefaultID is the ModelName() of the module to show initially.
@@ -318,7 +319,7 @@ func (p *Platform) goHome() {
 
 func (p *Platform) isViewable(id string) bool {
 	if p.CanView == nil {
-		return true
+		return false
 	}
 	if p.CanView(id) {
 		return true

@@ -69,9 +69,8 @@ no `if` in the shell.
 ### apiexplorer
 
 A screen that lists every endpoint of the running server (`GET /_routes`) with its access,
-permission and the roles that hold it, and lets an authorized user call each one. Add it as one
-more module: `explorer, _ := apiexplorer.New(apiexplorer.Config{})` and put it in `p.Modules`.
-Never expose it publicly in production — see `apiexplorer/README.md`.
+permission and the roles that hold it, and lets an authorized user call each one. Never expose
+it publicly in production — see `apiexplorer/README.md`.
 
 ### crudview
 
