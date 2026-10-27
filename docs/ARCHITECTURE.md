@@ -3,6 +3,7 @@
 ## Package Layout
 
     webtyp/layout/
+    ├── app/            # BuildMenu: []view.Screen → []layout.UIModule + CanView
     ├── platformd/      # Shell: header, nav rail, hash routing, notifications
     │   └── modules/    # Demo modules, one package each (devices, medicalhistory, about):
     │                   # view + data + icon, owned by the module, not the chassis
@@ -58,6 +59,18 @@ Three tests in `conformance_test.go` make the split un-reintroducible:
 
 See [ARQ_REFACTOR.md](ARQ_REFACTOR.md) for why the two skeletons diverged and
 what the construction harness has to say about it.
+
+## Chassis contracts and menu assembly (`layout`, `layout/app`)
+
+The contracts a chassis renders — `UIModule`, `GroupModule`, `Described`, `Notifier` — live in the root
+package `layout` (aliased in `platformd`), so `crudview` and `apiexplorer` do not import `platformd` and an
+app may bring its own chassis.
+
+`layout/app.BuildMenu(screens []view.Screen, ids, allows)` turns the screens modules declare as data
+(`view.Screen`) into `[]layout.UIModule` plus a `CanView` rule, without depending on `platformd`. Modules
+declare screens in `webtyp/view` and do not import `layout`, so a `layout` release does not force a module
+release — except a module whose `Component` screen is built with `chatview` or `crudview` (it imports them). A group has no permission of its own: it is shown only when the user may see at least one child,
+and opening it opens the first visible child.
 
 ## Dependencies
 
