@@ -9,7 +9,9 @@ import (
 )
 
 func TestPlatform_IconSvg_HasRequiredIcons(t *testing.T) {
-	p := &platformd.Platform{}
+	p := &platformd.Platform{
+		CanView: func(string) bool { return true },
+		}
 	sprite := p.IconSvg()
 	if sprite == nil {
 		t.Fatal("IconSvg() returned nil")
@@ -27,7 +29,9 @@ func TestPlatform_IconSvg_HasRequiredIcons(t *testing.T) {
 }
 
 func TestPlatform_IconSvg_HasCurrentColor(t *testing.T) {
-	p := &platformd.Platform{}
+	p := &platformd.Platform{
+		CanView: func(string) bool { return true },
+		}
 	sprite := p.IconSvg()
 	s := sprite.String()
 	if !strings.Contains(s, "currentColor") {

@@ -60,7 +60,9 @@ func ruleBlock(cssStr, want string) string {
 // first place satisfies the same invariant more simply than working around
 // one.
 func TestHoverOnANavLinkDoesNotResizeIt(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 
 	b := ruleBlock(cssStr, ".pd__nav-link:hover")
 	if b == "" {
@@ -94,7 +96,9 @@ func blocksFor(cssStr, sel string) []string {
 // `background-image: none` so a css.SetGradient rail cannot bleed its gradient
 // over their amber.
 func TestRailIsOnePrimarySurface(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 
 	// The menu fills with Primary.
 	menu := strings.Join(blocksFor(cssStr, ".pd__menu"), "\n---\n")
@@ -172,7 +176,9 @@ func TestRailIsOnePrimarySurface(t *testing.T) {
 // fires :hover but never the fine-pointer capability, so a float emitted
 // without that gate activates on tap and duplicates inside the Drawer.
 func TestDrawerPanelFloatIsFinePointerScoped(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 
 	mediaIdx := strings.Index(cssStr, "@media (hover: hover)")
 	if mediaIdx < 0 {
@@ -207,7 +213,9 @@ func TestDrawerPanelFloatIsFinePointerScoped(t *testing.T) {
 // TestMsgStackDockedTopEnd pins the hamburger's ride: docked in the top-end
 // corner (EdgeTop, SideEnd), one Space3 step off the frame.
 func TestMsgStackDockedTopEnd(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 	mediaIdx := strings.Index(cssStr, "@media (max-width")
 	if mediaIdx == -1 {
 		t.Fatal("expected a mobile (max-width) media query")
@@ -240,7 +248,9 @@ func TestMsgStackDockedTopEnd(t *testing.T) {
 }
 
 func TestHamburgerIsDrivenByScrollAlone(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 
 	for _, banned := range []string{
 		".pd:has(.pd__panel:focus-within) .pd__hamburger",
@@ -284,7 +294,9 @@ func TestHamburgerIsDrivenByScrollAlone(t *testing.T) {
 // TestHamburgerIsSquare pins the mobile hamburger sizing: IconBox(IconMd) = 1.5em,
 // perfectly fitting the 48px App Bar with 12px vertical clearance matching the brand mark.
 func TestHamburgerIsSquare(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 	rest := cssStr
 	found := false
 	for {
@@ -307,7 +319,9 @@ func TestHamburgerIsSquare(t *testing.T) {
 // expanding padding (maintaining 0 padding), so that brand (24px) and hamburger (24px)
 // are strictly symmetric, centering the title at exactly width/2.
 func TestHeaderLateralIconsSymmetric(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 	foundZeroPadding := false
 	rest := cssStr
 	for {
@@ -333,7 +347,9 @@ func TestHeaderLateralIconsSymmetric(t *testing.T) {
 // 2. Group icon on mobile is sized to IconMd (1.5em) matching all other drawer icons.
 // 3. Active icon slot is hidden, ensuring canonical category icon retention without duplication.
 func TestNavGroupAndActiveIconStates(t *testing.T) {
-	cssStr := (&Platform{}).RenderCSS().String()
+	cssStr := (&Platform{
+		CanView: func(string) bool { return true },
+		}).RenderCSS().String()
 
 	// nav-active-icon must be hidden
 	activeRule := ruleBlock(cssStr, ".pd__nav-active-icon {")
@@ -365,6 +381,8 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	// assertion below is two-directional, so anything left nil would read as a
 	// stylesheet rule with no markup behind it.
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		AppName:     "Test App",
 		AppVersion:  "v1.2.3",
 		Brand:       testBrand{name: "Acme", mark: "https://example.com/logo.svg"},
@@ -455,6 +473,8 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	// with no Brand is what actually exercises it, needed for the
 	// stylesheet-to-markup direction of the class-parity check below.
 	pNoBrand := &Platform{
+		CanView: func(string) bool { return true },
+
 		AppName: "Test App",
 		User:    testIdentity{},
 		Modules: p.Modules,
@@ -542,7 +562,9 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 // source for the colours: the base rule carries them, the phone rule only adds
 // elevation and padding and cannot drift from it.
 func TestMessageColorHasOnlyOneSource(t *testing.T) {
-	p := &Platform{}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		}
 	p.Init(NilCtx())
 	p.Notify(msgtype.Info, "i", Persistent())
 	p.Notify(msgtype.Success, "s", Persistent())

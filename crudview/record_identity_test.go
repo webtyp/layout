@@ -263,3 +263,50 @@ func TestRecordIdentity_CreatedItemAppearsFirstInList(t *testing.T) {
 		t.Fatalf("expected 2 items after deleting created item, got %d", len(listItemsAfterDelete))
 	}
 }
+
+type laterBackend struct {
+	memoryBackend
+	pending []func()
+}
+
+func (b *laterBackend) List(done func([]model.Model, error)) {
+	b.pending = append(b.pending, func() { b.memoryBackend.List(done) })
+}
+
+func (b *laterBackend) Save(recs []model.Model, done func(error)) {
+	cp := make([]model.Model, len(recs))
+	for i, r := range recs {
+		d := *(r.(*Device))
+		cp[i] = &d
+	}
+	b.pending = append(b.pending, func() { b.memoryBackend.Save(cp, done) })
+}
+
+func (b *laterBackend) answer() {
+	for len(b.pending) > 0 {
+		f := b.pending[0]
+		b.pending = b.pending[1:]
+		f()
+	}
+}
+
+// What is saved shows at once in its list row (skill ui-consistency), also when the
+// backend answers later.
+func TestRecordIdentity_EditedValueShowsInItsRow(t *testing.T) {
+	b := &laterBackend{memoryBackend: memoryBackend{rows: []Device{{Id: "a1", Name: "Alpha", Ip: "10.0.0.1"}}}}
+	v, err := New(Config{ParentID: "edit", Presenter: view.New(b, &Device{}), IDs: testIDs})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v.Init(&fakeCtx{})
+	v.Activate()
+	b.answer()
+	v.selectAction(view.Item{ID: "a1"})
+	v.form.SetValues("name", "Alpha Edited")
+	v.autoSaveAction()
+	b.answer()
+	items := v.list.Items()
+	if len(items) != 1 || items[0].Label != "Alpha Edited" {
+		t.Fatalf("row after edit = %+v, want one row labelled \"Alpha Edited\"", items)
+	}
+}

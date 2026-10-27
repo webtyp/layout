@@ -51,6 +51,8 @@ func (p *Platform) viewAlert(m UIModule, al ModuleAlert) {
 
 func TestPlatform_Render(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		AppName: "Test App",
 		Modules: []UIModule{
 			&mockModule{id: "mod1", label: "Module 1"},
@@ -85,6 +87,8 @@ func TestPlatform_Render(t *testing.T) {
 
 func TestPlatform_Render_Brand(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Brand: testBrand{name: "Acme", mark: "https://example.com/logo.svg"},
 	}
 	p.Init(NilCtx())
@@ -111,6 +115,8 @@ func TestPlatform_Render_BrandEmptyMark(t *testing.T) {
 	// Empty mark is a normal, expected outcome: the shell falls back to its
 	// own glyph, exactly as a missing avatar does.
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Brand: testBrand{name: "Acme", mark: ""},
 	}
 	p.Init(NilCtx())
@@ -129,7 +135,9 @@ func TestPlatform_Render_BrandEmptyMark(t *testing.T) {
 
 func TestPlatform_Render_NoBrand(t *testing.T) {
 	// Brand is optional: a platform without a logo is not a broken platform.
-	p := &Platform{}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		}
 	p.Init(NilCtx())
 
 	html := p.Render().String()
@@ -140,6 +148,8 @@ func TestPlatform_Render_NoBrand(t *testing.T) {
 
 func TestPlatform_Render_DefaultModule(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Element:   *Div(),
 		DefaultID: "mod2",
 		Modules: []UIModule{
@@ -158,6 +168,8 @@ func TestPlatform_Render_DefaultModule(t *testing.T) {
 
 func TestPlatform_Activate(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Element: *Div(),
 		Modules: []UIModule{
 			&mockModule{id: "mod1", label: "Mod 1"},
@@ -227,7 +239,9 @@ func TestPlatform_CanView(t *testing.T) {
 }
 
 func TestPlatform_Notify_Renders(t *testing.T) {
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 	p.Notify(msgtype.Error, "boom", Persistent())
 
@@ -255,7 +269,9 @@ func TestPlatform_Notify_Renders(t *testing.T) {
 func TestPlatform_Notify_A11yRoles(t *testing.T) {
 	// role=status (polite) for info/success; role=alert (assertive) for
 	// warnings and errors — announcements, never focus steals.
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 
 	p.Notify(msgtype.Info, "informational", Persistent())
@@ -286,7 +302,9 @@ func TestPlatform_Notify_A11yRoles(t *testing.T) {
 }
 
 func TestPlatform_Notify_Dismiss(t *testing.T) {
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 	p.Notify(msgtype.Info, "hi", For(10)) // 10ms
 
@@ -306,7 +324,9 @@ func TestPlatform_Notify_ManualDismiss(t *testing.T) {
 	// A persistent toast must survive its window untouched — only a tap (or
 	// the consumer) removes it. dismissal via a tap is the dismiss(id) path;
 	// the timer was never armed, so nothing can fire it later.
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 	p.Notify(msgtype.Info, "stay", Persistent())
 
@@ -339,7 +359,9 @@ func TestPlatform_Notify_ManualDismiss(t *testing.T) {
 // The same message already on screen is not stacked again: a failing auto-save
 // fires once per field commit, and a pile of identical toasts hides the page.
 func TestPlatform_Notify_IdenticalNotStacked(t *testing.T) {
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 	p.Notify(msgtype.Error, "tenant_id required", Auto())
 	p.Notify(msgtype.Error, "tenant_id required", Auto())
@@ -353,7 +375,9 @@ func TestPlatform_Notify_AutoDuration(t *testing.T) {
 	// Auto() sizes the window to the message: floor 4s for a short toast,
 	// then ~350ms per word on top of 2.5s, capped at 10s. The deadline is computed at
 	// Notify time and stays fixed across pause/resume.
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 
 	if got := autoMillis("Guardado"); got != 4000 {
@@ -382,7 +406,9 @@ func TestPlatform_Notify_PauseResume(t *testing.T) {
 	// remaining on the original deadline. A deadline that passes entirely
 	// while paused stays — the user is still reading it, which is the whole
 	// point of pausing.
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	p.Init(NilCtx())
 
 	p.Notify(msgtype.Info, "linger", For(60))
@@ -411,7 +437,9 @@ func TestPlatform_Notify_PauseResume(t *testing.T) {
 }
 
 func TestPlatform_IdleLock_DisabledByDefault(t *testing.T) {
-	p := &Platform{Element: *Div()}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		Element: *Div()}
 	// Should not panic when IdleTimeout is 0 and OnIdle is nil
 	p.Init(NilCtx())
 	if p.idleTimer != nil {
@@ -421,6 +449,8 @@ func TestPlatform_IdleLock_DisabledByDefault(t *testing.T) {
 
 func TestPlatform_IdleLock_PanicOnNilOnIdle(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Element:     *Div(),
 		IdleTimeout: 30,
 		OnIdle:      nil,
@@ -451,6 +481,8 @@ func TestPlatform_IdleLock_FiresOnce(t *testing.T) {
 	// two, so the counter needs atomic access, not a plain int.
 	var firedCount atomic.Int32
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Element:     *Div(),
 		IdleTimeout: 1, // 1 second timeout
 		OnIdle: func() {
@@ -502,6 +534,8 @@ func TestPlatform_UsesNotifier(t *testing.T) {
 		mockModule: mockModule{id: "mod1", label: "Module 1"},
 	}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{mod},
 	}
 
@@ -536,6 +570,8 @@ func TestPlatform_Badged(t *testing.T) {
 	modPlain := &mockModule{id: "plain_mod", label: "Plain Module"}
 
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{modBadged, modPlain},
 	}
 	p.Init(NilCtx())
@@ -555,7 +591,9 @@ func autoMillis(msg string) int {
 }
 
 func TestRenderCSS_NonEmpty(t *testing.T) {
-	p := &Platform{}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		}
 	css := p.RenderCSS().String()
 	if css == "" {
 		t.Fatal("RenderCSS() returned empty string")
@@ -578,6 +616,8 @@ func TestPlatform_ActivateCallsModuleActivate(t *testing.T) {
 	mod1 := &activatingModule{mockModule: mockModule{id: "mod1", label: "Mod 1"}}
 	mod2 := &activatingModule{mockModule: mockModule{id: "mod2", label: "Mod 2"}}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules:   []UIModule{mod1, mod2},
 		DefaultID: "mod1",
 	}
@@ -602,6 +642,8 @@ func TestPlatform_GroupModuleAccordion(t *testing.T) {
 	group := NewGroupUIModule("cat", "Catálogo", svg.Icon("catalog"), []UIModule{sub1, sub2})
 
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules:   []UIModule{group},
 		DefaultID: "cat",
 	}
@@ -667,6 +709,8 @@ func TestPlatform_GroupModuleAccordion(t *testing.T) {
 
 func TestPlatform_HeaderTitle(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{
 			&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")},
 			&mockModule{id: "mod2", label: "Module 2", icon: svg.Icon("info")},
@@ -696,6 +740,8 @@ func TestPlatform_HeaderTitle(t *testing.T) {
 
 	// Inside a group the <h1> names the active CHILD (the screen), not the group.
 	g := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{
 			NewGroupUIModule("group1", "Group 1", svg.Icon("folder"), []UIModule{
 				&mockModule{id: "sub1", label: "Sub 1", icon: svg.Icon("file")},
@@ -712,6 +758,8 @@ func TestPlatform_HeaderTitle(t *testing.T) {
 	// The app's name and version do not sit in the header beside the module's
 	// name (they compete with it): they live in the panel the app's mark opens.
 	b := &Platform{
+		CanView: func(string) bool { return true },
+
 		AppName:    "Acme App",
 		AppVersion: "v1.2.3",
 		Modules:    []UIModule{&mockModule{id: "mod1", label: "Module 1", icon: svg.Icon("home")}},
@@ -730,7 +778,9 @@ func TestPlatform_HeaderTitle(t *testing.T) {
 }
 
 func TestPlatform_OnScroll_Hysteresis(t *testing.T) {
-	p := &Platform{}
+	p := &Platform{
+		CanView: func(string) bool { return true },
+		}
 	p.Init(NilCtx())
 
 	// Initially at top: not stowed
@@ -802,6 +852,8 @@ func contains(s, substr string) bool {
 // Status sits in the header's right slot, before the user menu.
 func TestPlatform_Render_Status(t *testing.T) {
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		AppName: "Test App",
 		User:    testIdentity{},
 		Status:  func() Component { return Span().Text("status-probe") },
@@ -847,6 +899,8 @@ func TestPlatform_HelpButton_H1(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
 	modB := &mockModule{id: "b"}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{modA, modB},
 	}
 	p.Init(NilCtx())
@@ -867,6 +921,8 @@ func TestPlatform_HelpButton_H1(t *testing.T) {
 func TestPlatform_DescribedStartScreen_HelpDrawnOnce(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules:   []UIModule{modA},
 		DefaultID: "a",
 	}
@@ -886,6 +942,8 @@ func TestPlatform_HelpButton_H2(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")
 	modB := &mockModule{id: "b"}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{modA, modB},
 	}
 	p.Init(NilCtx())
@@ -900,6 +958,8 @@ func TestPlatform_HelpButton_H2(t *testing.T) {
 func TestPlatform_HelpButton_H3(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "")
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{modA},
 	}
 	p.Init(NilCtx())
@@ -915,6 +975,8 @@ func TestPlatform_HelpButton_H4(t *testing.T) {
 	modA := Describe(&mockModule{id: "a"}, "Desc")
 	modB := &mockModule{id: "b"}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{modA, modB},
 	}
 	p.Init(NilCtx())
@@ -975,6 +1037,8 @@ func TestPlatform_HelpButton_D4(t *testing.T) {
 	child := Describe(&mockModule{id: "child"}, "Child desc")
 	gm := NewGroupUIModule("g", "Group", "", []UIModule{child})
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{gm},
 	}
 	p.Init(NilCtx())
@@ -993,6 +1057,8 @@ func TestPlatform_Alerts_H5(t *testing.T) {
 		alerts:     []ModuleAlert{al},
 	}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{m},
 	}
 	p.Init(NilCtx())
@@ -1022,6 +1088,8 @@ func TestPlatform_Alerts_H6(t *testing.T) {
 		alerts:     []ModuleAlert{al},
 	}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{m},
 	}
 	p.Init(NilCtx())
@@ -1046,6 +1114,8 @@ func TestPlatform_Alerts_H7(t *testing.T) {
 		alerts:     []ModuleAlert{al},
 	}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{m},
 	}
 	p.Init(NilCtx())
@@ -1064,6 +1134,8 @@ func TestPlatform_Alerts_H8(t *testing.T) {
 	}
 	mPlain := &mockModule{id: "b"}
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{mAlerted, mPlain},
 	}
 	p.Init(NilCtx())
@@ -1079,6 +1151,8 @@ func TestPlatform_HelpButton_H9(t *testing.T) {
 	child := Describe(&mockModule{id: "child"}, "Child desc")
 	gm := NewGroupUIModule("g", "Group", "", []UIModule{child})
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{gm},
 	}
 	p.Init(NilCtx())
@@ -1097,6 +1171,8 @@ func TestPlatform_WelcomeSteps(t *testing.T) {
 	)
 
 	p := &Platform{
+		CanView: func(string) bool { return true },
+
 		Modules: []UIModule{mod},
 	}
 	p.Init(NilCtx())
@@ -1137,5 +1213,23 @@ func TestPlatform_WelcomeSteps(t *testing.T) {
 
 	if p.helpOpen.Get() != false {
 		t.Errorf("Expected helpOpen to be false after dismiss")
+	}
+}
+
+func TestPlatform_NilCanViewShowsNothing(t *testing.T) {
+	p := &Platform{
+		Modules: []UIModule{
+			&mockModule{id: "mod1", label: "Module 1"},
+			&mockModule{id: "mod2", label: "Module 2"},
+		},
+	}
+	p.Init(NilCtx())
+
+	html := p.Render().String()
+	if Contains(html, "data-id='mod1'") {
+		t.Errorf("expected mod1 to be hidden when CanView is nil, got html with data-id='mod1'")
+	}
+	if Contains(html, "data-id='mod2'") {
+		t.Errorf("expected mod2 to be hidden when CanView is nil, got html with data-id='mod2'")
 	}
 }

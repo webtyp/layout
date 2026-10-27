@@ -1,6 +1,9 @@
 package tests
 
 import (
+	"webtyp.com/dom"
+	"webtyp.com/router"
+
 	"strings"
 	"testing"
 
@@ -99,8 +102,8 @@ func TestBuildMenu_GroupHasNoOwnPermission(t *testing.T) {
 		t.Error("expected CanView('g.a') to be true")
 	}
 
-	if len(m.Modules) != 1 {
-		t.Fatalf("expected 1 module, got %d", len(m.Modules))
+	if len(m.Modules) != 2 {
+		t.Fatalf("expected 2 modules, got %d", len(m.Modules))
 	}
 
 	gm, ok := m.Modules[0].(layout.GroupModule)
@@ -131,8 +134,8 @@ func TestBuildMenu_DescriptionFromPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if len(m.Modules) != 1 {
-		t.Fatalf("expected 1 module, got %d", len(m.Modules))
+	if len(m.Modules) != 2 {
+		t.Fatalf("expected 2 modules, got %d", len(m.Modules))
 	}
 
 	desc, ok := m.Modules[0].(layout.Described)
@@ -141,5 +144,80 @@ func TestBuildMenu_DescriptionFromPresenter(t *testing.T) {
 	}
 	if desc.Description() != "Help" {
 		t.Errorf("expected Description 'Help', got '%s'", desc.Description())
+	}
+}
+
+type fakeComp struct{ dom.Element }
+
+func TestBuildMenu_ComponentLeaf(t *testing.T) {
+	screens := []view.Screen{
+		{
+			ID:         "booking",
+			Label:      "Booking",
+			Icon:       "laptop",
+			Permission: "reservation",
+			Help:       "Book.",
+			Component:  &fakeComp{},
+		},
+	}
+	ids := testIDGen{}
+
+	allows := func(r model.Resource) bool { return string(r) == "reservation" }
+	m, err := app.BuildMenu(screens, ids, allows)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if m.Modules[0].ModelName() != "booking" {
+		t.Errorf("expected module ModelName 'booking', got '%s'", m.Modules[0].ModelName())
+	}
+	if m.Modules[0].View() != screens[0].Component {
+		t.Error("expected View() to return the same component")
+	}
+
+	if !m.CanView("booking") {
+		t.Error("expected CanView('booking') to be true")
+	}
+
+	desc, ok := m.Modules[0].(layout.Described)
+	if !ok {
+		t.Fatalf("expected module to satisfy layout.Described")
+	}
+	if desc.Description() != "Book." {
+		t.Errorf("expected Description 'Book.', got '%s'", desc.Description())
+	}
+}
+
+func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
+	screens := []view.Screen{
+		{
+			ID:         "x",
+			Label:      "X",
+			Icon:       "laptop",
+			Permission: "service",
+			Presenter:  view.New(&conformance.FakeLister{}, &conformance.MockRecord{}),
+		},
+	}
+	ids := testIDGen{}
+
+	allows := func(r model.Resource) bool { return string(r) == string(router.ResourceIntrospection) }
+	m, err := app.BuildMenu(screens, ids, allows)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	last := m.Modules[len(m.Modules)-1]
+	if last.ModelName() != string(router.ResourceIntrospection) {
+		t.Errorf("expected last module to be API explorer, got '%s'", last.ModelName())
+	}
+
+	if !m.CanView(string(router.ResourceIntrospection)) {
+		t.Error("expected CanView for api explorer to be true when allows returns true")
+	}
+
+	allowsFalse := func(r model.Resource) bool { return false }
+	m2, _ := app.BuildMenu(screens, ids, allowsFalse)
+	if m2.CanView(string(router.ResourceIntrospection)) {
+		t.Error("expected CanView for api explorer to be false when allows returns false")
 	}
 }

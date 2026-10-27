@@ -4,11 +4,15 @@ import (
 	"webtyp.com/fmt"
 	"webtyp.com/lang"
 	"webtyp.com/layout"
+	"webtyp.com/layout/apiexplorer"
 	"webtyp.com/layout/crudview"
 	"webtyp.com/model"
+	"webtyp.com/router"
 	"webtyp.com/svg"
 	"webtyp.com/view"
 )
+
+const helpAPIExplorer lang.Text = "Every operation of this app: who may call it, and a form to try it."
 
 // Menu is what layout/app hands to any layout chassis (such as platformd or a custom layout):
 // the modules and the visibility rule.
@@ -23,7 +27,8 @@ type screenPerm struct {
 }
 
 // BuildMenu validates every screen and builds its layout.UIModule tree. allows answers whether the
-// signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Allows(string(r)) }).
+// signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Can(r, model.Read) }).
+// The API explorer is always added last, visible to whoever may read router.ResourceIntrospection; the app never adds it.
 func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.Resource) bool) (Menu, error) {
 	for _, s := range screens {
 		if err := s.Validate(); err != nil {
@@ -40,6 +45,13 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 		}
 		mods = append(mods, m)
 	}
+
+	explorer, err := apiexplorer.New(apiexplorer.Config{})
+	if err != nil {
+		return Menu{}, err
+	}
+	mods = append(mods, layout.Describe(explorer, helpAPIExplorer))
+	perms = append(perms, screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection})
 
 	canView := func(id string) bool {
 		if allows == nil {
@@ -71,6 +83,12 @@ func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm) (lay
 		}
 		grp := layout.NewGroupUIModule(s.ID, lang.Translate(s.Label).String(), svg.Icon(s.Icon), children)
 		return layout.Describe(grp, s.Help), nil
+	}
+
+	if s.Component != nil {
+		*perms = append(*perms, screenPerm{id: s.ID, permission: s.Permission})
+		m := layout.NewUIModule(s.ID, lang.Translate(s.Label).String(), svg.Icon(s.Icon), s.Component)
+		return layout.Describe(m, s.Help), nil
 	}
 
 	v, err := crudview.New(crudview.Config{

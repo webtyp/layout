@@ -91,7 +91,7 @@ func New(cfg Config) (*Explorer, error) {
 	return e, nil
 }
 
-func (e *Explorer) ModelName() string { return "api_explorer" }
+func (e *Explorer) ModelName() string { return string(router.ResourceIntrospection) }
 func (e *Explorer) Label() string     { return lang.Translate("API Explorer").String() }
 func (e *Explorer) Icon() svg.Icon    { return terminal.Ref }
 func (e *Explorer) View() Component   { return e }
