@@ -38,7 +38,7 @@ require (
 	webtyp.com/icons v0.0.33
 	webtyp.com/js v0.1.3 // indirect
 	webtyp.com/json v0.5.30
-	webtyp.com/router v0.4.8
+	webtyp.com/router v0.4.9
 )
 
 // TEMP local verification (toast, master-detail) — remove before commit.
