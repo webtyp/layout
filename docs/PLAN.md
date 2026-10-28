@@ -6,7 +6,7 @@ REVIEWER: none
 STATUS: review
 SESSION: 3069625319767653291
 PR: https://github.com/webtyp/layout/pull/52
-REVIEWED_COMMIT: eb052d10a132d358a6b6145e53224f7650815bb8
+REVIEWED_COMMIT: c1c7c599bb9efe748510e07ba2dad355f347e5db
 ---
 
 > Read AGENTS.md at the repo root before any change.
