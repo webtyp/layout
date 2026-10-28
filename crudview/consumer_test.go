@@ -33,8 +33,8 @@ var deviceModel = model.Definition{
 	Name: "device",
 	Fields: model.Fields{
 		{Name: "id", Type: input.Text(), DB: &model.FieldDB{PK: true}},
-		{Name: "name", Type: input.Text(), NotNull: true, Row: model.RowTitle},
-		{Name: "ip", Type: input.Text(), Row: model.RowDetail},
+		{Name: "name", Type: input.Text(), NotNull: true, Item: model.ItemLabel},
+		{Name: "ip", Type: input.Text(), Item: model.ItemDescription},
 	},
 }
 
@@ -42,6 +42,7 @@ type Device struct {
 	Id, Name, Ip string
 }
 
+func (d *Device) Item() model.Item      { return model.Item{ID: d.Id, Label: d.Name, Description: d.Ip} }
 func (d *Device) ModelName() string     { return "device" }
 func (d *Device) Schema() []model.Field { return deviceModel.Fields }
 func (d *Device) Pointers() []any       { return []any{&d.Id, &d.Name, &d.Ip} }
@@ -65,7 +66,7 @@ var _ model.Model = (*Device)(nil) // Verify compile-time implementation
 // view.Deleter, but NOT view.Updater: the double for every test that
 // asserts update UI stays absent.
 type listSaveDeleteBackend struct {
-	rows    []model.Model
+	rows    []view.Record
 	saved   []model.Model
 	deleted []string
 	records *view.Records
@@ -78,8 +79,8 @@ func (b *listSaveDeleteBackend) Records() *view.Records {
 	return b.records
 }
 
-func (b *listSaveDeleteBackend) List(done func([]model.Model, error)) {
-	out := make([]model.Model, len(b.rows))
+func (b *listSaveDeleteBackend) List(done func([]view.Record, error)) {
+	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)
 }
@@ -87,7 +88,11 @@ func (b *listSaveDeleteBackend) List(done func([]model.Model, error)) {
 func (b *listSaveDeleteBackend) Save(recs []model.Model, done func(error)) {
 	b.saved = append(b.saved, recs...)
 	if b.records != nil {
-		b.records.Put(recs...)
+		for _, rec := range recs {
+			if r, ok := rec.(view.Record); ok {
+				b.records.Put(r)
+			}
+		}
 	}
 	done(nil)
 }
@@ -128,21 +133,25 @@ func (d *DeviceNoWidgets) DecodeFields(r model.FieldReader) {
 	d.Name, _ = r.String("name")
 }
 
-var _ model.Model = (*DeviceNoWidgets)(nil) // Verify compile-time implementation
+func (d *DeviceNoWidgets) Item() model.Item {
+	return model.Item{ID: d.Id, Label: d.Name}
+}
+
+var _ view.Record = (*DeviceNoWidgets)(nil) // Verify compile-time implementation
 
 type fakeNoWidgetsPresenter struct {
-	record model.Model
+	record view.Record
 }
 
 func (f *fakeNoWidgetsPresenter) OnChange(fn func()) {}
 func (f *fakeNoWidgetsPresenter) Title() string                  { return "No Widgets" }
 func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text   { return "Search" }
-func (f *fakeNoWidgetsPresenter) Record() model.Model            { return f.record }
-func (f *fakeNoWidgetsPresenter) Items() []view.Item             { return nil }
-func (f *fakeNoWidgetsPresenter) Filter(term string) []view.Item { return nil }
+func (f *fakeNoWidgetsPresenter) Record() view.Record            { return f.record }
+func (f *fakeNoWidgetsPresenter) Items() []model.Item             { return nil }
+func (f *fakeNoWidgetsPresenter) Filter(term string) []model.Item { return nil }
 func (f *fakeNoWidgetsPresenter) Reload(done func(error))        { done(nil) }
 func (f *fakeNoWidgetsPresenter) Selected() string               { return "" }
-func (f *fakeNoWidgetsPresenter) Select(id string) model.Model   { return nil }
+func (f *fakeNoWidgetsPresenter) Select(id string) view.Record   { return nil }
 func (f *fakeNoWidgetsPresenter) Deselect()                      {}
 
 // fieldErrorText extracts the text inside a crudview form field's error span
@@ -223,7 +232,7 @@ func TestConsumer_ListOp(t *testing.T) {
 // Case 3: The list renders cards returned by Items
 func TestConsumer_ListRendersCards(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Device One", Ip: "192.168.1.1"},
 			&Device{Id: "23", Name: "Device Two", Ip: "192.168.1.2"},
 		},
@@ -253,7 +262,7 @@ func TestConsumer_ListRendersCards(t *testing.T) {
 // Case 4: Selecting a card populates the form using form.LoadValues
 func TestConsumer_SelectPopulatesForm(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Device One", Ip: "192.168.1.1"},
 			&Device{Id: "23", Name: "Device Two", Ip: "192.168.1.2"},
 		},
@@ -272,7 +281,7 @@ func TestConsumer_SelectPopulatesForm(t *testing.T) {
 	v.Init(&fakeCtx{})
 	v.Activate()
 
-	v.selectAction(view.Item{ID: "12"})
+	v.selectAction(model.Item{ID: "12"})
 
 	// "id" is a hidden PK — asserting through the form means checking the
 	// record the save actually ships, not an input that was never rendered.
@@ -306,7 +315,7 @@ func TestConsumer_SelectPopulatesForm(t *testing.T) {
 	}
 
 	// Nil record on Fill should reset the form
-	v.selectAction(view.Item{ID: "unknown"})
+	v.selectAction(model.Item{ID: "unknown"})
 	if len(nameInput.GetValues()) != 0 && nameInput.GetValues()[0] != "" {
 		t.Errorf("expected name input to be reset/empty, got %v", nameInput.GetValues())
 	}
@@ -425,7 +434,7 @@ func TestConsumer_SaveInvalidForm(t *testing.T) {
 // Case 7: Delete calls Delete on presenter
 func TestConsumer_DeleteSelected(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "123", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -444,7 +453,7 @@ func TestConsumer_DeleteSelected(t *testing.T) {
 	v.Activate()
 
 	// Select the loaded device so the presenter indexes and registers selection
-	v.selectAction(view.Item{ID: "123"})
+	v.selectAction(model.Item{ID: "123"})
 
 	var deleteDoneCalled bool
 	var deleteErr error
@@ -479,7 +488,7 @@ func TestConsumer_DeleteSelected(t *testing.T) {
 // Case 8: Delete can return error from presenter
 func TestConsumer_DeleteNoSelection(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "non-existent", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -497,7 +506,7 @@ func TestConsumer_DeleteNoSelection(t *testing.T) {
 	v.Init(&fakeCtx{})
 
 	// Select the item so it is registered
-	v.selectAction(view.Item{ID: "non-existent"})
+	v.selectAction(model.Item{ID: "non-existent"})
 
 	// Set fb.Err *after* successful Init/Reload
 	expectedErr := fmt.Errf("no selection")
@@ -555,7 +564,7 @@ func TestConsumer_ListErrorPropagated(t *testing.T) {
 // Case 10: Search filters cards by Label and Description (case-insensitive)
 func TestConsumer_SearchFiltering(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Frontend Device", Ip: "192.168.1.10"},
 			&Device{Id: "23", Name: "Backend Server", Ip: "10.0.0.5"},
 			&Device{Id: "34", Name: "Database Instance", Ip: "mysql-production"},
@@ -608,7 +617,7 @@ func TestConsumer_SearchFiltering(t *testing.T) {
 // gate that used to appear on selection is the regression this guards.
 func TestConsumer_NoLockGating(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -628,7 +637,7 @@ func TestConsumer_NoLockGating(t *testing.T) {
 	}
 
 	// Selecting an existing row: still editable — the lock no longer exists.
-	v.selectAction(view.Item{ID: "12"})
+	v.selectAction(model.Item{ID: "12"})
 	html = v.form.Render().String()
 	if fmt.Contains(html, "disabled") {
 		t.Error("expected selecting a row to leave the form editable (no lock), got disabled fields")
@@ -642,7 +651,7 @@ func TestConsumer_NoLockGating(t *testing.T) {
 	}
 
 	// Re-select the same row (simulating a fresh row click): still editable.
-	v.selectAction(view.Item{ID: "12"})
+	v.selectAction(model.Item{ID: "12"})
 	html = v.form.Render().String()
 	if fmt.Contains(html, "disabled") {
 		t.Error("expected re-selecting the row to leave the form editable")
@@ -662,7 +671,7 @@ func TestConsumer_NoLockGating(t *testing.T) {
 // record untouched.
 func TestConsumer_DeleteRequiresConfirmation(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -707,7 +716,7 @@ func TestConsumer_DeleteRequiresConfirmation(t *testing.T) {
 // button stayed on "+" after pressing it.
 func TestConsumer_NewFlipsToggleActive(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -737,7 +746,7 @@ func TestConsumer_NewFlipsToggleActive(t *testing.T) {
 	}
 
 	// Selecting an existing row is the other source of active().
-	v.selectAction(view.Item{ID: "12"})
+	v.selectAction(model.Item{ID: "12"})
 	if !v.active() {
 		t.Error("expected selecting a row to flip active() to true")
 	}

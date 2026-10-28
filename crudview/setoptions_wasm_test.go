@@ -36,7 +36,7 @@ func (r *Room) DecodeFields(rd model.FieldReader) {
 	r.Id, _ = rd.String("id")
 	r.FloorId, _ = rd.String("floor_id")
 }
-func (r *Room) Item() view.Item { return view.Item{ID: r.Id, Label: r.Id} }
+func (r *Room) Item() model.Item { return model.Item{ID: r.Id, Label: r.Id} }
 
 // TestSetOptions_FillsLiveSelect is the consumer's case: a record whose form has
 // a select fed by another table (a room's floor). The choices arrive from a

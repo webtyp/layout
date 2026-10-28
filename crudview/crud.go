@@ -40,8 +40,8 @@ type Config struct {
 	// targetlist.TargetList factory — the ergonomic default, not a decision
 	// imposed: pass a targetdate.TargetDate (or anything satisfying
 	// ListView) factory instead when the data wants a leading date/time
-	// badge (view.Item's LeadTop/Main/Bottom) rather than a plain label.
-	List func(selected *dom.SignalString, onSelect func(view.Item)) ListView
+	// badge (the item's Badge) rather than a plain label.
+	List func(selected *dom.SignalString, onSelect func(model.Item)) ListView
 
 	// OnAfterReload se invoca al final de Reload(), justo después de que la lista
 	// se re-llena con los items del presenter (list.SetItems). Recibe el list

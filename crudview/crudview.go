@@ -70,13 +70,13 @@ const (
 
 // ListView is the row-rendering half of a CrudView. targetlist.TargetList
 // (plain label rows) and targetdate.TargetDate (a leading date/time badge
-// instead of a plain label — see view.Item's LeadTop/Main/Bottom) both
+// instead of a plain label — see the item's Badge) both
 // satisfy it, so Config.List can swap one for the other without CrudView
 // ever knowing which it got.
 type ListView interface {
 	Component
-	SetItems(items []view.Item)
-	Items() []view.Item
+	SetItems(items []model.Item)
+	Items() []model.Item
 	Count() int
 	// Selection mode — targetlist and targetdate both implement it by
 	// assembling the components/listselect lego piece.
@@ -120,7 +120,7 @@ type CrudView struct {
 	// OnSelect/OnDelete callbacks CrudView owns — Init calls it once. Set by
 	// New from Config.List; nil there resolves to a targetlist.TargetList
 	// factory, same "ergonomic default, not a decision imposed" as Filter.
-	List func(selected *SignalString, onSelect func(view.Item)) ListView
+	List func(selected *SignalString, onSelect func(model.Item)) ListView
 
 	// NewRecord returns the record a NEW draft starts from — the "+" button's
 	// seed. nil (the default) starts from an empty form.
@@ -128,7 +128,7 @@ type CrudView struct {
 
 	// Additive user hooks — called AFTER the built-in behavior. Assigning them
 	// can never disable list→form fill, save or delete wiring.
-	OnSelect func(it view.Item)
+	OnSelect func(it model.Item)
 	OnNew    func()
 	OnSaved  func(err error)
 	// OnDeleted fires after both the single-record delete (row → ⋮ → Eliminar)
@@ -273,7 +273,7 @@ func (v *CrudView) Init(ctx Ctx) {
 	// left nil is fine. Default here mirrors New's own default exactly.
 	buildList := v.List
 	if buildList == nil {
-		buildList = func(selected *SignalString, onSelect func(view.Item)) ListView {
+		buildList = func(selected *SignalString, onSelect func(model.Item)) ListView {
 			return &targetlist.TargetList{Selected: selected, OnSelect: onSelect}
 		}
 	}
@@ -456,7 +456,7 @@ func (v *CrudView) renderDeleteConfirm() *Element {
 // directly (see conformance_test.go). Focus is synchronous, on purpose — see
 // newAction below for why it must never be deferred.
 func (v *CrudView) editAction(id string) {
-	v.selectAction(view.Item{ID: id})
+	v.selectAction(model.Item{ID: id})
 	if v.form != nil {
 		v.form.Focus()
 	}
@@ -563,7 +563,7 @@ func (v *CrudView) Reload(done func(error)) {
 // so nothing needs protecting from edits. On mobile (horizontal scroll-snap
 // strip) it also snaps the viewport to the form panel; a no-op on desktop,
 // where both columns are already visible.
-func (v *CrudView) selectAction(it view.Item) {
+func (v *CrudView) selectAction(it model.Item) {
 	v.selected.Set(it.ID)
 	v.canDelete.Set(it.ID != "")
 	if v.list != nil {

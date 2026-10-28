@@ -7,7 +7,6 @@ import (
 	"webtyp.com/components/searchbar"
 	"webtyp.com/dom"
 	. "webtyp.com/html"
-	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 	"webtyp.com/widget"
@@ -31,7 +30,7 @@ func (f *fakeFilter) Render() *dom.Element {
 // fakeListBackend returns a FakeLister seeded with three rows, like the demo store.
 func fakeListBackend() *conformance.FakeLister {
 	return &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "12", Name: "Frontend Device", Ip: "192.168.1.10"},
 			&Device{Id: "23", Name: "Backend Server", Ip: "10.0.0.5"},
 			&Device{Id: "34", Name: "Database Instance", Ip: "mysql-production"},

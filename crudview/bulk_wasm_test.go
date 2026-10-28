@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	. "webtyp.com/dom"
-	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -26,7 +25,7 @@ func mountBulk(t *testing.T, withUpdate bool) (*CrudView, view.Lister, js.Value)
 	doc.Get("body").Call("appendChild", root)
 	t.Cleanup(func() { root.Set("innerHTML", "") })
 
-	rows := []model.Model{
+	rows := []view.Record{
 		&Device{Id: "id-1", Name: "Device id-1", Ip: "10.0.0.id-1"},
 		&Device{Id: "id-2", Name: "Device id-2", Ip: "10.0.0.id-2"},
 		&Device{Id: "id-3", Name: "Device id-3", Ip: "10.0.0.id-3"},

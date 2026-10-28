@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	. "webtyp.com/dom"
-	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -25,7 +24,7 @@ func TestRowClick_WritesDataSelected(t *testing.T) {
 	t.Cleanup(func() { root.Set("innerHTML", "") })
 
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "1", Name: "Item 1", Ip: "Desc 1"},
 			&Device{Id: "2", Name: "Item 2", Ip: "Desc 2"},
 		},

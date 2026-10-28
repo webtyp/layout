@@ -13,7 +13,7 @@ import (
 
 func TestCrudView_Wasm_EmptyDisplays(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "1", Name: "Item One", Ip: "Desc One"},
 		},
 	}
@@ -43,7 +43,7 @@ func TestCrudView_Wasm_EmptyDisplays(t *testing.T) {
 		t.Errorf("Expected empty message element to exist.")
 	}
 
-	v.selectAction(view.Item{ID: "1"})
+	v.selectAction(model.Item{ID: "1"})
 	rendered = v.Render().String()
 
 	if strings.Contains(rendered, `data-open='true'>No selection desc</p>`) {
@@ -61,7 +61,7 @@ func TestCrudView_Wasm_EmptyDisplays(t *testing.T) {
 
 func TestCrudView_Wasm_EmptyDisplays_BothEmpty(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{},
+		Rows: []view.Record{},
 	}
 	p := view.New(fb, &Device{}, view.WithTitle("Wasm Test"))
 

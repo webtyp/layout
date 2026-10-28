@@ -13,7 +13,7 @@ import (
 )
 
 func setupBulkTest(t *testing.T, withUpdate bool) (*CrudView, view.Lister) {
-	rows := []model.Model{
+	rows := []view.Record{
 		&Device{Id: "id-1", Name: "Device One", Ip: "192.168.1.1"},
 		&Device{Id: "id-2", Name: "Device Two", Ip: "192.168.1.2"},
 		&Device{Id: "id-3", Name: "Device Three", Ip: "192.168.1.3"},
@@ -85,7 +85,7 @@ func TestBulkEntriesDisabledWhileEditingARecord(t *testing.T) {
 		t.Error("expected active() to be false after undoAction")
 	}
 
-	v.selectAction(view.Item{ID: "id-1"})
+	v.selectAction(model.Item{ID: "id-1"})
 	if !v.active() {
 		t.Error("expected active() to be true when a row is selected")
 	}
@@ -178,7 +178,7 @@ func TestEditButtonAbsentWithoutUpdater(t *testing.T) {
 func TestRowTapStillLoadsRecordInNormalMode(t *testing.T) {
 	v, _ := setupBulkTest(t, true)
 
-	v.selectAction(view.Item{ID: "id-1"})
+	v.selectAction(model.Item{ID: "id-1"})
 
 	if v.selected.Get() != "id-1" {
 		t.Errorf("expected selected ID 'id-1', got %q", v.selected.Get())
@@ -200,7 +200,7 @@ func TestSingleDeleteEntryConfirmsLoadedRecord(t *testing.T) {
 	v, backend := setupBulkTest(t, true)
 	fb := backend.(*conformance.FakeLister)
 
-	v.selectAction(view.Item{ID: "id-1", Label: "Device One"})
+	v.selectAction(model.Item{ID: "id-1", Label: "Device One"})
 	v.deleteEntryAction()
 
 	if v.mode.Get() != string(modeNormal) {
@@ -287,7 +287,7 @@ func TestCreateActionGatedOnSaver(t *testing.T) {
 	// We need a presenter that is NOT a view.Saver.
 	// Create a custom double without Save method.
 	nosaveBackend := &noSaveBackend{
-		rows: []model.Model{
+		rows: []view.Record{
 			&Device{Id: "id-1", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
@@ -339,12 +339,12 @@ func TestCreateActionGatedOnSaver(t *testing.T) {
 }
 
 type noSaveBackend struct {
-	rows []model.Model
+	rows []view.Record
 }
 
 func (b *noSaveBackend) Records() *view.Records { return view.NewRecords() }
-func (b *noSaveBackend) List(done func([]model.Model, error)) {
-	out := make([]model.Model, len(b.rows))
+func (b *noSaveBackend) List(done func([]view.Record, error)) {
+	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)
 }
@@ -418,7 +418,7 @@ func TestFooterHidesBulkActionsWhenNothingToActOn(t *testing.T) {
 
 	// Cancel the draft, load an existing row.
 	v.undoAction()
-	v.selectAction(view.Item{ID: "id-1"})
+	v.selectAction(model.Item{ID: "id-1"})
 	if !shown("cv-cruddelete") {
 		t.Errorf("a loaded existing row must still offer 🗑 to delete it")
 	}

@@ -215,7 +215,7 @@ func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
 	}
 }
 
-var specialtyDef = model.Definition{Name: "specialty", Fields: model.Fields{{Name: "id", Type: input.Text(), DB: &model.FieldDB{PK: true}}, {Name: "name", Type: input.Text(), NotNull: true, Row: model.RowTitle}}}
+var specialtyDef = model.Definition{Name: "specialty", Fields: model.Fields{{Name: "id", Type: input.Text(), DB: &model.FieldDB{PK: true}}, {Name: "name", Type: input.Text(), NotNull: true, Item: model.ItemLabel}}}
 type testSpecialty struct {
 	Id, Name string
 }
@@ -225,6 +225,7 @@ func (d *testSpecialty) Pointers() []any       { return []any{&d.Id, &d.Name} }
 func (d *testSpecialty) IsNil() bool           { return d == nil }
 func (d *testSpecialty) EncodeFields(w model.FieldWriter) {}
 func (d *testSpecialty) DecodeFields(r model.FieldReader) {}
+func (d *testSpecialty) Item() model.Item      { return model.Item{ID: d.Id, Label: d.Name} }
 
 var serviceDef = model.Definition{Name: "service", Fields: model.Fields{{Name: "id", Type: input.Text(), DB: &model.FieldDB{PK: true}}, {Name: "specialty_id", Type: input.Select(), Ref: &specialtyDef}}}
 type testService struct {
@@ -236,13 +237,21 @@ func (d *testService) Pointers() []any       { return []any{&d.Id, &d.SpecialtyI
 func (d *testService) IsNil() bool           { return d == nil }
 func (d *testService) EncodeFields(w model.FieldWriter) {}
 func (d *testService) DecodeFields(r model.FieldReader) {}
+func (d *testService) Item() model.Item      { return model.Item{ID: d.Id} }
 
 type localSavingLister struct {
 	records *view.Records
 }
 func (l *localSavingLister) Records() *view.Records { return l.records }
-func (l *localSavingLister) List(done func([]model.Model, error)) { done([]model.Model{}, nil) }
-func (l *localSavingLister) Save(recs []model.Model, done func(error)) { l.records.Put(recs...); done(nil) }
+func (l *localSavingLister) List(done func([]view.Record, error)) { done([]view.Record{}, nil) }
+func (l *localSavingLister) Save(recs []model.Model, done func(error)) {
+	for _, rec := range recs {
+		if r, ok := rec.(view.Record); ok {
+			l.records.Put(r)
+		}
+	}
+	done(nil)
+}
 
 func TestBuildMenu_SelectFollowsSource(t *testing.T) {
 	records := view.NewRecords()
@@ -275,6 +284,7 @@ func (d *testServiceMissing) Pointers() []any       { return []any{&d.Id, &d.Mis
 func (d *testServiceMissing) IsNil() bool           { return d == nil }
 func (d *testServiceMissing) EncodeFields(w model.FieldWriter) {}
 func (d *testServiceMissing) DecodeFields(r model.FieldReader) {}
+func (d *testServiceMissing) Item() model.Item      { return model.Item{ID: d.Id} }
 
 func TestBuildMenu_SelectWithoutSourceFails(t *testing.T) {
 	screens := []view.Screen{

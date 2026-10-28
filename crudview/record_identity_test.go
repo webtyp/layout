@@ -28,8 +28,8 @@ func (b *memoryBackend) Records() *view.Records {
 	return b.records
 }
 
-func (b *memoryBackend) List(done func([]model.Model, error)) {
-	out := make([]model.Model, len(b.rows))
+func (b *memoryBackend) List(done func([]view.Record, error)) {
+	out := make([]view.Record, len(b.rows))
 	for i := range b.rows {
 		cpy := b.rows[i]
 		out[i] = &cpy
@@ -54,7 +54,11 @@ func (b *memoryBackend) Save(recs []model.Model, done func(error)) {
 		}
 	}
 	if b.records != nil {
-		b.records.Put(recs...)
+		for _, m := range recs {
+			if r, ok := m.(view.Record); ok {
+				b.records.Put(r)
+			}
+		}
 	}
 	done(nil)
 }
@@ -101,7 +105,7 @@ func TestRecordIdentity_SelectEditKeepsID(t *testing.T) {
 	}}
 	v := newIdentityView(t, backend)
 
-	v.selectAction(view.Item{ID: "a1"})
+	v.selectAction(model.Item{ID: "a1"})
 	v.form.SetValues("name", "Alpha Edited")
 	v.autoSaveAction()
 
@@ -171,7 +175,7 @@ func TestRecordIdentity_CreateThenEditKeepsSelectedID(t *testing.T) {
 	}
 	createdID := backend.saved[0].Id
 
-	v.selectAction(view.Item{ID: "a1"})
+	v.selectAction(model.Item{ID: "a1"})
 	v.form.SetValues("name", "Alpha v2")
 	v.autoSaveAction()
 
@@ -199,7 +203,7 @@ func TestRecordIdentity_InvalidLoadedValueDoesNotSave(t *testing.T) {
 	}}
 	v := newIdentityView(t, backend)
 
-	v.selectAction(view.Item{ID: "bad1"})
+	v.selectAction(model.Item{ID: "bad1"})
 	v.form.SetValues("ip", "10.0.0.10") // a valid touch, so the save is attempted
 
 	var savedErr error
@@ -250,7 +254,7 @@ func TestRecordIdentity_CreatedItemAppearsFirstInList(t *testing.T) {
 
 
 	// Now edit an existing item (b1) - it must NOT jump to the top
-	v.selectAction(view.Item{ID: "b1"})
+	v.selectAction(model.Item{ID: "b1"})
 	v.form.SetValues("name", "Beta Edited")
 	v.autoSaveAction()
 
@@ -271,7 +275,7 @@ type laterBackend struct {
 
 func (b *laterBackend) Records() *view.Records { return b.memoryBackend.Records() }
 
-func (b *laterBackend) List(done func([]model.Model, error)) {
+func (b *laterBackend) List(done func([]view.Record, error)) {
 	b.pending = append(b.pending, func() { b.memoryBackend.List(done) })
 }
 
@@ -303,7 +307,7 @@ func TestRecordIdentity_EditedValueShowsInItsRow(t *testing.T) {
 	v.Init(&fakeCtx{})
 	v.Activate()
 	b.answer()
-	v.selectAction(view.Item{ID: "a1"})
+	v.selectAction(model.Item{ID: "a1"})
 	v.form.SetValues("name", "Alpha Edited")
 	v.autoSaveAction()
 	b.answer()

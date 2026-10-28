@@ -33,20 +33,20 @@ func (r *AuditRow) DecodeFields(rd model.FieldReader) {
 	r.Id, _ = rd.String("id")
 	r.What, _ = rd.String("what")
 }
-func (r *AuditRow) Item() view.Item { return view.Item{ID: r.Id, Label: r.What} }
+func (r *AuditRow) Item() model.Item { return model.Item{ID: r.Id, Label: r.What} }
 
 // listOnly is a Lister with no write capability.
-type listOnly struct { rows []model.Model; records *view.Records }
+type listOnly struct { rows []view.Record; records *view.Records }
 
 func (l *listOnly) Records() *view.Records {
 	if l.records == nil { l.records = view.NewRecords() }
 	return l.records
 }
-func (l *listOnly) List(done func([]model.Model, error)) { done(l.rows, nil) }
+func (l *listOnly) List(done func([]view.Record, error)) { done(l.rows, nil) }
 
 // A read-only presenter over a widget-less record is a standalone list.
 func TestReadOnlyWithoutWidgets_IsAStandaloneList(t *testing.T) {
-	p := view.New(&listOnly{rows: []model.Model{&AuditRow{Id: "1", What: "applied"}}}, &AuditRow{})
+	p := view.New(&listOnly{rows: []view.Record{&AuditRow{Id: "1", What: "applied"}}}, &AuditRow{})
 	v, err := New(Config{ParentID: "audit", Presenter: p, IDs: testIDs})
 	if err != nil {
 		t.Fatalf("New: %v", err)
@@ -56,8 +56,8 @@ func TestReadOnlyWithoutWidgets_IsAStandaloneList(t *testing.T) {
 	}
 	v.Init(&fakeCtx{})
 	v.Activate()
-	v.selectAction(view.Item{ID: "1"}) // must not touch a form
-	v.list.SetItems([]view.Item{{ID: "1", Label: "applied"}})
+	v.selectAction(model.Item{ID: "1"}) // must not touch a form
+	v.list.SetItems([]model.Item{{ID: "1", Label: "applied"}})
 	if html := v.Render().String(); !strings.Contains(html, string(clsListaBox)) {
 		t.Errorf("list box not rendered:\n%s", html)
 	}

@@ -5,7 +5,6 @@ import (
 	"strings"
 	"testing"
 
-	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -32,7 +31,7 @@ type countingLister struct {
 	lists int
 }
 
-func (c *countingLister) List(done func([]model.Model, error)) {
+func (c *countingLister) List(done func([]view.Record, error)) {
 	c.lists++
 	c.FakeLister.List(done)
 }

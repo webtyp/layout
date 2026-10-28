@@ -12,7 +12,7 @@ import (
 
 func TestCrudView_Wasm_Flow(t *testing.T) {
 	fb := &conformance.FakeLister{
-		Rows: []model.Model{
+		Rows: []view.Record{
 			&Device{Id: "1", Name: "Item One", Ip: "Desc One"},
 			&Device{Id: "2", Name: "Item Two", Ip: "Desc Two"},
 		},
@@ -37,7 +37,7 @@ func TestCrudView_Wasm_Flow(t *testing.T) {
 	}
 
 	// Test selection
-	v.selectAction(view.Item{ID: "1"})
+	v.selectAction(model.Item{ID: "1"})
 	if v.selected.Get() != "1" {
 		t.Error("expected item 1 to be selected")
 	}
@@ -45,7 +45,7 @@ func TestCrudView_Wasm_Flow(t *testing.T) {
 		t.Error("expected canDelete to be true")
 	}
 
-	v.selectAction(view.Item{ID: ""})
+	v.selectAction(model.Item{ID: ""})
 	if v.canDelete.Get() {
 		t.Error("expected canDelete to be false")
 	}

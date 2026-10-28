@@ -11,9 +11,13 @@ type sharedBackend struct {
 }
 
 func (b *sharedBackend) Records() *view.Records { return b.records }
-func (b *sharedBackend) List(done func([]model.Model, error)) { done(nil, nil) }
+func (b *sharedBackend) List(done func([]view.Record, error)) { done(nil, nil) }
 func (b *sharedBackend) Save(recs []model.Model, done func(error)) {
-	b.records.Put(recs...)
+	for _, rec := range recs {
+		if r, ok := rec.(view.Record); ok {
+			b.records.Put(r)
+		}
+	}
 	done(nil)
 }
 
