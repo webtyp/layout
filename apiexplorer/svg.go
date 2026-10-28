@@ -3,12 +3,13 @@
 package apiexplorer
 
 import (
+	"webtyp.com/icons/code"
 	"webtyp.com/icons/terminal"
 	"webtyp.com/svg/sprite"
 )
 
-// IconSvg ships the explorer's nav glyph (the shared command-prompt icon) to
-// the page sprite, so the menu entry Icon() points at a symbol that exists.
+// IconSvg ships the explorer's nav glyph (code) and the glyph of the «Developer tools» group
+// layout/app.BuildMenu wraps it in (terminal), so both menu entries point at symbols that exist.
 func (e *Explorer) IconSvg() *sprite.Sprite {
-	return sprite.NewSprite(terminal.Def())
+	return sprite.NewSprite(code.Def(), terminal.Def())
 }
