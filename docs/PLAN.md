@@ -3,6 +3,8 @@ PLAN: "feat: schemaview — the «Database» screen of the Developer tools group
 TAG: v0.3.81
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 3069625319767653291
 ---
 
 > Read AGENTS.md at the repo root before any change.
