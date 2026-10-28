@@ -1,16 +1,18 @@
 package tests
 
 import (
-	"webtyp.com/input"
-	"webtyp.com/router"
 	"strings"
 	"testing"
+
+	"webtyp.com/erd"
+	"webtyp.com/html"
+	"webtyp.com/input"
 	"webtyp.com/layout"
 	"webtyp.com/layout/app"
 	"webtyp.com/model"
+	"webtyp.com/router"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
-    "webtyp.com/html"
 )
 
 type testIDGen struct{}
@@ -181,7 +183,7 @@ func TestBuildMenu_ComponentScreenVisibleByPermission(t *testing.T) {
 	}
 }
 
-func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
+func TestBuildMenu_AddsDevToolsLast(t *testing.T) {
 	screens := []view.Screen{
 		{
 			ID:         "x",
@@ -206,10 +208,14 @@ func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
 	if gm, ok := last.(layout.GroupModule); !ok {
 		t.Errorf("expected last module to be a GroupModule")
 	} else {
-		if len(gm.Children()) != 1 {
-			t.Errorf("expected devtools group to have 1 child, got %d", len(gm.Children()))
-		} else if gm.Children()[0].ModelName() != string(router.ResourceIntrospection) {
-			t.Errorf("expected devtools child to be %s, got %s", string(router.ResourceIntrospection), gm.Children()[0].ModelName())
+		if len(gm.Children()) != 2 {
+			t.Fatalf("expected devtools group to have 2 children, got %d", len(gm.Children()))
+		}
+		if gm.Children()[0].ModelName() != string(router.ResourceIntrospection) {
+			t.Errorf("expected first devtools child to be %s, got %s", string(router.ResourceIntrospection), gm.Children()[0].ModelName())
+		}
+		if gm.Children()[1].ModelName() != string(erd.ResourceSchema) {
+			t.Errorf("expected second devtools child to be %s, got %s", string(erd.ResourceSchema), gm.Children()[1].ModelName())
 		}
 	}
 
@@ -217,10 +223,26 @@ func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
 		t.Error("expected CanView for api explorer to be true when allows returns true")
 	}
 
+	// with allows true only for erd.ResourceSchema:
+	allowsSchema := func(r model.Resource) bool { return r == erd.ResourceSchema }
+	mSchema, err := app.BuildMenu(screens, ids, allowsSchema)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !mSchema.CanView("db_schema") {
+		t.Error("expected CanView('db_schema') to be true")
+	}
+	if mSchema.CanView(string(router.ResourceIntrospection)) {
+		t.Error("expected CanView for api explorer to be false when allows only for schema")
+	}
+
 	allowsFalse := func(r model.Resource) bool { return false }
 	m2, _ := app.BuildMenu(screens, ids, allowsFalse)
 	if m2.CanView(string(router.ResourceIntrospection)) {
 		t.Error("expected CanView for api explorer to be false when allows returns false")
+	}
+	if m2.CanView("db_schema") {
+		t.Error("expected CanView for db_schema to be false when allows returns false")
 	}
 }
 

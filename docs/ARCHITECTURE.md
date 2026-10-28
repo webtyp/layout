@@ -15,6 +15,7 @@
     │                   # Renders NO frame — composes rightpanel.
     ├── apiexplorer/    # API explorer: reads /_routes (router.RouteTable), one row per
     │                   # endpoint with access and roles, and a form to call it.
+    ├── schemaview/     # the database diagram: reads /_schema (erd.Report)
     ├── login/          # Pre-authentication screen: card on a brand backdrop.
     └── landing/        # Public multi-page website: typed sections in call
                         # order, explicit anchors, RenderPages() per URL.
@@ -68,8 +69,7 @@ app may bring its own chassis.
 
 `layout/app.BuildMenu(screens []view.Screen, ids, allows)` turns the screens modules declare as data
 (`view.Screen`) into `[]layout.UIModule` plus a `CanView` rule, without depending on `platformd`. A leaf
-is a list (`Presenter`) or a component (`Component` + `Help`), and `BuildMenu` adds the API explorer last, inside the «Developer tools» group (`terminal` glyph), under
-`router.ResourceIntrospection`. `Platform.CanView == nil` shows nothing. Modules
+is a list (`Presenter`) or a component (`Component` + `Help`), and `BuildMenu` adds the «Developer tools» group (`terminal` glyph) holding the API explorer (`router.ResourceIntrospection`) and the database diagram (`erd.ResourceSchema`). `Platform.CanView == nil` shows nothing. Modules
 declare screens in `webtyp/view` and do not import `layout`, so a `layout` release does not force a module
 release — except a module whose `Component` screen is built with `chatview` or `crudview` (it imports them). A group has no permission of its own: it is shown only when the user may see at least one child,
 and opening it opens the first visible child.

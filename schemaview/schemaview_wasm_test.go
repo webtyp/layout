@@ -30,9 +30,17 @@ func TestSchemaView(t *testing.T) {
 	v.svgNodes.Set([]*Element{Div().Raw(Trust(v.report.SVG))})
 	v.updateRows()
 
-	node := v.Render()
-	js.Global().Get("document").Get("body").Call("appendChild", node.JSValue())
-	defer js.Global().Get("document").Get("body").Call("removeChild", node.JSValue())
+	doc := js.Global().Get("document")
+	root := doc.Call("createElement", "div")
+	root.Set("id", "test-schemaview-root")
+	doc.Get("body").Call("appendChild", root)
+	t.Cleanup(func() {
+		doc.Get("body").Call("removeChild", root)
+	})
+
+	if err := Render("test-schemaview-root", v); err != nil {
+		t.Fatalf("Render failed: %v", err)
+	}
 
 	findings := js.Global().Get("document").Call("querySelectorAll", ".schemaview__finding")
 	if findings.Length() != 2 {
