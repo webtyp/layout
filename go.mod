@@ -7,6 +7,7 @@ require (
 	webtyp.com/components v0.8.57
 	webtyp.com/css v0.4.30
 	webtyp.com/dom v0.13.29
+	webtyp.com/erd v0.0.2
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.52
@@ -18,12 +19,11 @@ require (
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.2
-	webtyp.com/view v0.6.48
+	webtyp.com/view v0.6.49
 	webtyp.com/widget v0.6.44
 )
 
 require (
-	webtyp.com/erd v0.0.2 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
 )
