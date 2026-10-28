@@ -2,6 +2,7 @@ package app
 
 import (
 	"webtyp.com/fmt"
+	"webtyp.com/input"
 	"webtyp.com/lang"
 	"webtyp.com/layout"
 	"webtyp.com/layout/apiexplorer"
@@ -26,6 +27,57 @@ type screenPerm struct {
 	permission model.Resource
 }
 
+const errNoOptionSource = "layout/app: a field takes its options from a model no screen lists: "
+
+// leafView pairs a built list screen with its CrudView, so selects can be wired after
+// every screen exists. buildScreen appends one per list leaf.
+type leafView struct {
+	view *crudview.CrudView
+	pres view.Presenter
+}
+
+// wireOptions fills every select of every list screen from the presenter that lists the
+// field's Ref/Options model, and keeps it in step: the source's OnChange refills it.
+func wireOptions(leaves []leafView) error {
+	for _, target := range leaves {
+		for _, f := range target.pres.Record().Schema() {
+			src := f.Options
+			if src == nil {
+				src = f.Ref
+			}
+			if src == nil {
+				continue
+			}
+			source, ok := sourceFor(leaves, src.Name)
+			if !ok {
+				return fmt.Err(errNoOptionSource + target.pres.Record().ModelName() + "." + f.Name + " → " + src.Name)
+			}
+			fill := func(v *crudview.CrudView, field string, s view.Presenter) func() {
+				return func() {
+					items := s.Items()
+					opts := make([]fmt.KeyValue, 0, len(items))
+					for _, it := range items {
+						opts = append(opts, fmt.KeyValue{Key: it.ID, Value: it.Label})
+					}
+					v.SetOptions(field, opts...)
+				}
+			}(target.view, f.Name, source)
+			source.OnChange(fill)
+			fill()
+		}
+	}
+	return nil
+}
+
+func sourceFor(leaves []leafView, modelName string) (view.Presenter, bool) {
+	for _, l := range leaves {
+		if l.pres.Record().ModelName() == modelName {
+			return l.pres, true
+		}
+	}
+	return nil, false
+}
+
 // BuildMenu validates every screen and builds its layout.UIModule tree. allows answers whether the
 // signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Can(r, model.Read) }).
 // The API explorer is always added last, visible to whoever may read router.ResourceIntrospection; the app never adds it.
@@ -37,13 +89,18 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 	}
 
 	var perms []screenPerm
+	leaves := make([]leafView, 0)
 	mods := make([]layout.UIModule, 0, len(screens))
 	for _, s := range screens {
-		m, err := buildScreen(s, ids, &perms)
+		m, err := buildScreen(s, ids, &perms, &leaves)
 		if err != nil {
 			return Menu{}, err
 		}
 		mods = append(mods, m)
+	}
+
+	if err := wireOptions(leaves); err != nil {
+		return Menu{}, err
 	}
 
 	explorer, err := apiexplorer.New(apiexplorer.Config{})
@@ -71,11 +128,11 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 	}, nil
 }
 
-func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm) (layout.UIModule, error) {
+func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm, leaves *[]leafView) (layout.UIModule, error) {
 	if len(s.Children) > 0 {
 		children := make([]layout.UIModule, 0, len(s.Children))
 		for _, c := range s.Children {
-			ch, err := buildScreen(c, ids, perms)
+			ch, err := buildScreen(c, ids, perms, leaves)
 			if err != nil {
 				return nil, err
 			}
@@ -100,12 +157,27 @@ func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm) (lay
 		return nil, err
 	}
 
-	lookups := s.Lookups
-	activate := onFirstActivation(v, func() {
-		for _, l := range lookups {
-			fillOptions(v, l.Field, l.Source)
+	*leaves = append(*leaves, leafView{view: v, pres: s.Presenter})
+
+	activate := func() {
+		for _, f := range s.Presenter.Record().Schema() {
+			src := f.Options
+			if src == nil {
+				src = f.Ref
+			}
+			if src == nil {
+				continue
+			}
+			if _, isInput := f.Type.(input.Input); !isInput {
+				continue
+			}
+			source, ok := sourceFor(*leaves, src.Name)
+			if ok {
+				source.Reload(nil)
+			}
 		}
-	})
+		v.Activate()
+	}
 
 	*perms = append(*perms, screenPerm{id: s.ID, permission: s.Permission})
 	m := layout.NewUIModule(s.ID, lang.Translate(s.Label).String(), svg.Icon(s.Icon), v, activate)
@@ -113,29 +185,4 @@ func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm) (lay
 		m = layout.Describe(m, desc)
 	}
 	return m, nil
-}
-
-func onFirstActivation(v *crudview.CrudView, load func()) func() {
-	loaded := false
-	return func() {
-		if !loaded {
-			loaded = true
-			load()
-		}
-		v.Activate()
-	}
-}
-
-func fillOptions(v *crudview.CrudView, field string, source view.Presenter) {
-	source.Reload(func(err error) {
-		if err != nil {
-			return
-		}
-		items := source.Items()
-		opts := make([]fmt.KeyValue, 0, len(items))
-		for _, it := range items {
-			opts = append(opts, fmt.KeyValue{Key: it.ID, Value: it.Label})
-		}
-		v.SetOptions(field, opts...)
-	})
 }

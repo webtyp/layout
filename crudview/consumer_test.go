@@ -33,8 +33,8 @@ var deviceModel = model.Definition{
 	Name: "device",
 	Fields: model.Fields{
 		{Name: "id", Type: input.Text(), DB: &model.FieldDB{PK: true}},
-		{Name: "name", Type: input.Text(), NotNull: true},
-		{Name: "ip", Type: input.Text()},
+		{Name: "name", Type: input.Text(), NotNull: true, Row: model.RowTitle},
+		{Name: "ip", Type: input.Text(), Row: model.RowDetail},
 	},
 }
 
@@ -59,12 +59,7 @@ func (d *Device) DecodeFields(r model.FieldReader) {
 	d.Ip, _ = r.String("ip")
 }
 
-func (d *Device) Item() view.Item {
-	return view.Item{ID: d.Id, Label: d.Name, Description: d.Ip}
-}
-
 var _ model.Model = (*Device)(nil) // Verify compile-time implementation
-var _ view.Itemizer = (*Device)(nil)
 
 // listSaveDeleteBackend implements view.Lister + view.Saver +
 // view.Deleter, but NOT view.Updater: the double for every test that
@@ -73,6 +68,14 @@ type listSaveDeleteBackend struct {
 	rows    []model.Model
 	saved   []model.Model
 	deleted []string
+	records *view.Records
+}
+
+func (b *listSaveDeleteBackend) Records() *view.Records {
+	if b.records == nil {
+		b.records = view.NewRecords()
+	}
+	return b.records
 }
 
 func (b *listSaveDeleteBackend) List(done func([]model.Model, error)) {
@@ -83,11 +86,17 @@ func (b *listSaveDeleteBackend) List(done func([]model.Model, error)) {
 
 func (b *listSaveDeleteBackend) Save(recs []model.Model, done func(error)) {
 	b.saved = append(b.saved, recs...)
+	if b.records != nil {
+		b.records.Put(recs...)
+	}
 	done(nil)
 }
 
 func (b *listSaveDeleteBackend) Delete(ids []string, done func(error)) {
 	b.deleted = append(b.deleted, ids...)
+	if b.records != nil {
+		b.records.Remove("device", ids...)
+	}
 	done(nil)
 }
 
@@ -125,6 +134,7 @@ type fakeNoWidgetsPresenter struct {
 	record model.Model
 }
 
+func (f *fakeNoWidgetsPresenter) OnChange(fn func()) {}
 func (f *fakeNoWidgetsPresenter) Title() string                  { return "No Widgets" }
 func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text   { return "Search" }
 func (f *fakeNoWidgetsPresenter) Record() model.Model            { return f.record }

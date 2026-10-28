@@ -74,6 +74,8 @@ declare screens in `webtyp/view` and do not import `layout`, so a `layout` relea
 release — except a module whose `Component` screen is built with `chatview` or `crudview` (it imports them). A group has no permission of its own: it is shown only when the user may see at least one child,
 and opening it opens the first visible child.
 
+Selects are automatically sourced from a field's `Ref` or `Options` and follow their source presenter.
+
 ## Dependencies
 
     webtyp/layout → webtyp/html (element builders)
@@ -332,10 +334,10 @@ The high-level pattern for constructing a CRUD view is `crudview.New(Config)`. T
 - A module builds a `view.Presenter` (owns list/select/save/delete against a `router.Caller`) and passes it once via `Config{ParentID, Presenter}`.
 - All callbacks (`OnSelect`, `OnNew`, `OnSave`, `OnDelete`, `OnCancel`) are automatically wired.
 - Form inputs are automatically populated on selection using `form.LoadValues` with records returned by `Presenter.Select(id)`.
-- Saves are validated and synced via `form.SyncValues` before shipping to `Presenter.Save`.
+- Saves are validated and synced via `form.SyncValues` before shipping to `Presenter.Save`. The list updates directly by listening to `Presenter.OnChange`, with no reload after save.
 - `OnSave`/`OnDelete` are only wired when `Presenter.CanSave()`/`CanDelete()` are true.
 - Empty search string placeholders default to `"Search…"`, but can be customized via `Presenter.SearchPlaceholder()`.
-- A select/radio/datalist fed by another table (a room's floor) gets its choices through `CrudView.SetOptions(fieldName, opts...)`, called when the Caller answers — usually after the view is on screen; the live control repaints. It is the typed path to the form's `SetOptions`: consumers never type-assert `CrudView.Form`.
+- A select/radio/datalist fed by another table (a room's floor) gets its choices automatically from the field's `Ref`/`Options` which follow their source presenter live via `CrudView.SetOptions(fieldName, opts...)`.
 - The `OnAfterReload func(list ListView)` hook runs at the end of `Reload()`, right after the list widget has been repopulated via `filter()`. It passes only the concrete `ListView` instance constructed by `Config.List`, adhering to the minimal API surface principle (items do not need to be passed separately as they are accessible directly via `list.Items()`).
 
 #### Principle: Standard-shaped tests

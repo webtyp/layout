@@ -36,8 +36,12 @@ func (r *AuditRow) DecodeFields(rd model.FieldReader) {
 func (r *AuditRow) Item() view.Item { return view.Item{ID: r.Id, Label: r.What} }
 
 // listOnly is a Lister with no write capability.
-type listOnly struct{ rows []model.Model }
+type listOnly struct { rows []model.Model; records *view.Records }
 
+func (l *listOnly) Records() *view.Records {
+	if l.records == nil { l.records = view.NewRecords() }
+	return l.records
+}
 func (l *listOnly) List(done func([]model.Model, error)) { done(l.rows, nil) }
 
 // A read-only presenter over a widget-less record is a standalone list.
@@ -51,8 +55,9 @@ func TestReadOnlyWithoutWidgets_IsAStandaloneList(t *testing.T) {
 		t.Fatal("a read-only widget-less view must have no form")
 	}
 	v.Init(&fakeCtx{})
-	v.Reload(nil)
+	v.Activate()
 	v.selectAction(view.Item{ID: "1"}) // must not touch a form
+	v.list.SetItems([]view.Item{{ID: "1", Label: "applied"}})
 	if html := v.Render().String(); !strings.Contains(html, string(clsListaBox)) {
 		t.Errorf("list box not rendered:\n%s", html)
 	}
