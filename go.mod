@@ -23,6 +23,7 @@ require (
 )
 
 require (
+	webtyp.com/erd v0.0.2 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
 )
@@ -37,8 +38,6 @@ require (
 	webtyp.com/font v0.0.5 // indirect
 	webtyp.com/icons v0.0.38
 	webtyp.com/js v0.1.3 // indirect
-	webtyp.com/json v0.5.30
-	webtyp.com/router v0.4.9
+	webtyp.com/json v0.5.36
+	webtyp.com/router v0.4.11
 )
-
-// TEMP local verification (toast, master-detail) — remove before commit.
