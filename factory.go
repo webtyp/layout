@@ -1,6 +1,7 @@
 package layout
 
 import (
+	"webtyp.com/components/countbadge"
 	"webtyp.com/dom"
 	"webtyp.com/svg"
 )
@@ -46,8 +47,16 @@ func (m *uiModule) UseNotifier(n Notifier) {
 	}
 }
 
+func (m *uiModule) Badge() *countbadge.CountBadge {
+	if b, ok := m.view.(Badged); ok {
+		return b.Badge()
+	}
+	return nil
+}
+
 var _ UIModule = (*uiModule)(nil)
 var _ UsesNotifier = (*uiModule)(nil)
+var _ Badged = (*uiModule)(nil)
 
 // NewGroupUIModule returns an implementation of GroupModule that wraps child UIModules.
 func NewGroupUIModule(id, label string, icon svg.Icon, children []UIModule) UIModule {

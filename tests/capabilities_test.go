@@ -3,7 +3,10 @@ package tests
 import (
 	"testing"
 
+	"webtyp.com/components/countbadge"
+	"webtyp.com/dom"
 	"webtyp.com/lang"
+	"webtyp.com/layout"
 	"webtyp.com/layout/platformd"
 )
 
@@ -53,5 +56,25 @@ func TestCapabilities(t *testing.T) {
 	alerts := alert.UnseenAlerts()
 	if len(alerts) != 1 || alerts[0].ID != "alert-1" || alerts[0].Subject != "test alert" {
 		t.Errorf("unexpected alerts: %+v", alerts)
+	}
+}
+
+type badgedComponent struct {
+	dom.Element
+	badge *countbadge.CountBadge
+}
+
+func (b *badgedComponent) Badge() *countbadge.CountBadge { return b.badge }
+
+func TestUIModule_BadgedForwarding(t *testing.T) {
+	cb := &countbadge.CountBadge{}
+	c := &badgedComponent{badge: cb}
+	m := layout.NewUIModule("chat", "Chat", "", c)
+	b, ok := m.(layout.Badged)
+	if !ok {
+		t.Fatalf("expected NewUIModule to implement Badged")
+	}
+	if b.Badge() != cb {
+		t.Fatalf("expected Badge() to return component's badge")
 	}
 }
