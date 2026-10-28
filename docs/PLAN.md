@@ -3,6 +3,8 @@ PLAN: "refactor!: crudview and the menu speak model.Item and view.Record"
 TAG: v0.3.79
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 9582040430455426620
 ---
 
 > Read AGENTS.md at the repo root before any change.
