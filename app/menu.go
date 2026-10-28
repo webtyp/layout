@@ -1,6 +1,7 @@
 package app
 
 import (
+	"webtyp.com/erd"
 	"webtyp.com/fmt"
 	"webtyp.com/icons/terminal"
 	"webtyp.com/input"
@@ -8,13 +9,17 @@ import (
 	"webtyp.com/layout"
 	"webtyp.com/layout/apiexplorer"
 	"webtyp.com/layout/crudview"
+	"webtyp.com/layout/schemaview"
 	"webtyp.com/model"
 	"webtyp.com/router"
 	"webtyp.com/svg"
 	"webtyp.com/view"
 )
 
-const helpAPIExplorer lang.Text = "Every operation of this app: who may call it, and a form to try it."
+var (
+	helpAPIExplorer = lang.Text("Every operation of this app: who may call it, and a form to try it.")
+	helpSchemaView  = lang.Text("Every table of this app, its references and the model errors to fix.")
+)
 
 // idDevTools is the menu id of the «Developer tools» group. A group has no permission of its own.
 const idDevTools = "devtools"
@@ -89,7 +94,7 @@ func sourceFor(leaves []leafView, modelName string) (view.Presenter, bool) {
 
 // BuildMenu validates every screen and builds its layout.UIModule tree. allows answers whether the
 // signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Can(r, model.Read) }).
-// The API explorer is always added last, inside the «Developer tools» group, visible to whoever may read router.ResourceIntrospection; the app never adds it.
+// The API explorer is always added last, inside the «Developer tools» group, with the database diagram, visible to whoever may read erd.ResourceSchema; the app never adds it.
 func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.Resource) bool) (Menu, error) {
 	for _, s := range screens {
 		if err := s.Validate(); err != nil {
@@ -116,10 +121,14 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 	if err != nil {
 		return Menu{}, err
 	}
+	schema := schemaview.New()
 	devtools := layout.NewGroupUIModule(idDevTools, lang.Translate(labelDevTools).String(), terminal.Ref,
-		[]layout.UIModule{layout.Describe(explorer, helpAPIExplorer)})
+		[]layout.UIModule{layout.Describe(explorer, helpAPIExplorer), layout.Describe(schema, helpSchemaView)})
 	mods = append(mods, layout.Describe(devtools, helpDevTools))
-	perms = append(perms, screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection})
+	perms = append(perms,
+		screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection},
+		screenPerm{id: schema.ModelName(), permission: erd.ResourceSchema},
+	)
 
 	canView := func(id string) bool {
 		if allows == nil {

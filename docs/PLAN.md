@@ -3,8 +3,10 @@ PLAN: "feat: schemaview — the «Database» screen of the Developer tools group
 TAG: v0.3.81
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 3069625319767653291
+PR: https://github.com/webtyp/layout/pull/52
+REVIEWED_COMMIT: c1c7c599bb9efe748510e07ba2dad355f347e5db
 ---
 
 > Read AGENTS.md at the repo root before any change.

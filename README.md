@@ -72,6 +72,10 @@ A screen that lists every endpoint of the running server (`GET /_routes`) with i
 permission and the roles that hold it, and lets an authorized user call each one. Never expose
 it publicly in production — see `apiexplorer/README.md`. In the menu it lives inside the «Developer tools» group.
 
+### schemaview
+
+A screen that displays the app's database diagram (`GET /_schema`) and the list of model errors, each jumping to its table. It requires permission `db_schema:read` and is never public — served by `webtyp.com/appkit` when the app passes `Migrations`. In the menu it lives as the second child of the «Developer tools» group.
+
 ### crudview
 
 A CRUD controller for `rightpanel` (form left, list right) that replicates the Pa100T experience. Renders no frame of its own — it builds a `rightpanel.RightPanel`, fills its slots, and owns only the state machine.
