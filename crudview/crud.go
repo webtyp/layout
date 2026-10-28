@@ -122,5 +122,11 @@ func New(cfg Config) (*CrudView, error) {
 		f.OnFieldChange(func() { v.autoSaveAction() })
 	}
 
+	cfg.Presenter.OnChange(func() {
+		if v.list != nil {
+			v.filter()
+		}
+	})
+
 	return v, nil
 }

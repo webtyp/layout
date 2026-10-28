@@ -732,13 +732,6 @@ func (v *CrudView) saveAction(saver view.Saver) {
 		v.reportSave(err)
 		return
 	}
-	isNew := v.composing.Get()
-	var newID string
-	if isNew {
-		if iz, ok := record.(view.Itemizer); ok {
-			newID = iz.Item().ID
-		}
-	}
 	saver.Save([]model.Model{record}, func(err error) {
 		if err != nil {
 			v.reportSave(err)
@@ -752,23 +745,6 @@ func (v *CrudView) saveAction(saver view.Saver) {
 			v.Presenter.Deselect()
 			v.form.Reset()
 		}
-		v.Reload(func(err error) {
-			if isNew && err == nil && v.list != nil && newID != "" {
-				items := v.list.Items()
-				for i, it := range items {
-					if it.ID == newID {
-						if i > 0 {
-							reordered := make([]view.Item, len(items))
-							reordered[0] = it
-							copy(reordered[1:i+1], items[:i])
-							copy(reordered[i+1:], items[i+1:])
-							v.list.SetItems(reordered)
-						}
-						break
-					}
-				}
-			}
-		})
 		v.reportSave(nil)
 	})
 }
@@ -842,7 +818,6 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 		} else {
 			v.selected.Set("")
 			v.canDelete.Set(false)
-			v.Reload(nil)
 			if v.notifier != nil {
 				v.notifier.Notify(msgtype.Success, "Eliminado con éxito", layout.Auto())
 			}

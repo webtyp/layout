@@ -3,8 +3,10 @@ PLAN: "feat!: lists and selects follow the shared records (view.Records); no rel
 TAG: v0.3.78
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 11831450411581804107
+PR: https://github.com/webtyp/layout/pull/50
+REVIEWED_COMMIT: f52a3057b92d5226ea4b3216b70e60c18c058d66
 ---
 
 > Read AGENTS.md at the repo root before any change.
