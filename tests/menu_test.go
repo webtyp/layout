@@ -127,7 +127,7 @@ func TestBuildMenu_DescriptionFromPresenter(t *testing.T) {
 		t.Fatal(err)
 	}
 	if len(m.Modules) != 2 {
-		t.Fatalf("expected 2 modules (1 screen + explorer), got %d", len(m.Modules))
+		t.Fatalf("expected 2 modules (1 screen + the group), got %d", len(m.Modules))
 	}
 	if m.Modules[0].ModelName() != "booking" {
 		t.Errorf("expected ModelName booking, got %s", m.Modules[0].ModelName())
@@ -200,8 +200,17 @@ func TestBuildMenu_AddsAPIExplorerLast(t *testing.T) {
 	}
 
 	last := m.Modules[len(m.Modules)-1]
-	if last.ModelName() != string(router.ResourceIntrospection) {
-		t.Errorf("expected last module to be API explorer, got '%s'", last.ModelName())
+	if last.ModelName() != "devtools" {
+		t.Errorf("expected last module to be devtools, got '%s'", last.ModelName())
+	}
+	if gm, ok := last.(layout.GroupModule); !ok {
+		t.Errorf("expected last module to be a GroupModule")
+	} else {
+		if len(gm.Children()) != 1 {
+			t.Errorf("expected devtools group to have 1 child, got %d", len(gm.Children()))
+		} else if gm.Children()[0].ModelName() != string(router.ResourceIntrospection) {
+			t.Errorf("expected devtools child to be %s, got %s", string(router.ResourceIntrospection), gm.Children()[0].ModelName())
+		}
 	}
 
 	if !m.CanView(string(router.ResourceIntrospection)) {

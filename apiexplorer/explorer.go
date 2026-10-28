@@ -3,7 +3,7 @@ package apiexplorer
 import (
 	"webtyp.com/components/searchbar"
 	"webtyp.com/fetch"
-	"webtyp.com/icons/terminal"
+	"webtyp.com/icons/code"
 	"webtyp.com/json"
 	"webtyp.com/router"
 	"webtyp.com/widget"
@@ -93,7 +93,7 @@ func New(cfg Config) (*Explorer, error) {
 
 func (e *Explorer) ModelName() string { return string(router.ResourceIntrospection) }
 func (e *Explorer) Label() string     { return lang.Translate("API Explorer").String() }
-func (e *Explorer) Icon() svg.Icon    { return terminal.Ref }
+func (e *Explorer) Icon() svg.Icon    { return code.Ref }
 func (e *Explorer) View() Component   { return e }
 
 func (e *Explorer) WidgetName() widget.Name { return NameAPIExplorer }

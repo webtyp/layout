@@ -636,6 +636,33 @@ func TestPlatform_ActivateCallsModuleActivate(t *testing.T) {
 	}
 }
 
+// A group shows only the children the user may see, and is hidden when the user may see none.
+func TestPlatform_GroupShowsOnlyAllowedChildren(t *testing.T) {
+	allowed := &mockModule{id: "dev.routes", label: "Routes", icon: svg.Icon("code")}
+	denied := &mockModule{id: "dev.schema", label: "Schema", icon: svg.Icon("database")}
+	group := NewGroupUIModule("dev", "Developer tools", svg.Icon("terminal"), []UIModule{allowed, denied})
+
+	p := &Platform{Modules: []UIModule{group}, CanView: func(id string) bool { return id == "dev.routes" }}
+	p.Init(NilCtx())
+	html := p.Render().String()
+	if !contains(html, "data-id='dev.routes'") {
+		t.Error("allowed child must be rendered")
+	}
+	if contains(html, "data-id='dev.schema'") {
+		t.Error("forbidden child must not be rendered, neither as link nor as panel")
+	}
+	p.Activate("dev.schema")
+	if p.active.Get() == "dev.schema" {
+		t.Error("a forbidden child must not be activatable by id")
+	}
+
+	none := &Platform{Modules: []UIModule{group}, CanView: func(string) bool { return false }}
+	none.Init(NilCtx())
+	if contains(none.Render().String(), "data-id='dev'") {
+		t.Error("a group with no visible child must not be rendered")
+	}
+}
+
 func TestPlatform_GroupModuleAccordion(t *testing.T) {
 	sub1 := &activatingModule{mockModule: mockModule{id: "cat.services", label: "Servicios", icon: svg.Icon("service")}}
 	sub2 := &activatingModule{mockModule: mockModule{id: "cat.specialties", label: "Especialidades", icon: svg.Icon("aid")}}

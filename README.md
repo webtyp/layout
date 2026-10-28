@@ -70,7 +70,7 @@ no `if` in the shell.
 
 A screen that lists every endpoint of the running server (`GET /_routes`) with its access,
 permission and the roles that hold it, and lets an authorized user call each one. Never expose
-it publicly in production — see `apiexplorer/README.md`.
+it publicly in production — see `apiexplorer/README.md`. In the menu it lives inside the «Developer tools» group.
 
 ### crudview
 

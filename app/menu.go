@@ -2,6 +2,7 @@ package app
 
 import (
 	"webtyp.com/fmt"
+	"webtyp.com/icons/terminal"
 	"webtyp.com/input"
 	"webtyp.com/lang"
 	"webtyp.com/layout"
@@ -14,6 +15,14 @@ import (
 )
 
 const helpAPIExplorer lang.Text = "Every operation of this app: who may call it, and a form to try it."
+
+// idDevTools is the menu id of the «Developer tools» group. A group has no permission of its own.
+const idDevTools = "devtools"
+
+const (
+	labelDevTools lang.Text = "Developer tools"
+	helpDevTools  lang.Text = "Tools to inspect how this app is built."
+)
 
 // Menu is what layout/app hands to any layout chassis (such as platformd or a custom layout):
 // the modules and the visibility rule.
@@ -80,7 +89,7 @@ func sourceFor(leaves []leafView, modelName string) (view.Presenter, bool) {
 
 // BuildMenu validates every screen and builds its layout.UIModule tree. allows answers whether the
 // signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Can(r, model.Read) }).
-// The API explorer is always added last, visible to whoever may read router.ResourceIntrospection; the app never adds it.
+// The API explorer is always added last, inside the «Developer tools» group, visible to whoever may read router.ResourceIntrospection; the app never adds it.
 func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.Resource) bool) (Menu, error) {
 	for _, s := range screens {
 		if err := s.Validate(); err != nil {
@@ -107,7 +116,9 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 	if err != nil {
 		return Menu{}, err
 	}
-	mods = append(mods, layout.Describe(explorer, helpAPIExplorer))
+	devtools := layout.NewGroupUIModule(idDevTools, lang.Translate(labelDevTools).String(), terminal.Ref,
+		[]layout.UIModule{layout.Describe(explorer, helpAPIExplorer)})
+	mods = append(mods, layout.Describe(devtools, helpDevTools))
 	perms = append(perms, screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection})
 
 	canView := func(id string) bool {
