@@ -3,6 +3,8 @@ PLAN: "feat: API explorer inside a «Developer tools» menu group"
 TAG: v0.3.80
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 9772909075004117390
 ---
 
 > Read AGENTS.md at the repo root before any change.
