@@ -3,8 +3,10 @@ PLAN: "feat: API explorer inside a «Developer tools» menu group"
 TAG: v0.3.80
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 9772909075004117390
+PR: https://github.com/webtyp/layout/pull/51
+REVIEWED_COMMIT: 5027675dcb693ec44a92a9b03be4ce293df88f28
 ---
 
 > Read AGENTS.md at the repo root before any change.
