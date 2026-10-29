@@ -7,7 +7,7 @@ require (
 	webtyp.com/components v0.8.57
 	webtyp.com/css v0.4.31
 	webtyp.com/dom v0.13.29
-	webtyp.com/erd v0.0.4
+	webtyp.com/erd v0.0.5
 	webtyp.com/fetch v0.1.29
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.52
@@ -41,5 +41,3 @@ require (
 	webtyp.com/json v0.5.36
 	webtyp.com/router v0.4.11
 )
-
-replace webtyp.com/erd => ../erd
