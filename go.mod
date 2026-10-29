@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.57
-	webtyp.com/css v0.4.30
+	webtyp.com/css v0.4.31
 	webtyp.com/dom v0.13.29
 	webtyp.com/erd v0.0.4
 	webtyp.com/fetch v0.1.29
@@ -20,7 +20,7 @@ require (
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.2
 	webtyp.com/view v0.6.49
-	webtyp.com/widget v0.6.44
+	webtyp.com/widget v0.6.45
 )
 
 require (
@@ -41,3 +41,5 @@ require (
 	webtyp.com/json v0.5.36
 	webtyp.com/router v0.4.11
 )
+
+replace webtyp.com/erd => ../erd
