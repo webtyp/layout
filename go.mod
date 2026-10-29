@@ -26,7 +26,7 @@ require (
 require (
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
-	webtyp.com/rpc v0.2.7 // indirect
+	webtyp.com/rpc v0.2.13 // indirect
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
