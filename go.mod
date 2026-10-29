@@ -19,13 +19,14 @@ require (
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.2
-	webtyp.com/view v0.6.50
+	webtyp.com/view v0.6.53
 	webtyp.com/widget v0.6.45
 )
 
 require (
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
+	webtyp.com/rpc v0.2.7 // indirect
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
@@ -39,5 +40,5 @@ require (
 	webtyp.com/icons v0.0.38
 	webtyp.com/js v0.1.3 // indirect
 	webtyp.com/json v0.5.37
-	webtyp.com/router v0.4.11
+	webtyp.com/router v0.4.12
 )
