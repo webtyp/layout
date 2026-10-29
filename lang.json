@@ -28,7 +28,7 @@
     "Raw JSON": ["JSON sin procesar", "原始 JSON", "कच्चा JSON", "JSON خام", "JSON bruto", "JSON brut", "Rohes JSON", "Сырой JSON"],
     "Read": ["Leído", "阅读", "पढ़ना", "يقرأ", "Ler", "Lire", "Lesen", "Читать"],
     "Search routes": ["Buscar rutas", "搜索路线", "मार्ग खोजें", "بحث عن مسارات", "Pesquisar rotas", "Rechercher des itinéraires", "Routen suchen", "Искать маршруты"],
-    "Search tables": ["Buscar tablas", "搜索表", "तालिकाएँ खोजें", "البحث في الجداول", "Pesquisar tabelas", "Rechercher des tables", "Tabellen durchsuchen", "Поиск таблиц"],
+    "Search warnings by table or column": ["Buscar avisos por tabla o columna", "按表或列搜索警告", "तालिका या कॉलम से चेतावनियाँ खोजें", "البحث في التحذيرات حسب الجدول أو العمود", "Pesquisar avisos por tabela ou coluna", "Rechercher des avertissements par table ou colonne", "Warnungen nach Tabelle oder Spalte suchen", "Поиск предупреждений по таблице или столбцу"],
     "Send": ["Enviar", "发送", "भेजें", "إرسال", "Enviar", "Envoyer", "Senden", "Отправить"],
     "Sending...": ["Enviando...", "发送中...", "भेज रहा है...", "إرسال...", "Enviando...", "Envoi...", "Senden...", "Отправка..."],
     "This": ["Esta", "这", "यह", "هذا", "Isto", "Ce", "Dies", "Это"],
@@ -43,6 +43,7 @@
     "chatview.New: Source is required": ["chatview.New: Source es obligatorio", "来源必填", "स्रोत आवश्यक है", "المصدر مطلوب", "Fonte é necessária", "La source est requise", "Quelle ist erforderlich", "Требуется источник"],
     "could not load": ["no se pudo cargar el", "无法加载", "लोड नहीं किया जा सका", "تعذر تحميل", "não foi possível carregar o", "impossible de charger le", "konnte nicht geladen werden", "не удалось загрузить"],
     "database diagram": ["diagrama de la base de datos", "数据库图", "डेटाबेस आरेख", "مخطط قاعدة البيانات", "diagrama do banco de dados", "diagramme de base de données", "Datenbankdiagramm", "диаграмма базы данных"],
+    "errors": ["errores", "错误", "त्रुटियाँ", "أخطاء", "erros", "erreurs", "Fehler", "ошибки"],
     "held by": ["lo tiene", "持有", "द्वारा आयोजित", "مملوكة بواسطة", "mantido por", "détenu par", "gehalten von", "удерживается"],
     "no access to": ["sin acceso al", "无权访问", "तक कोई पहुंच नहीं", "لا يوجد وصول إلى", "sem acesso ao", "pas d'accès à", "kein Zugriff auf", "нет доступа к"],
     "nobody": ["nadie", "没有人", "कोई नहीं", "لا أحد", "ninguém", "personne", "niemand", "никто"],
@@ -50,6 +51,7 @@
     "requires": ["requiere", "要求", "आवश्यक है", "يتطلب", "requer", "nécessite", "erfordert", "требует"],
     "the server did not describe its policy": ["el servidor no describió su política", "服务器未描述其策略", "सर्वर ने अपनी नीति का वर्णन नहीं किया", "لم يصف الخادم سياسته", "o servidor não descreveu sua política", "le serveur n'a pas décrit sa politique", "Der Server hat seine Richtlinie nicht beschrieben", "сервер не описал свою политику"],
     "undone.": ["puede deshacer.", "未完成.", "अपूर्ण.", "غير منجز.", "desfeito.", "défait.", "ungeschehen.", "отменено."],
+    "warnings": ["avisos", "警告", "चेतावनियाँ", "تحذيرات", "avisos", "avertissements", "Warnungen", "предупреждения"],
     "you need permission to view the API": ["necesitas permiso para ver la API", "需要权限才能查看 API", "API देखने के लिए आपको अनुमति चाहिए", "تحتاج إلى إذن لعرض واجهة برمجة التطبيقات", "você precisa de permissão para ver a API", "vous avez besoin de la permission pour voir l'API", "Sie benötigen die Erlaubnis, die API anzuzeigen", "вам нужно разрешение на просмотр API"]
   }
 }

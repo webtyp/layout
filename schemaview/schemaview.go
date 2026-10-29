@@ -27,8 +27,12 @@ var (
 	clsRoot     = NameSchemaView.Root()
 	clsHeader   = NameSchemaView.Class("header")
 	clsError    = NameSchemaView.Class("error")
+	clsBody     = NameSchemaView.Class("body")
 	clsFindings = NameSchemaView.Class("findings")
+	clsSummary  = NameSchemaView.Class("summary")
 	clsFinding  = NameSchemaView.Class("finding")
+	clsWhere    = NameSchemaView.Class("finding-where")
+	clsWhy      = NameSchemaView.Class("finding-why")
 	clsBad      = NameSchemaView.Class("finding-error")
 	clsCanvas   = NameSchemaView.Class("canvas")
 )
@@ -55,7 +59,7 @@ func (v *View) WidgetName() widget.Name { return NameSchemaView }
 func (v *View) WidgetKind() widget.Kind { return widget.Region }
 
 func (v *View) Init(ctx Ctx) {
-	v.filter = &searchbar.SearchBar{Placeholder: lang.Text("Search tables")}
+	v.filter = &searchbar.SearchBar{Placeholder: lang.Text("Search warnings by table or column")}
 	v.filter.OnFilterChange(func(term string) {
 		v.search.Set(term)
 		v.updateRows()
@@ -85,8 +89,10 @@ func (v *View) Activate() {
 			return
 		}
 		v.report = &rep
-		// The SVG is produced by this app's own server (erd), never by a user: trusted markup.
-		v.svgNodes.Set([]*Element{Div().Raw(Trust(rep.SVG))})
+		// The SVG is produced by this app's own server (erd), never by a user: trusted markup. The
+		// server has no dictionary, so each band title's word «Module» is translated here.
+		svg := Convert(rep.SVG).Replace(">"+string(erd.ModuleLabel)+" ", ">"+lang.Translate(erd.ModuleLabel).String()+" ").String()
+		v.svgNodes.Set([]*Element{Div().Raw(Trust(svg))})
 		v.updateRows()
 	})
 }
@@ -97,7 +103,18 @@ func (v *View) updateRows() {
 		return
 	}
 	term := Convert(v.search.Get()).ToLower().String()
-	var rows []*Element
+	errs, warns := 0, 0
+	for _, f := range v.report.Findings {
+		if f.Rule.Level() == erd.LevelError {
+			errs++
+		} else {
+			warns++
+		}
+	}
+	// «2 errors · 7 warnings»: how much there is to fix before reading the list.
+	summary := Convert(errs).String() + " " + lang.Translate("errors").String() + " · " +
+		Convert(warns).String() + " " + lang.Translate("warnings").String()
+	rows := []*Element{Div().Set(clsSummary.AsAttr()).Text(summary)}
 	for _, f := range v.report.Findings {
 		where := f.Table
 		if f.Column != "" {
@@ -115,7 +132,7 @@ func (v *View) updateRows() {
 			row.Set(clsBad.AsAttr())
 		}
 		table := f.Table
-		row.Child(Span().Text(where), Span().Text(text)).OnClick(func(Event) { v.jumpTo(table) })
+		row.Child(Div().Set(clsWhere.AsAttr()).Text(where), Div().Set(clsWhy.AsAttr()).Text(text)).OnClick(func(Event) { v.jumpTo(table) })
 		rows = append(rows, row)
 	}
 	v.rows.Set(rows)
@@ -136,7 +153,10 @@ func (v *View) Render() *Element {
 	}
 	root.Child(header)
 	root.Child(Div().Set(clsError.AsAttr()).BindText(v.errorMsg))
-	root.Child(Div().Set(clsFindings.AsAttr()).BindChildren(v.rows))
-	root.Child(Div().Set(clsCanvas.AsAttr()).BindChildren(v.svgNodes))
+	// The diagram takes the room; the findings are a rail beside it, so clicking one keeps the table in view.
+	root.Child(Div().Set(clsBody.AsAttr()).Child(
+		Div().Set(clsCanvas.AsAttr()).BindChildren(v.svgNodes),
+		Div().Set(clsFindings.AsAttr()).BindChildren(v.rows),
+	))
 	return root
 }

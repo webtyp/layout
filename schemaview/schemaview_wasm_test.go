@@ -12,7 +12,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	js.Global().Get("document").Get("body").Call("insertAdjacentHTML", "beforeend", `<script id="`+lang.ScriptID+`" type="application/json">{"Database":"Database","Search tables":"Search tables"}</script>`)
+	js.Global().Get("document").Get("body").Call("insertAdjacentHTML", "beforeend", `<script id="`+lang.ScriptID+`" type="application/json">{"Database":"Database","Search warnings by table or column":"Search warnings by table or column"}</script>`)
 	m.Run()
 }
 
