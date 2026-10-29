@@ -80,12 +80,12 @@ func (v *View) Activate() {
 			return
 		}
 		if resp.Status != 200 {
-			v.errorMsg.Set(lang.Translate("could not load", "database diagram").String() + " " + Sprintf("%d", resp.Status))
+			v.errorMsg.Set(lang.Translate("Could not", "load", "database diagram").String() + " " + Sprintf("%d", resp.Status))
 			return
 		}
 		var rep erd.Report
 		if err := json.Decode(resp.Body(), &rep); err != nil {
-			v.errorMsg.Set(lang.Translate("could not load", "database diagram").String() + ": " + err.Error())
+			v.errorMsg.Set(lang.Translate("Could not", "load", "database diagram").String() + ": " + err.Error())
 			return
 		}
 		v.report = &rep

@@ -494,7 +494,7 @@ func (v *CrudView) confirmDeleteAction() {
 					if err != nil {
 						Log(err.Error())
 						if v.notifier != nil {
-							v.notifyError("Could not delete", err)
+							v.notifyError(lang.Text("delete"), err)
 						}
 					} else {
 						v.setMode(modeNormal)
@@ -753,11 +753,11 @@ func (v *CrudView) saveAction(saver view.Saver) {
 // ("tenant_id required") names a field and no action, so it is prefixed with
 // the action that did not happen. Errors stay on screen until dismissed
 // (platformd.Notify), and an identical one is not stacked again.
-func (v *CrudView) notifyError(action string, err error) {
+func (v *CrudView) notifyError(action lang.Text, err error) {
 	if v.notifier == nil {
 		return
 	}
-	v.notifier.Notify(msgtype.Error, lang.Translate(action).String()+": "+err.Error(), layout.Auto())
+	v.notifier.Notify(msgtype.Error, lang.Translate("Could not", action).String()+": "+err.Error(), layout.Auto())
 }
 
 // reportSave funnels every save outcome through one place: a non-nil err is
@@ -768,7 +768,7 @@ func (v *CrudView) reportSave(err error) {
 	if err != nil {
 		Log(err.Error())
 		if v.notifier != nil {
-			v.notifyError("Could not save", err)
+			v.notifyError(lang.Text("save"), err)
 		}
 	} else {
 		if v.notifier != nil {
@@ -813,7 +813,7 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 		if err != nil {
 			Log(err.Error())
 			if v.notifier != nil {
-				v.notifyError("Could not delete", err)
+				v.notifyError(lang.Text("delete"), err)
 			}
 		} else {
 			v.selected.Set("")
@@ -925,7 +925,7 @@ func (v *CrudView) bulkEditAction() {
 		if err != nil {
 			Log(err.Error())
 			if v.notifier != nil {
-				v.notifyError("Could not update", err)
+				v.notifyError(lang.Text("update"), err)
 			}
 		} else {
 			v.setMode(modeNormal)
