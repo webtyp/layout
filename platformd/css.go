@@ -94,7 +94,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Interactive(style.Bare),
 			style.KeepSize(),
 		).
-		Part(widget.Part("brand-panel"),
+		Within(widget.Part("brand-menu"), widget.Part("brand-panel"),
 			style.Stack(style.Space1),
 			style.As(style.Panel),
 			style.Round(style.RadiusMd),
@@ -117,13 +117,23 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		).
 
 		// Fill() here is what pushes header-right to the far edge: it grows to
-		// take the free space between the two blocks. CenterContent() makes the
-		// message itself read in the middle of that space instead of hard
-		// against the brand — the same block, held apart at the two edges.
+		// take the free space between the two blocks. The slot holds nothing in
+		// the flow — its messages ride msg-track, laid over it — so its size is
+		// that free space and never the length of a message: a long one used to
+		// widen the slot and push the header onto a second row.
 		Part(widget.Part("msg-slot"),
-			style.Row(style.Space1),
 			style.Fill(),
+			style.Anchor(),
+		).
+		// The track covers the slot exactly. CenterContent() makes a message that
+		// fits read in the middle of the space; one that does not wraps inside
+		// it, and HideOverflow() keeps it to the two lines the header's height
+		// holds.
+		Within(widget.Part("msg-slot"), widget.Part("msg-track"),
+			style.Backdrop(style.Parent),
+			style.Row(style.Space1),
 			style.CenterContent(),
+			style.HideOverflow(),
 		).
 		// No per-severity tint: every notification carries the SAME identity,
 		// the system's own Primary blue — never a severity color (green/amber/
@@ -151,11 +161,29 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// already rely on (a plain-text toast never had an icon to pair the
 		// color with anyway — WCAG 1.4.1 wants a second channel for a
 		// color-coded signal, and there wasn't one).
+		// No KeepSize(): a message must be free to shrink to the space it is
+		// given and wrap. Anchor() is the corner the × docks into; PadInline
+		// (Space8), the same on both sides, keeps the text clear of it.
 		Part(widget.Part("msg"),
 			style.As(style.Inverse),
 			style.Round(style.RadiusSm),
-			style.PadInline(style.Space3),
-			style.KeepSize(),
+			style.PadInline(style.Space8),
+			style.Anchor(),
+		).
+		// The small × in the top-end corner of the module's help message (the
+		// only closable one), in the header and in the mobile stack. A light square
+		// (Panel) around it so it reads as a control, not as part of the text.
+		Within(widget.Part("msg"), widget.Part("msg-close"),
+			// A 1em square at TextBase is 16px: inside one 24px line of text it
+			// leaves the same Space1 above, beside and below it, so a one-line
+			// message frames it exactly as a two-line one does.
+			style.Docked(style.Parent, style.EdgeTop, style.SideEnd, style.Space1),
+			style.FontSize(style.TextBase),
+			style.IconBox(style.IconSm),
+			style.CenterContent(),
+			style.As(style.Panel),
+			style.Interactive(style.Panel),
+			style.Round(style.RadiusSm),
 		).
 		Part(widget.Part("header-right"),
 			style.Row(style.Space2),
@@ -599,22 +627,26 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// above the drawer's overlay when both are on screen. (The --z-toast
 		// layer exists for widgets whose Kind is Alert; platformd is a Menu,
 		// and switching kinds to steal the layer would change its role.)
+		// The stack spans the screen and starts right where the header ends
+		// (Width(Full), no gap, DockedClear(Space12) = the header's height), so
+		// it never covers the header. Sized to its content (max-content) a long
+		// message ran as one line wider than the phone and was cut at the start
+		// edge; now it wraps and grows downwards.
 		OnlyOn(css.Mobile, widget.Part("msg-stack"),
 			style.Stack(style.Space2),
 			style.KeepSize(),
-			style.Docked(style.Viewport, style.EdgeTop, style.SideEnd, style.Space3),
+			style.Width(style.Full),
+			style.Docked(style.Viewport, style.EdgeTop, style.SideEnd, style.SpaceNone),
 			style.DockedClear(style.Space12),
 		).
+		// The same Space3 above and on both sides of the messages. Revealed
+		// only while it holds one (see platformd.go), so the padding never
+		// catches taps meant for the page.
 		OnlyOn(css.Mobile, widget.Part("msg-slot-mobile"),
 			style.Stack(style.Space2),
-			style.Width(style.Content),
-			style.KeepSize(),
-			// Width(Content) sizes the slot to its widest toast's max-content;
-			// the toasts stretch to that width, so the stack reads as one
-			// aligned column hugging the end edge. A long message wraps inside
-			// its box instead of overflowing the screen — the DSL has no
-			// max-width, so the honest behaviour is max-content: the box is as
-			// wide as the widest word and the text wraps below it.
+			style.PadInline(style.Space3),
+			style.PadEdge(style.EdgeTop, style.Space3),
+			style.RevealedBy(widget.Open),
 		).
 		// The msg part is shared with the DESKTOP header slot (blue text on
 		// the header's own Panel), so this is On, not OnlyOn: OnlyOn's
@@ -635,7 +667,8 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// outline to clash with Raise's shadow.
 		On(css.Mobile, widget.Part("msg"),
 			style.Raise(style.Floating),
-			style.Pad(style.Space2),
+			style.PadEdge(style.EdgeTop, style.Space2),
+			style.PadEdge(style.EdgeBottom, style.Space2),
 		).
 		// On a phone the rail stops being a column and becomes a panel that
 		// slides in from the inline-end edge, gated by the same Open state as
@@ -652,8 +685,18 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.As(style.Primary),
 			style.RevealedBy(widget.Open),
 		).
+		// Just the "?": nothing around it, like the brand mark and the hamburger.
+		// No Button() recipe — its control box is taller than the header bar and
+		// drew a stretched grey box beside the module's name; IconBox keeps the
+		// glyph a square that fits the bar.
 		Part(widget.Part("help-btn"),
-			style.Button(style.Secondary),
+			style.Row(style.SpaceNone),
+			style.CenterContent(),
+			style.As(style.Bare),
+			style.Interactive(style.Bare),
+			style.IconBox(style.IconMd),
+			style.FontWeight(style.WeightBold),
+			style.KeepSize(),
 		).
 		Part(widget.Part("help-panel"),
 			style.Stack(style.Space1),

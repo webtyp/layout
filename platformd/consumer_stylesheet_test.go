@@ -210,8 +210,9 @@ func TestDrawerPanelFloatIsFinePointerScoped(t *testing.T) {
 // — invisible on a real phone (iOS does not focus on tap), but on a desktop
 // browser or a device emulator the button vanished on arrival and came back
 // only by clicking outside the page.
-// TestMsgStackDockedTopEnd pins the hamburger's ride: docked in the top-end
-// corner (EdgeTop, SideEnd), one Space3 step off the frame.
+// TestMsgStackDockedTopEnd pins the mobile message stack: docked right under
+// the header (EdgeTop + Space12 clear), spanning the screen with no side gap so
+// each message can centre itself with the same margin on both sides.
 func TestMsgStackDockedTopEnd(t *testing.T) {
 	cssStr := (&Platform{
 		CanView: func(string) bool { return true },
@@ -240,7 +241,7 @@ func TestMsgStackDockedTopEnd(t *testing.T) {
 	if mb == "" {
 		t.Fatal("expected a mobile .pd__msg-stack block carrying the docked top-end pin")
 	}
-	for _, want := range []string{"position: fixed", "inset-block-start: calc(var(--space-3", "inset-inline-end: var(--space-3"} {
+	for _, want := range []string{"position: fixed", "inset-block-start: calc(0px + var(--space-12", "inset-inline-end: 0;", "width: 100%"} {
 		if !strings.Contains(mb, want) {
 			t.Errorf(".pd__msg-stack should contain %q, block:\n%s", want, mb)
 		}
@@ -411,6 +412,8 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 	p.Notify(msgtype.Success, "success msg", Persistent())
 	p.Notify(msgtype.Warning, "warning msg", Persistent())
 	p.Notify(msgtype.Error, "error msg", Persistent())
+	// The help message is the one that carries the × (msg-close).
+	p.openHelp("Desc", false)
 
 	// Set menuOpen to true so that data-open attribute renders in markup
 	p.menuOpen.Set(true)
@@ -429,8 +432,20 @@ func TestPlatform_StylesheetAsserts(t *testing.T) {
 		t.Error("expected EdgeToEdge to emit border-radius: 0")
 	}
 	// The message block is centred.
-	if b := ruleBlock(cssStr, ".pd__msg-slot {"); !Contains(b, "justify-content: center") {
-		t.Errorf("msg-slot must centre its content, block:\n%s", b)
+	centred := false
+	for rest := cssStr; ; {
+		b := ruleBlock(rest, ".pd__msg-track {")
+		if b == "" {
+			break
+		}
+		if Contains(b, "justify-content: center") {
+			centred = true
+			break
+		}
+		rest = rest[strings.Index(rest, ".pd__msg-track {")+1:]
+	}
+	if !centred {
+		t.Error("msg-track must centre its content")
 	}
 	// The active nav item wears AccentInverse (white icon on the fully
 	// committed amber fill), matching the mobile hamburger and crudview's

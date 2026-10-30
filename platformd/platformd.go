@@ -39,7 +39,9 @@ var (
 	clsHeaderTitle     = NamePlatform.Class("header-title")
 	clsHeaderTitleText = NamePlatform.Class("header-title-text")
 	clsMsgSlot         = NamePlatform.Class("msg-slot")
+	clsMsgTrack        = NamePlatform.Class("msg-track")
 	clsMsg             = NamePlatform.Class("msg")
+	clsMsgClose        = NamePlatform.Class("msg-close")
 	clsHeaderRight     = NamePlatform.Class("header-right")
 	clsBody            = NamePlatform.Class("body")
 	clsStage           = NamePlatform.Class("stage")
@@ -77,6 +79,7 @@ var (
 
 const (
 	textHelp           = "What is this module?"
+	textMsgClose       = "Close"
 	textWelcomeDismiss = "Got it"
 	textGettingStarted = "Getting started"
 	textAlertView      = "View"
@@ -189,6 +192,10 @@ type Platform struct {
 	rawNotifications []notification
 	mu               sync.Mutex
 
+	// helpToastID is the notification that shows the active module's
+	// description (empty when it is not on screen). Guarded by mu.
+	helpToastID string
+
 	// lastScrollTop es el testigo de la última posición leída por onScroll. Los
 	// eventos de scroll llegan por el hilo de JS, igual que los click, así que no
 	// va bajo p.mu — ese mutex existe por time.AfterFunc, que descarta
@@ -223,6 +230,10 @@ type notification struct {
 	Type msgtype.Type
 	Msg  string
 	ID   string
+	// closable draws the small × in the corner. Only the module's help carries
+	// it: a short message (one line) looks wrong with a box beside it, and a
+	// tap on any message still closes it.
+	closable bool
 	// expiryNs is the auto-dismiss deadline; 0 = persistent. The
 	// timer is stored on the notification so pause/resume can cancel and
 	// re-arm it — see pauseToast/resumeToast.
@@ -622,8 +633,11 @@ func (p *Platform) Render() *Element {
 
 	// Chassis singleton: one per page by construction, so a stable global id is
 	// the intended use of ID() (see webtyp/dom, "Element ids are owned by dom").
+	// The slot only holds the header's free space; the messages ride the track
+	// laid over it, so a long one wraps inside that space instead of widening
+	// the slot and pushing the header onto a second row.
 	msgSlot := Div().Set(clsMsgSlot.AsAttr()).ID("pd-msg-slot").
-		BindChildren(p.notifications)
+		Child(Div().Set(clsMsgTrack.AsAttr()).BindChildren(p.notifications))
 	header.Child(msgSlot)
 
 	right := Div().Set(clsHeaderRight.AsAttr()).
@@ -654,7 +668,10 @@ func (p *Platform) Render() *Element {
 	// ── mobile message stack (mobile only) ─────────────────────────────────
 	// The toasts' phone home, docked to the top-end.
 	msgStack := Div().Set(clsMsgStack.AsAttr())
+	// Open only while it holds a message: closed, it takes no room, so its
+	// padding never catches a tap meant for the page under it.
 	msgSlotMobile := Div().Set(clsMsgSlotMobile.AsAttr()).
+		BindStateFunc(widget.Open, func() bool { return len(p.notificationsMobile.Get()) > 0 }).
 		BindChildren(p.notificationsMobile)
 	msgStack.Child(msgSlotMobile)
 	// Added as the root's LAST child below — see that site for why DOM order
@@ -898,11 +915,10 @@ func (p *Platform) Render() *Element {
 // different color because each was its own declaration. role isn't a CSS
 // class, so it never risked the same drift.
 //
-// The toast itself is the manual dismiss affordance — tapping it closes it.
-// Pause-on-hover lets a long message hold the screen; focusin/focusout mirror
-// it for the keyboard even though toasts are deliberately not focusable (a
-// focusable toast would add tab stops that appear and vanish with each
-// notification).
+// The module's help carries a small × in its top-end corner (see
+// notification.closable); tapping any toast closes it, and the auto-dismiss
+// timer keeps running alongside. Pause-on-hover lets a long message hold the
+// screen; focusin/focusout mirror it for the keyboard, which reaches the ×.
 func (p *Platform) toastNodes(suffix string) []*Element {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -916,10 +932,20 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 		}
 
 		id := n.ID
-		nodes = append(nodes, Div().Set(clsMsg.AsAttr()).
+		toast := Div().Set(clsMsg.AsAttr()).
 			Key(id+suffix).
 			Attr("role", role).
-			Text(n.Msg).
+			Child(Span().Text(n.Msg))
+		if n.closable {
+			toast.Child(Button().Set(clsMsgClose.AsAttr()).
+				Attr("aria-label", lang.Translate(textMsgClose).String()).
+				Text("×").
+				OnClick(func(e Event) {
+					e.StopPropagation()
+					p.dismiss(id)
+				}))
+		}
+		nodes = append(nodes, toast.
 			OnClick(func(e Event) {
 				e.StopPropagation()
 				p.dismiss(id)
@@ -937,7 +963,17 @@ func (p *Platform) toastNodes(suffix string) []*Element {
 // Auto() sizes it to the message, Persistent() leaves it until dismissed,
 // For(ms) pins it. Errors are the one case that must not vanish on their own
 // — hand them Persistent(), or a generous For().
+//
+// A new message replaces the module's help message.
 func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
+	p.closeHelp()
+	p.notify(t, msg, d, false)
+}
+
+// notify queues the notification and returns its id (the id of the identical
+// one already on screen, when it is not stacked again). closable: see
+// notification.closable.
+func (p *Platform) notify(t msgtype.Type, msg string, d Duration, closable bool) string {
 	p.mu.Lock()
 	// An error whose length was left to the platform stays until dismissed
 	// (WCAG 2.2.1): a message that vanishes before it is read defeats the
@@ -960,16 +996,18 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 			n.expiryNs = time.NowNano() + time.Nano(ms)*nanosPerMilli
 			n.timer = time.AfterFunc(ms, func() { p.dismiss(id) })
 		}
+		id := n.ID
 		p.mu.Unlock()
-		return
+		return id
 	}
 	ms := 0
 	if d.HasTimer() {
 		ms = d.Millis(msg)
 	}
 	n := notification{
-		Type: t,
-		Msg:  msg,
+		Type:     t,
+		Msg:      msg,
+		closable: closable,
 		ID:   "pd-notification-" + p.GetID() + "-" + Sprint(int64(time.NowNano())),
 	}
 	if ms > 0 {
@@ -981,6 +1019,7 @@ func (p *Platform) Notify(t msgtype.Type, msg string, d Duration) {
 
 	p.notifications.Set(p.toastNodes(""))
 	p.notificationsMobile.Set(p.toastNodes("-m"))
+	return n.ID
 }
 
 // dismiss removes the notification with the given id — from a tap on the
@@ -1103,7 +1142,7 @@ func (p *Platform) Activate(moduleID string) {
 		p.refreshHelp(targetModule)
 		p.refreshAlerts(targetModule)
 	} else {
-		p.helpOpen.Set(false)
+		p.closeHelp()
 		p.helpSlot.Set(nil)
 		p.helpPanel.Set(nil)
 		p.alertStrip.Set(nil)
@@ -1154,35 +1193,42 @@ func (p *Platform) moduleByID(id string) UIModule {
 func (p *Platform) refreshHelp(m UIModule) {
 	d, ok := m.(Described)
 	if !ok || d.Description() == "" {
-		p.helpOpen.Set(false)
+		p.closeHelp()
 		p.helpSlot.Set(nil)
 		p.helpPanel.Set(nil)
 		return
 	}
 
+	text := lang.Translate(d.Description()).String()
+	hasSteps := len(d.Steps()) > 0
 	key := "pd-welcome-" + m.ModelName()
 	firstVisit := false
-	if len(d.Steps()) > 0 && LocalStorageAvailable() {
+	if hasSteps && LocalStorageAvailable() {
 		if val, err := LocalStorageGet(key); err == nil && val == "" {
 			firstVisit = true
 		}
 	}
+	p.closeHelp()
 	if firstVisit {
-		p.helpOpen.Set(true)
-	} else {
-		p.helpOpen.Set(false)
+		p.openHelp(text, hasSteps)
 	}
 
 	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-" + m.ModelName()).
 		Attr("aria-label", lang.Translate(textHelp).String()).
 		Text("?").
-		OnClick(func(e Event) { e.StopPropagation(); p.helpOpen.Toggle() })
+		OnClick(func(e Event) {
+			e.StopPropagation()
+			if p.helpShown() {
+				p.closeHelp()
+				return
+			}
+			p.openHelp(text, hasSteps)
+		})
 
-	panelNodes := []*Element{
-		P().Key("helpt-" + m.ModelName()).Text(lang.Translate(d.Description()).String()),
-	}
-
-	if len(d.Steps()) > 0 {
+	// The description rides the header's message slot like every other message;
+	// the panel under the header only exists for the getting-started steps.
+	var panelNodes []*Element
+	if hasSteps {
 		panelNodes = append(panelNodes, H2().Text(lang.Translate(textGettingStarted).String()))
 		stepsContainer := Div().Set(clsWelcomeSteps.AsAttr())
 		for _, s := range d.Steps() {
@@ -1203,13 +1249,51 @@ func (p *Platform) refreshHelp(m UIModule) {
 				if LocalStorageAvailable() {
 					_ = LocalStorageSet(key, "seen")
 				}
-				p.helpOpen.Set(false)
+				p.closeHelp()
 			})
 		panelNodes = append(panelNodes, dismissBtn)
 	}
 
 	p.helpSlot.Set([]*Element{button})
 	p.helpPanel.Set(panelNodes)
+}
+
+// openHelp shows the module's description as a message like any other — same
+// slot, same ×, same auto-dismiss — until it times out, is closed, another
+// message replaces it or "?" is tapped again; it also opens the steps panel when the module has steps — without them the panel
+// is empty and must stay closed.
+func (p *Platform) openHelp(text string, withSteps bool) {
+	p.helpOpen.Set(withSteps)
+	id := p.notify(msgtype.Info, text, Auto(), true)
+	p.mu.Lock()
+	p.helpToastID = id
+	p.mu.Unlock()
+}
+
+// closeHelp removes the help message, if it is on screen, and closes the steps
+// panel.
+func (p *Platform) closeHelp() {
+	p.helpOpen.Set(false)
+	p.mu.Lock()
+	id := p.helpToastID
+	p.helpToastID = ""
+	p.mu.Unlock()
+	if id != "" {
+		p.dismiss(id)
+	}
+}
+
+// helpShown reports whether the help message is still on screen — a tap on the
+// message itself dismisses it without going through closeHelp.
+func (p *Platform) helpShown() bool {
+	p.mu.Lock()
+	defer p.mu.Unlock()
+	for _, n := range p.rawNotifications {
+		if n.ID == p.helpToastID {
+			return p.helpToastID != ""
+		}
+	}
+	return false
 }
 
 func (p *Platform) refreshAlerts(m UIModule) {

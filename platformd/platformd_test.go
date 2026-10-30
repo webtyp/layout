@@ -937,12 +937,17 @@ func TestPlatform_HelpButton_H1(t *testing.T) {
 	if !Contains(html, `aria-label='What is this module?'`) {
 		t.Errorf("Expected help button aria-label")
 	}
-	if !Contains(html, "Keeps the clinic") {
-		t.Errorf("Expected description text")
+	if Contains(html, "Keeps the clinic") {
+		t.Errorf("Description must wait for the «?» tap, not be drawn on arrival")
+	}
+
+	p.openHelp("Keeps the clinic's supplies", false)
+	if !Contains(p.Render().String(), "Keeps the clinic") {
+		t.Errorf("Expected description as a header message")
 	}
 }
 
-// The start screen is described: its «?» button and its text are drawn once.
+// The start screen is described: its «?» button is drawn once and its text once per message slot.
 // The slots used to copy their signal's nodes into Child(...) as well, which
 // drew them twice in the browser and stopped the app (dom claimID panic).
 func TestPlatform_DescribedStartScreen_HelpDrawnOnce(t *testing.T) {
@@ -955,13 +960,16 @@ func TestPlatform_DescribedStartScreen_HelpDrawnOnce(t *testing.T) {
 	}
 	p.Init(NilCtx())
 	p.Activate("a")
+	p.openHelp("Keeps the clinic's supplies", false)
 
 	html := p.Render().String()
 	if n := Count(html, `aria-label='What is this module?'`); n != 1 {
 		t.Errorf("help button drawn %d times, want 1", n)
 	}
-	if n := Count(html, "Keeps the clinic"); n != 1 {
-		t.Errorf("description drawn %d times, want 1", n)
+	// Like every message: once in the header slot (desktop), once in the mobile
+	// stack; the stylesheet shows one per viewport.
+	if n := Count(html, "Keeps the clinic"); n != 2 {
+		t.Errorf("description drawn %d times, want 2 (header slot + mobile stack)", n)
 	}
 }
 
@@ -1008,16 +1016,61 @@ func TestPlatform_HelpButton_H4(t *testing.T) {
 	}
 	p.Init(NilCtx())
 	p.Activate("a")
-	p.helpOpen.Toggle()
+	p.openHelp("Desc", false)
 
-	if p.helpOpen.Get() != true {
-		t.Errorf("Expected help panel to be open")
+	if !p.helpShown() {
+		t.Errorf("Expected help message on screen")
 	}
 
 	p.Activate("b")
 	p.Activate("a")
-	if p.helpOpen.Get() != false {
-		t.Errorf("Expected help panel to close on module switch")
+	if p.helpShown() || p.helpOpen.Get() {
+		t.Errorf("Expected help to close on module switch")
+	}
+}
+
+// Without steps the panel under the header is empty: opening help must not
+// open it (an empty panel drew a grey bar between the header and the stage).
+func TestPlatform_HelpWithoutSteps_PanelStaysClosed(t *testing.T) {
+	p := &Platform{
+		CanView: func(string) bool { return true },
+
+		Modules: []UIModule{Describe(&mockModule{id: "a"}, "Desc")},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+	p.openHelp("Desc", false)
+
+	if !p.helpShown() {
+		t.Errorf("Expected help message on screen")
+	}
+	if p.helpOpen.Get() {
+		t.Errorf("Steps panel opened for a module without steps")
+	}
+}
+
+// The help message stays until another message arrives, which replaces it.
+func TestPlatform_HelpMessage_ReplacedByNotify(t *testing.T) {
+	p := &Platform{
+		CanView: func(string) bool { return true },
+
+		Modules: []UIModule{Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+	p.openHelp("Keeps the clinic's supplies", false)
+
+	p.Notify(msgtype.Info, "Saved", Persistent())
+
+	if p.helpShown() {
+		t.Errorf("Expected the new message to replace the help message")
+	}
+	html := p.Render().String()
+	if Contains(html, "Keeps the clinic") {
+		t.Errorf("Help message still drawn after another message arrived")
+	}
+	if !Contains(html, "Saved") {
+		t.Errorf("Expected the new message")
 	}
 }
 
@@ -1070,6 +1123,7 @@ func TestPlatform_HelpButton_D4(t *testing.T) {
 	}
 	p.Init(NilCtx())
 	p.Activate("child")
+	p.openHelp("Child desc", false)
 
 	html := p.Render().String()
 	if !Contains(html, "Child desc") {
@@ -1258,5 +1312,27 @@ func TestPlatform_NilCanViewShowsNothing(t *testing.T) {
 	}
 	if Contains(html, "data-id='mod2'") {
 		t.Errorf("expected mod2 to be hidden when CanView is nil, got html with data-id='mod2'")
+	}
+}
+
+// Only the module's help carries the ×: a short message like "Saved" closes
+// on its own or on a tap, and a box beside one line of text looks wrong.
+func TestPlatform_OnlyHelpMessageIsClosable(t *testing.T) {
+	p := &Platform{
+		CanView: func(string) bool { return true },
+
+		Modules: []UIModule{Describe(&mockModule{id: "a"}, "Keeps the clinic's supplies")},
+	}
+	p.Init(NilCtx())
+	p.Activate("a")
+
+	p.Notify(msgtype.Success, "Saved", Persistent())
+	if Contains(p.Render().String(), "pd__msg-close") {
+		t.Errorf("A plain message must not draw the ×")
+	}
+
+	p.openHelp("Keeps the clinic's supplies", false)
+	if !Contains(p.Render().String(), "pd__msg-close") {
+		t.Errorf("The help message must draw the ×")
 	}
 }

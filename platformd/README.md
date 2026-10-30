@@ -41,7 +41,7 @@ Modules can optionally implement capabilities detected by `platformd`:
 ### Help and alerts
 
 Two capabilities exist for explaining and warning users:
-- **`Described`**: a module can implement `Description() lang.Text` and optionally `Steps() []Step`. When the active module is `Described` and the description text is not empty, a «?» help button appears beside the module title. Tapping it reveals a panel with the description text. When the module also has `Steps()`, they are rendered in the panel. The panel automatically opens as a welcome card on first visit (remembered in browser localStorage). Alternatively, use `Describe(module, "Text")` to add this capability functionally.
+- **`Described`**: a module can implement `Description() lang.Text` and optionally `Steps() []Step`. When the active module is `Described` and the description text is not empty, a «?» help button appears beside the module title. Tapping it shows the description as a persistent message in the header's message slot (the same slot as every notification, and the mobile message stack on a phone); it stays until the next message arrives or «?» is tapped again. When the module also has `Steps()`, they are rendered in a panel under the header. The message and panel open automatically as a welcome card on first visit (remembered in browser localStorage). Alternatively, use `Describe(module, "Text")` to add this capability functionally.
 - **`AlertedModule`**: a module can implement `UnseenAlerts() []ModuleAlert`. When the active module has unseen alerts, an alert strip appears above its content on the stage. The strip lists the alerts by subject, with optional "View" and "Mark as seen" actions.
 
 ```go
