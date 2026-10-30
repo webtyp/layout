@@ -1,6 +1,7 @@
 package app
 
 import (
+	"webtyp.com/ddl"
 	"webtyp.com/erd"
 	"webtyp.com/fmt"
 	"webtyp.com/icons/terminal"
@@ -12,6 +13,7 @@ import (
 	"webtyp.com/layout/schemaview"
 	"webtyp.com/model"
 	"webtyp.com/router"
+	"webtyp.com/rpc"
 	"webtyp.com/svg"
 	"webtyp.com/view"
 )
@@ -28,6 +30,39 @@ const (
 	labelDevTools lang.Text = "Developer tools"
 	helpDevTools  lang.Text = "Tools to inspect how this app is built."
 )
+
+// Tools are the developer screens under «Developer tools». A nil field leaves
+// that screen out; Tools{} leaves the whole group out — an app with no API and
+// no database shows no developer tools.
+// Example (an app with a server): app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()}
+type Tools struct {
+	API      *apiexplorer.Config
+	Database *schemaview.Source
+}
+
+// LocalTools builds the tools of a page with no server — a module's demo — with
+// the pieces the server uses: the routes its operations declare (rpc.Routes)
+// and its migration steps (erd.ReadSteps). No modules leaves the explorer out;
+// no steps leaves the diagram out.
+// Example: tools, err := app.LocalTools([]router.OperationModule{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})
+func LocalTools(modules []router.OperationModule, steps ...ddl.Step) (Tools, error) {
+	var t Tools
+	if len(modules) > 0 {
+		routes, err := rpc.Routes(rpc.DefaultPrefix, modules...)
+		if err != nil {
+			return Tools{}, err
+		}
+		t.API = apiexplorer.FromTable(router.Table(routes, nil))
+	}
+	if len(steps) > 0 {
+		d, err := erd.ReadSteps(steps...)
+		if err != nil {
+			return Tools{}, err
+		}
+		t.Database = schemaview.FromReport(d.Report())
+	}
+	return t, nil
+}
 
 // Menu is what layout/app hands to any layout chassis (such as platformd or a custom layout):
 // the modules and the visibility rule.
@@ -94,8 +129,8 @@ func sourceFor(leaves []leafView, modelName string) (view.Presenter, bool) {
 
 // BuildMenu validates every screen and builds its layout.UIModule tree. allows answers whether the
 // signed-in user holds a permission (in an app: func(r model.Resource) bool { return profile.Can(r, model.Read) }).
-// The API explorer is always added last, inside the «Developer tools» group, with the database diagram, visible to whoever may read erd.ResourceSchema; the app never adds it.
-func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.Resource) bool) (Menu, error) {
+// tools configures the «Developer tools» group, added last; the group appears only with at least one tool.
+func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.Resource) bool, tools Tools) (Menu, error) {
 	for _, s := range screens {
 		if err := s.Validate(); err != nil {
 			return Menu{}, err
@@ -117,18 +152,27 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 		return Menu{}, err
 	}
 
-	explorer, err := apiexplorer.New(apiexplorer.Config{})
-	if err != nil {
-		return Menu{}, err
+	var devs []layout.UIModule
+	if tools.API != nil {
+		explorer, err := apiexplorer.New(tools.API)
+		if err != nil {
+			return Menu{}, err
+		}
+		devs = append(devs, layout.Describe(explorer, helpAPIExplorer))
+		perms = append(perms, screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection})
 	}
-	schema := schemaview.New()
-	devtools := layout.NewGroupUIModule(idDevTools, lang.Translate(labelDevTools).String(), terminal.Ref,
-		[]layout.UIModule{layout.Describe(explorer, helpAPIExplorer), layout.Describe(schema, helpSchemaView)})
-	mods = append(mods, layout.Describe(devtools, helpDevTools))
-	perms = append(perms,
-		screenPerm{id: explorer.ModelName(), permission: router.ResourceIntrospection},
-		screenPerm{id: schema.ModelName(), permission: erd.ResourceSchema},
-	)
+	if tools.Database != nil {
+		schema, err := schemaview.New(tools.Database)
+		if err != nil {
+			return Menu{}, err
+		}
+		devs = append(devs, layout.Describe(schema, helpSchemaView))
+		perms = append(perms, screenPerm{id: schema.ModelName(), permission: erd.ResourceSchema})
+	}
+	if len(devs) > 0 {
+		devtools := layout.NewGroupUIModule(idDevTools, lang.Translate(labelDevTools).String(), terminal.Ref, devs)
+		mods = append(mods, layout.Describe(devtools, helpDevTools))
+	}
 
 	canView := func(id string) bool {
 		if allows == nil {

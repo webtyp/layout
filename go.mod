@@ -27,7 +27,7 @@ require (
 	webtyp.com/ddl v0.0.36 // indirect
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
-	webtyp.com/rpc v0.2.14 // indirect
+	webtyp.com/rpc v0.2.15 // indirect
 	webtyp.com/storage v0.1.8 // indirect
 )
 

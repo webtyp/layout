@@ -5,9 +5,7 @@ package schemaview
 import (
 	"webtyp.com/components/searchbar"
 	"webtyp.com/erd"
-	"webtyp.com/fetch"
 	"webtyp.com/icons/database"
-	"webtyp.com/json"
 	"webtyp.com/lang"
 	"webtyp.com/layout"
 	"webtyp.com/svg"
@@ -39,6 +37,7 @@ var (
 
 type View struct {
 	Element
+	src      *Source
 	errorMsg *SignalString
 	search   *SignalString
 	filter   *searchbar.SearchBar
@@ -47,8 +46,11 @@ type View struct {
 	rows     *SignalNodes
 }
 
-func New() *View {
-	return &View{errorMsg: NewString(""), search: NewString(""), svgNodes: NewNodes(), rows: NewNodes()}
+func New(src *Source) (*View, error) {
+	if src == nil {
+		return nil, Err(errNoSource)
+	}
+	return &View{src: src, errorMsg: NewString(""), search: NewString(""), svgNodes: NewNodes(), rows: NewNodes()}, nil
 }
 
 func (v *View) ModelName() string       { return string(erd.ResourceSchema) }
@@ -70,22 +72,9 @@ func (v *View) Init(ctx Ctx) {
 // Activate fetches the diagram each time the screen opens (the schema changes when the app is redeployed).
 func (v *View) Activate() {
 	v.errorMsg.Set("")
-	fetch.Get(erd.SchemaPath).Send(func(resp *fetch.Response, err error) {
+	v.src.load(func(rep erd.Report, err error) {
 		if err != nil {
 			v.errorMsg.Set(err.Error())
-			return
-		}
-		if resp.Status == 403 {
-			v.errorMsg.Set(lang.Translate("no access to", "database diagram").String())
-			return
-		}
-		if resp.Status != 200 {
-			v.errorMsg.Set(lang.Translate("Could not", "load", "database diagram").String() + " " + Sprintf("%d", resp.Status))
-			return
-		}
-		var rep erd.Report
-		if err := json.Decode(resp.Body(), &rep); err != nil {
-			v.errorMsg.Set(lang.Translate("Could not", "load", "database diagram").String() + ": " + err.Error())
 			return
 		}
 		v.report = &rep

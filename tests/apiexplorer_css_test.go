@@ -50,7 +50,7 @@ func declsFor(cssStr, sel string) string {
 // emits min-height: 0. Without a scroll region and rows that refuse to shrink,
 // 25 rows that need 32px each were squeezed into 18px and their text overlapped.
 func TestAPIExplorer_RowsKeepTheirHeight(t *testing.T) {
-	e, err := apiexplorer.New(apiexplorer.Config{})
+	e, err := apiexplorer.New(apiexplorer.FromServer())
 	if err != nil {
 		t.Fatal(err)
 	}

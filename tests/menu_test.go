@@ -4,11 +4,15 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/ddl"
 	"webtyp.com/erd"
+	"webtyp.com/fmt"
 	"webtyp.com/html"
 	"webtyp.com/input"
 	"webtyp.com/layout"
+	"webtyp.com/layout/apiexplorer"
 	"webtyp.com/layout/app"
+	"webtyp.com/layout/schemaview"
 	"webtyp.com/model"
 	"webtyp.com/router"
 	"webtyp.com/view"
@@ -41,7 +45,7 @@ func TestBuildMenu_InvalidScreenIsAnError(t *testing.T) {
 		},
 	}
 	ids := testIDGen{}
-	_, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true })
+	_, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true }, app.Tools{})
 	if err == nil {
 		t.Fatal("expected error for leaf screen without Permission, got nil")
 	}
@@ -63,7 +67,7 @@ func TestBuildMenu_LeafVisibleByItsPermission(t *testing.T) {
 	ids := testIDGen{}
 
 	allowsService := func(r model.Resource) bool { return string(r) == "service" }
-	m, err := app.BuildMenu(screens, ids, allowsService)
+	m, err := app.BuildMenu(screens, ids, allowsService, app.Tools{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -72,7 +76,7 @@ func TestBuildMenu_LeafVisibleByItsPermission(t *testing.T) {
 	}
 
 	allowsFalse := func(r model.Resource) bool { return false }
-	m2, err := app.BuildMenu(screens, ids, allowsFalse)
+	m2, err := app.BuildMenu(screens, ids, allowsFalse, app.Tools{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +105,7 @@ func TestBuildMenu_GroupHasNoOwnPermission(t *testing.T) {
 	}
 	ids := testIDGen{}
 
-	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return string(r) == "a" })
+	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return string(r) == "a" }, app.Tools{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -124,12 +128,12 @@ func TestBuildMenu_DescriptionFromPresenter(t *testing.T) {
 	}
 	ids := testIDGen{}
 
-	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true })
+	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true }, app.Tools{})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(m.Modules) != 2 {
-		t.Fatalf("expected 2 modules (1 screen + the group), got %d", len(m.Modules))
+	if len(m.Modules) != 1 {
+		t.Fatalf("expected 1 module (1 screen), got %d", len(m.Modules))
 	}
 	if m.Modules[0].ModelName() != "booking" {
 		t.Errorf("expected ModelName booking, got %s", m.Modules[0].ModelName())
@@ -161,7 +165,7 @@ func TestBuildMenu_ComponentScreenVisibleByPermission(t *testing.T) {
 	}
 	ids := testIDGen{}
 
-	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true })
+	m, err := app.BuildMenu(screens, ids, func(r model.Resource) bool { return true }, app.Tools{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,7 +200,7 @@ func TestBuildMenu_AddsDevToolsLast(t *testing.T) {
 	ids := testIDGen{}
 
 	allows := func(r model.Resource) bool { return string(r) == string(router.ResourceIntrospection) }
-	m, err := app.BuildMenu(screens, ids, allows)
+	m, err := app.BuildMenu(screens, ids, allows, app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -225,7 +229,7 @@ func TestBuildMenu_AddsDevToolsLast(t *testing.T) {
 
 	// with allows true only for erd.ResourceSchema:
 	allowsSchema := func(r model.Resource) bool { return r == erd.ResourceSchema }
-	mSchema, err := app.BuildMenu(screens, ids, allowsSchema)
+	mSchema, err := app.BuildMenu(screens, ids, allowsSchema, app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -237,7 +241,7 @@ func TestBuildMenu_AddsDevToolsLast(t *testing.T) {
 	}
 
 	allowsFalse := func(r model.Resource) bool { return false }
-	m2, _ := app.BuildMenu(screens, ids, allowsFalse)
+	m2, _ := app.BuildMenu(screens, ids, allowsFalse, app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()})
 	if m2.CanView(string(router.ResourceIntrospection)) {
 		t.Error("expected CanView for api explorer to be false when allows returns false")
 	}
@@ -297,7 +301,7 @@ func TestBuildMenu_SelectFollowsSource(t *testing.T) {
 		{ID: "service", Label: "Services", Icon: "laptop", Permission: "serv", Presenter: servPres},
 	}
 
-	app.BuildMenu(screens, testIDGen{}, func(r model.Resource) bool { return true })
+	app.BuildMenu(screens, testIDGen{}, func(r model.Resource) bool { return true }, app.Tools{})
 
 	// simulate a name change
 	specPres.(view.Saver).Save([]model.Model{&testSpecialty{Id: "s1", Name: "Surgeon"}}, func(error){})
@@ -322,8 +326,99 @@ func TestBuildMenu_SelectWithoutSourceFails(t *testing.T) {
 		{ID: "service", Label: "Services", Icon: "laptop", Permission: "serv", Presenter: view.New(&localFakeLister{}, &testServiceMissing{})},
 	}
 
-	_, err := app.BuildMenu(screens, testIDGen{}, func(r model.Resource) bool { return true })
+	_, err := app.BuildMenu(screens, testIDGen{}, func(r model.Resource) bool { return true }, app.Tools{})
 	if err == nil || !strings.Contains(err.Error(), "a field takes its options from a model no screen lists") {
 		t.Fatalf("expected error containing 'a field takes its options from a model no screen lists', got %v", err)
+	}
+}
+
+
+func TestBuildMenu_NoTools_NoGroup(t *testing.T) {
+	m, err := app.BuildMenu(nil, testIDGen{}, func(model.Resource) bool { return true }, app.Tools{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, mod := range m.Modules {
+		if mod.ModelName() == "devtools" {
+			t.Error("expected no devtools group")
+		}
+	}
+}
+
+func TestBuildMenu_OnlyAPI(t *testing.T) {
+	m, err := app.BuildMenu(nil, testIDGen{}, func(model.Resource) bool { return true }, app.Tools{API: apiexplorer.FromServer()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Modules) != 1 || m.Modules[0].ModelName() != "devtools" {
+		t.Fatalf("expected 1 module (devtools), got %d", len(m.Modules))
+	}
+	gm := m.Modules[0].(layout.GroupModule)
+	if len(gm.Children()) != 1 || gm.Children()[0].ModelName() != string(router.ResourceIntrospection) {
+		t.Errorf("expected 1 child (API), got %v", gm.Children())
+	}
+}
+
+func TestBuildMenu_OnlyDatabase(t *testing.T) {
+	m, err := app.BuildMenu(nil, testIDGen{}, func(model.Resource) bool { return true }, app.Tools{Database: schemaview.FromServer()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(m.Modules) != 1 || m.Modules[0].ModelName() != "devtools" {
+		t.Fatalf("expected 1 module (devtools), got %d", len(m.Modules))
+	}
+	gm := m.Modules[0].(layout.GroupModule)
+	if len(gm.Children()) != 1 || gm.Children()[0].ModelName() != string(erd.ResourceSchema) {
+		t.Errorf("expected 1 child (Database), got %v", gm.Children())
+	}
+}
+
+type fakeOpMod struct{}
+
+func (fakeOpMod) ModelName() string { return "demo" }
+
+func (fakeOpMod) MountOperations(reg router.OperationRegistry) {
+	noop := func(router.Context) {}
+	reg.Operation("list", noop).Requires("demo_item", model.Read)
+	reg.Operation("save", noop).Requires("demo_item", model.Create)
+}
+
+var _ router.OperationModule = fakeOpMod{}
+
+func TestLocalTools(t *testing.T) {
+	fakeStep := ddl.Step{
+		Name: "demo",
+		Run: func(c ddl.Execer, k ddl.Compiler) error {
+			return ddl.New(c, k).Sync(&testSpecialty{})
+		},
+	}
+	tools, err := app.LocalTools([]router.OperationModule{fakeOpMod{}}, fakeStep)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tools.API == nil || tools.Database == nil {
+		t.Error("expected API and Database to be not nil")
+	}
+
+	toolsNone, err := app.LocalTools(nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if toolsNone.API != nil || toolsNone.Database != nil {
+		t.Error("expected API and Database to be nil")
+	}
+
+	boomStep := ddl.Step{
+		Name: "broken",
+		Run: func(ddl.Execer, ddl.Compiler) error {
+			return fmt.Err("boom")
+		},
+	}
+	_, errBoom := app.LocalTools(nil, boomStep)
+	if errBoom == nil {
+		t.Fatal("expected error, got nil")
+	}
+	if !strings.Contains(errBoom.Error(), "broken") || !strings.Contains(errBoom.Error(), "boom") {
+		t.Errorf("expected error containing step name and boom, got %v", errBoom)
 	}
 }

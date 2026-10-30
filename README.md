@@ -72,6 +72,8 @@ A screen that lists every endpoint of the running server (`GET /_routes`) with i
 permission and the roles that hold it, and lets an authorized user call each one. Never expose
 it publicly in production — see `apiexplorer/README.md`. In the menu it lives inside the «Developer tools» group.
 
+An app with a server declares its tools using `app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()}`. A demo uses `app.LocalTools([]router.OperationModule{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})` to build them from in-process data. Passing no tools (`app.Tools{}`) leaves the whole group out.
+
 ### schemaview
 
 A screen that displays the app's database diagram (`GET /_schema`) and the list of model errors, each jumping to its table. It requires permission `db_schema:read` and is never public — served by `webtyp.com/appkit` when the app passes `Migrations`. In the menu it lives as the second child of the «Developer tools» group.

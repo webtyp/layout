@@ -2,9 +2,7 @@ package apiexplorer
 
 import (
 	"webtyp.com/components/searchbar"
-	"webtyp.com/fetch"
 	"webtyp.com/icons/code"
-	"webtyp.com/json"
 	"webtyp.com/router"
 	"webtyp.com/widget"
 
@@ -55,15 +53,10 @@ var (
 	clsTryForm = NameAPIExplorer.Class("try-form")
 )
 
-type Config struct {
-	RoutesURL string
-}
 
 type Explorer struct {
 	Element
-	cfg Config
-
-	routesURL string
+	cfg *Config
 
 	tableData *router.RouteTable
 	errorMsg  *SignalString
@@ -75,18 +68,16 @@ type Explorer struct {
 	rowsNodes   *SignalNodes
 }
 
-func New(cfg Config) (*Explorer, error) {
+func New(cfg *Config) (*Explorer, error) {
+	if cfg == nil {
+		return nil, Err(errNoSource)
+	}
 	e := &Explorer{
 		cfg:         cfg,
 		errorMsg:    NewString(""),
 		search:      NewString(""),
 		expandedRow: NewString(""),
 		rowsNodes:   NewNodes(),
-	}
-	if e.cfg.RoutesURL == "" {
-		e.routesURL = router.IntrospectionPath
-	} else {
-		e.routesURL = e.cfg.RoutesURL
 	}
 	return e, nil
 }
@@ -115,25 +106,9 @@ func (e *Explorer) Activate() {
 }
 
 func (e *Explorer) load() {
-	req := fetch.Get(e.routesURL)
-	req.Send(func(resp *fetch.Response, err error) {
+	e.cfg.load(func(table router.RouteTable, err error) {
 		if err != nil {
 			e.errorMsg.Set(err.Error())
-			return
-		}
-		if resp.Status != 200 {
-			if resp.Status == 403 {
-				e.errorMsg.Set(lang.Translate("you need permission to view the API").String())
-			} else {
-				e.errorMsg.Set(lang.Translate("Error").String() + " " + Sprintf("%d", resp.Status))
-			}
-			return
-		}
-
-		var table router.RouteTable
-		err = json.Decode(resp.Body(), &table)
-		if err != nil {
-			e.errorMsg.Set(lang.Translate("Failed to decode routes").String() + ": " + err.Error())
 			return
 		}
 		e.tableData = &table
@@ -247,7 +222,7 @@ func (e *Explorer) updateRows() {
 		headerRow := Div().Set(clsRowHeader.AsAttr()).Child(methodCol, pathCol, accessCol, permCol, rolesCol)
 		row.Child(headerRow)
 
-		if isExpanded {
+		if isExpanded && e.cfg.canTry {
 			tryPanel := buildTryPanel(r)
 			row.Child(tryPanel)
 		}
