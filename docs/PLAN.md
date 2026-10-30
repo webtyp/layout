@@ -2,6 +2,8 @@
 PLAN: "feat!: developer tools only when there is an API or a database; a demo shows them from its own operations and migrations"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 16899058921556042881
 ---
 
 > Read AGENTS.md at the repo root before any change.
