@@ -2,8 +2,10 @@
 PLAN: "feat!: developer tools only when there is an API or a database; a demo shows them from its own operations and migrations"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
+STATUS: review
 SESSION: 16899058921556042881
+PR: https://github.com/webtyp/layout/pull/53
+REVIEWED_COMMIT: 43e4f14cf2564cf947e3a9c9fc4eb5b36dab38c2
 ---
 
 > Read AGENTS.md at the repo root before any change.
