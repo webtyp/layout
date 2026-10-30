@@ -7,7 +7,7 @@ import (
 )
 
 func TestSortingAndFiltering(t *testing.T) {
-	e, _ := New(Config{})
+	e, _ := New(FromTable(router.RouteTable{}))
 
 	e.tableData = &router.RouteTable{
 		Routes: []router.RouteRecord{
@@ -43,5 +43,51 @@ func TestAccessLabelShowsMFA(t *testing.T) {
 	}
 	if got := accessLabel(router.RouteRecord{Access: "public"}); got != "public" {
 		t.Errorf("non-MFA route label = %q, want %q", got, "public")
+	}
+}
+
+func TestNewWithoutSource(t *testing.T) {
+	_, err := New(nil)
+	if err == nil {
+		t.Fatal("expected error for New(nil), got nil")
+	}
+	if err.Error() != errNoSource {
+		t.Fatalf("expected error '%s', got '%s'", errNoSource, err.Error())
+	}
+}
+
+func TestFromTableCannotTry(t *testing.T) {
+	cfg := FromTable(router.RouteTable{})
+	if cfg.canTry {
+		t.Error("expected FromTable().canTry to be false")
+	}
+	srvCfg := FromServer()
+	if !srvCfg.canTry {
+		t.Error("expected FromServer().canTry to be true")
+	}
+}
+
+func TestFromTableLoads(t *testing.T) {
+	table := router.RouteTable{Routes: []router.RouteRecord{{Method: "GET", Path: "/a"}}}
+	cfg := FromTable(table)
+
+	var loaded router.RouteTable
+	var loadedErr error
+	called := false
+
+	cfg.load(func(t router.RouteTable, err error) {
+		loaded = t
+		loadedErr = err
+		called = true
+	})
+
+	if !called {
+		t.Fatal("expected load to call done synchronously")
+	}
+	if loadedErr != nil {
+		t.Fatalf("expected no error, got %v", loadedErr)
+	}
+	if len(loaded.Routes) != 1 || loaded.Routes[0].Path != "/a" {
+		t.Errorf("expected loaded route /a, got %v", loaded.Routes)
 	}
 }

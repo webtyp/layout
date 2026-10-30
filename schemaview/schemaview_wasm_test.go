@@ -17,7 +17,10 @@ func TestMain(m *testing.M) {
 }
 
 func TestSchemaView(t *testing.T) {
-	v := New()
+	v, err := New(FromServer())
+	if err != nil {
+		t.Fatal(err)
+	}
 	// manually mock the state, Activate would fetch it from network
 	v.report = &erd.Report{
 		SVG: "<svg><g id=\"erd-table-user\"></g></svg>",

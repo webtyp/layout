@@ -20,7 +20,7 @@ func TestExplorer_WASM_Mount(t *testing.T) {
 		doc.Get("body").Call("removeChild", root)
 	})
 
-	e, err := New(Config{})
+	e, err := New(FromServer())
 	if err != nil {
 		t.Fatalf("failed to create Explorer: %v", err)
 	}
