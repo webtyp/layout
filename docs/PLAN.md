@@ -2,6 +2,8 @@
 PLAN: "feat!: crudview lists paged and searched on the server (view v0.6.64: Search/HasMore/More)"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 486127966435176406
 ---
 
 > Read AGENTS.md at the repo root before any change.
