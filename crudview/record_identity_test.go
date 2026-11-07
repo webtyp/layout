@@ -28,7 +28,9 @@ func (b *memoryBackend) Records() *view.Records {
 	return b.records
 }
 
-func (b *memoryBackend) List(done func([]view.Record, error)) {
+func (b *memoryBackend) Page() view.Page { return view.Page{First: view.All} }
+
+func (b *memoryBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	for i := range b.rows {
 		cpy := b.rows[i]
@@ -252,7 +254,6 @@ func TestRecordIdentity_CreatedItemAppearsFirstInList(t *testing.T) {
 	// List should now have 3 items, with newID at index 0
 	_ = v.list.Items()
 
-
 	// Now edit an existing item (b1) - it must NOT jump to the top
 	v.selectAction(model.Item{ID: "b1"})
 	v.form.SetValues("name", "Beta Edited")
@@ -275,8 +276,8 @@ type laterBackend struct {
 
 func (b *laterBackend) Records() *view.Records { return b.memoryBackend.Records() }
 
-func (b *laterBackend) List(done func([]view.Record, error)) {
-	b.pending = append(b.pending, func() { b.memoryBackend.List(done) })
+func (b *laterBackend) List(args view.ListArgs, done func([]view.Record, error)) {
+	b.pending = append(b.pending, func() { b.memoryBackend.List(args, done) })
 }
 
 func (b *laterBackend) Save(recs []model.Model, done func(error)) {

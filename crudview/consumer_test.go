@@ -79,7 +79,9 @@ func (b *listSaveDeleteBackend) Records() *view.Records {
 	return b.records
 }
 
-func (b *listSaveDeleteBackend) List(done func([]view.Record, error)) {
+func (b *listSaveDeleteBackend) Page() view.Page { return view.Page{First: view.All} }
+
+func (b *listSaveDeleteBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)
@@ -143,16 +145,26 @@ type fakeNoWidgetsPresenter struct {
 	record view.Record
 }
 
-func (f *fakeNoWidgetsPresenter) OnChange(fn func()) {}
-func (f *fakeNoWidgetsPresenter) Title() string                  { return "No Widgets" }
-func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text   { return "Search" }
-func (f *fakeNoWidgetsPresenter) Record() view.Record            { return f.record }
-func (f *fakeNoWidgetsPresenter) Items() []model.Item             { return nil }
-func (f *fakeNoWidgetsPresenter) Filter(term string) []model.Item { return nil }
-func (f *fakeNoWidgetsPresenter) Reload(done func(error))        { done(nil) }
-func (f *fakeNoWidgetsPresenter) Selected() string               { return "" }
-func (f *fakeNoWidgetsPresenter) Select(id string) view.Record   { return nil }
-func (f *fakeNoWidgetsPresenter) Deselect()                      {}
+func (f *fakeNoWidgetsPresenter) OnChange(fn func())           {}
+func (f *fakeNoWidgetsPresenter) Title() string                { return "No Widgets" }
+func (f *fakeNoWidgetsPresenter) SearchPlaceholder() lang.Text { return "Search" }
+func (f *fakeNoWidgetsPresenter) Record() view.Record          { return f.record }
+func (f *fakeNoWidgetsPresenter) Items() []model.Item          { return nil }
+func (f *fakeNoWidgetsPresenter) Search(term string, done func(error)) {
+	if done != nil {
+		done(nil)
+	}
+}
+func (f *fakeNoWidgetsPresenter) HasMore() bool { return false }
+func (f *fakeNoWidgetsPresenter) More(done func(error)) {
+	if done != nil {
+		done(nil)
+	}
+}
+func (f *fakeNoWidgetsPresenter) Reload(done func(error))      { done(nil) }
+func (f *fakeNoWidgetsPresenter) Selected() string             { return "" }
+func (f *fakeNoWidgetsPresenter) Select(id string) view.Record { return nil }
+func (f *fakeNoWidgetsPresenter) Deselect()                    {}
 
 // fieldErrorText extracts the text inside a crudview form field's error span
 // from the rendered form, or "" when the span is empty. The form id is
@@ -596,11 +608,11 @@ func TestConsumer_SearchFiltering(t *testing.T) {
 		t.Errorf("expected 1 item for 'backend', got %d", v.list.Count())
 	}
 
-	// 3. Search by Description ("mysql") case-insensitive - expect only 1 item
-	v.search.Set("MYSQL")
+	// 3. Search by Label ("database") case-insensitive - expect only 1 item
+	v.search.Set("DATABASE")
 	v.filter()
 	if v.list.Count() != 1 {
-		t.Errorf("expected 1 item for 'MYSQL', got %d", v.list.Count())
+		t.Errorf("expected 1 item for 'DATABASE', got %d", v.list.Count())
 	}
 
 	// 4. Search with no matches ("invalid-term") - expect 0 items

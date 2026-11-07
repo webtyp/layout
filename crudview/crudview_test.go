@@ -9,8 +9,8 @@ import (
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
 	"webtyp.com/layout"
-	"webtyp.com/msgtype"
 	"webtyp.com/model"
+	"webtyp.com/msgtype"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -84,8 +84,8 @@ func (s *stubList) SetID(id string)                {}
 func (s *stubList) String() string                 { return "" }
 func (s *stubList) Render() *dom.Element           { return nil }
 func (s *stubList) Children() []dom.Component      { return nil }
-func (s *stubList) SetItems(items []model.Item)     { s.items = items }
-func (s *stubList) Items() []model.Item             { return s.items }
+func (s *stubList) SetItems(items []model.Item)    { s.items = items }
+func (s *stubList) Items() []model.Item            { return s.items }
 func (s *stubList) Count() int                     { return len(s.items) }
 func (s *stubList) SetSelectMode(on bool)          {}
 func (s *stubList) SetDanger(on bool)              {}

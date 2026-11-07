@@ -10,8 +10,9 @@ type sharedBackend struct {
 	records *view.Records
 }
 
-func (b *sharedBackend) Records() *view.Records { return b.records }
-func (b *sharedBackend) List(done func([]view.Record, error)) { done(nil, nil) }
+func (b *sharedBackend) Records() *view.Records                                { return b.records }
+func (b *sharedBackend) Page() view.Page                                       { return view.Page{First: view.All} }
+func (b *sharedBackend) List(_ view.ListArgs, done func([]view.Record, error)) { done(nil, nil) }
 func (b *sharedBackend) Save(recs []model.Model, done func(error)) {
 	for _, rec := range recs {
 		if r, ok := rec.(view.Record); ok {

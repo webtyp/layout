@@ -124,7 +124,7 @@ func New(cfg Config) (*CrudView, error) {
 
 	cfg.Presenter.OnChange(func() {
 		if v.list != nil {
-			v.filter()
+			v.paint()
 		}
 	})
 

@@ -2,6 +2,8 @@ module webtyp.com/layout
 
 go 1.26.8
 
+replace webtyp.com/view => /home/cesar/Dev/Project/webtyp/view
+
 require (
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.63
@@ -21,7 +23,7 @@ require (
 	webtyp.com/rpc v0.2.15
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
-	webtyp.com/view v0.6.53
+	webtyp.com/view v0.6.65
 	webtyp.com/widget v0.6.46
 )
 

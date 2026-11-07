@@ -53,6 +53,17 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 			style.Scroll(),
 			style.Round(style.RadiusMd),
 			style.Fill(),
+		).
+		Part(widget.Part("more-btn"),
+			style.Button(style.Secondary),
+			style.Fill(),
+			style.CenterContent(),
+			style.RevealedBy(widget.Open),
+		).
+		Part(widget.Part("no-more-text"),
+			style.Pad(style.Space1),
+			style.CenterContent(),
+			style.RevealedBy(widget.Open),
 		). // The footer is a Row of equal buttons: delete leads, add follows
 		// (see Render). Every button answers to --control-height — the same
 		// token the search bar measures by — so the two ends of the column

@@ -31,9 +31,9 @@ type countingLister struct {
 	lists int
 }
 
-func (c *countingLister) List(done func([]view.Record, error)) {
+func (c *countingLister) List(args view.ListArgs, done func([]view.Record, error)) {
 	c.lists++
-	c.FakeLister.List(done)
+	c.FakeLister.List(args, done)
 }
 
 func newActionView(t *testing.T, fl *conformance.FakeLister) (*CrudView, *countingLister) {

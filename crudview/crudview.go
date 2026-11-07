@@ -32,6 +32,8 @@ var (
 	clsBtnCrudEditIcon     = NameCrudView.Class("action-edit-icon")
 	clsFooter              = NameCrudView.Class("footer")
 	clsListaBox            = NameCrudView.Class("list")
+	clsMoreBtn             = NameCrudView.Class("more-btn")
+	clsNoMoreText          = NameCrudView.Class("no-more-text")
 	clsDelConfirmBody      = NameCrudView.Class("delconfirm-body")
 	clsDelConfirmActions   = NameCrudView.Class("delconfirm-actions")
 	clsDelConfirmBtn       = NameCrudView.Class("delconfirm-btn")
@@ -45,6 +47,11 @@ var (
 // actionNamePrefix names each action button "cv-action-<op>", so a host or a
 // test can find the control of one action without depending on its label.
 const actionNamePrefix = "cv-action-"
+
+const (
+	textShowMore lang.Text = "Show more results"
+	textNoMore   lang.Text = "No more results for this search"
+)
 
 const (
 	// The single toggle button swaps between these two glyphs reactively — see
@@ -192,6 +199,7 @@ type CrudView struct {
 	// filter() on every reload/search. The footer's 🗑/✏ read it: on an empty
 	// list there is nothing to delete or bulk-edit, so only "+" shows.
 	hasRows *SignalBool
+	hasMore *SignalBool
 	// hasMultiRows is hasRows' sibling for the ONE affordance that is
 	// meaningless below N=2: the bulk-edit ✏. Delete (🗑) reads hasRows —
 	// it is variadic and a single-row delete is a real case; ✏ patches a
@@ -259,6 +267,7 @@ func (v *CrudView) Init(ctx Ctx) {
 	v.hasChecked = NewBool(false)
 	v.hasEdits = NewBool(false)
 	v.hasRows = NewBool(false)
+	v.hasMore = NewBool(false)
 	v.hasMultiRows = NewBool(false)
 	v.itemsLoaded = NewBool(false)
 	v.actionRunning = NewString("")
@@ -336,7 +345,7 @@ func (v *CrudView) renderActionConfirm() *Element {
 // already running (no double submit). The DOM binding and the conformance
 // driver both read it.
 func (v *CrudView) actionEnabled(op string) bool {
-	return v.Presenter != nil && len(v.Presenter.Items()) > 0 && v.actionRunning.Get() != op
+	return v.Presenter != nil && v.itemsLoaded != nil && v.itemsLoaded.Get() && v.actionRunning.Get() != op
 }
 
 // actionRequest is an action button's click: with a Confirm question it opens
@@ -377,7 +386,10 @@ func (v *CrudView) runAction(op string) {
 	actioner.Run(op, func(err error) {
 		v.actionRunning.Set("")
 		if err == nil {
-			v.filter()
+			if v.itemsLoaded != nil {
+				v.itemsLoaded.Set(len(v.Presenter.Items()) > 0)
+			}
+			v.paint()
 		}
 		v.reportAction(op, err)
 	})
@@ -549,7 +561,10 @@ func (v *CrudView) Reload(done func(error)) {
 			done(err)
 			return
 		}
-		v.filter()
+		if v.itemsLoaded != nil {
+			v.itemsLoaded.Set(len(v.Presenter.Items()) > 0)
+		}
+		v.paint()
 		if v.OnAfterReload != nil && v.list != nil {
 			v.OnAfterReload(v.list)
 		}
@@ -828,21 +843,36 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 	})
 }
 
-// filter repopulates the list for the current term and then enforces the one
-// invariant a list-detail controller cannot let slip: what the form holds must
-// be something the list still shows.
+// filter asks the server for the current term; paint shows the result.
 func (v *CrudView) filter() {
-	v.list.SetItems(v.Presenter.Filter(v.search.Get()))
+	v.Presenter.Search(v.search.Get(), func(err error) {
+		if err != nil {
+			Log(err.Error())
+			if v.OnLoadError != nil {
+				v.OnLoadError(err)
+			}
+			return
+		}
+		v.paint()
+	})
+}
+
+// paint repopulates the list from the presenter and keeps the invariants filter() kept before.
+func (v *CrudView) paint() {
+	v.list.SetItems(v.Presenter.Items())
 	if v.hasRows != nil {
 		v.hasRows.Set(v.list.Count() > 0)
 	}
 	if v.hasMultiRows != nil {
 		v.hasMultiRows.Set(v.list.Count() > 1)
 	}
-	if v.itemsLoaded != nil {
+	if v.itemsLoaded != nil && v.search.Get() == "" {
 		v.itemsLoaded.Set(len(v.Presenter.Items()) > 0)
 	}
 	v.dropSelectionOutOfScope()
+	if v.hasMore != nil {
+		v.hasMore.Set(v.Presenter.HasMore())
+	}
 }
 
 // deleteEntryAction: the 🗑 button's click handler. A loaded record deletes
@@ -999,6 +1029,26 @@ func (v *CrudView) Render() *Element {
 					BindStateFunc(widget.Open, func() bool { return !v.hasRows.Get() }),
 			)
 		}
+
+		moreBtn := Button().Set(clsMoreBtn.AsAttr()).Text(lang.Translate(textShowMore).String()).
+			BindStateFunc(widget.Open, func() bool { return v.hasMore.Get() })
+		moreBtn.OnClick(func(Event) {
+			v.Presenter.More(func(err error) {
+				if err != nil {
+					Log(err.Error())
+					return
+				}
+				v.paint()
+			})
+		})
+		asideContent.Child(moreBtn)
+
+		asideContent.Child(
+			P().Set(clsNoMoreText.AsAttr()).Text(lang.Translate(textNoMore).String()).
+				BindStateFunc(widget.Open, func() bool {
+					return v.search.Get() != "" && v.hasRows.Get() && !v.hasMore.Get()
+				}),
+		)
 
 		v.panel.Aside = asideContent
 

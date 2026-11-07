@@ -36,13 +36,19 @@ func (r *AuditRow) DecodeFields(rd model.FieldReader) {
 func (r *AuditRow) Item() model.Item { return model.Item{ID: r.Id, Label: r.What} }
 
 // listOnly is a Lister with no write capability.
-type listOnly struct { rows []view.Record; records *view.Records }
+type listOnly struct {
+	rows    []view.Record
+	records *view.Records
+}
 
 func (l *listOnly) Records() *view.Records {
-	if l.records == nil { l.records = view.NewRecords() }
+	if l.records == nil {
+		l.records = view.NewRecords()
+	}
 	return l.records
 }
-func (l *listOnly) List(done func([]view.Record, error)) { done(l.rows, nil) }
+func (l *listOnly) Page() view.Page                                       { return view.Page{First: view.All} }
+func (l *listOnly) List(_ view.ListArgs, done func([]view.Record, error)) { done(l.rows, nil) }
 
 // A read-only presenter over a widget-less record is a standalone list.
 func TestReadOnlyWithoutWidgets_IsAStandaloneList(t *testing.T) {

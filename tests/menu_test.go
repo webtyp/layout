@@ -278,7 +278,8 @@ type localSavingLister struct {
 	records *view.Records
 }
 func (l *localSavingLister) Records() *view.Records { return l.records }
-func (l *localSavingLister) List(done func([]view.Record, error)) { done([]view.Record{}, nil) }
+func (l *localSavingLister) Page() view.Page { return view.Page{First: view.All} }
+func (l *localSavingLister) List(_ view.ListArgs, done func([]view.Record, error)) { done([]view.Record{}, nil) }
 func (l *localSavingLister) Save(recs []model.Model, done func(error)) {
 	for _, rec := range recs {
 		if r, ok := rec.(view.Record); ok {

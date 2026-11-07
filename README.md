@@ -84,6 +84,7 @@ A CRUD controller for `rightpanel` (form left, list right) that replicates the P
 
 - **Preconfigure, don't assemble**: The composition root should use the high-level constructor `crudview.New(crudview.Config)` to wire the entire form↔list↔transport cycle once per module.
 - **Presenter-Based**: Takes a `view.Presenter` that handles list, selection, saving, and deleting.
+- **Paged and searched on the server**: The list is loaded as the module's `view.Page` declares, searched on the server, and shows «Show more results» while there are more rows; see [LIST_PAGING.md](https://github.com/webtyp/view/blob/main/docs/LIST_PAGING.md).
 
 ```go
 view, err := crudview.New(crudview.Config{

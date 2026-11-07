@@ -247,8 +247,9 @@ Standard two-column layout: Form (left, 66vw) and List (right, 29vw).
     L --> D[Description: shown when no record is selected]
     L --> F[Form: dom.Component]
     R --> SC[Scope slot: dom.Component]
-    R --> S[Search: local filter]
+    R --> S[Search: server search]
     R --> LIST[List: SignalNodes]
+    R --> MORE[Show More: button]
     R --> EM[EmptyMessage: shown when list has no records]
     R --> B[CRUD Bar: Buttons]
 ```
@@ -280,9 +281,11 @@ Every `view` read and write is **asynchronous**: the result arrives through a `d
 callback (`view` never blocks, never uses a channel — see the CALLBACK_LISTERS master
 plan). `crudview` is the renderer that paints from inside those callbacks:
 
-1. `Init` (or a save/delete callback) calls `Reload(done)`, which asks `Presenter.Reload(done)`;
-   when the records arrive, `filter()` reads straight from `Presenter.Items()` (no local
-   `allItems` copy) and the list repaints.
+1. `Init` (or a save/delete callback) calls `Reload(done)`, which asks `Presenter.Reload(done)`
+   to load the rows declared by `view.Page`; `paint()` repaints from `Presenter.Items()`.
+   `filter()` asks the server via `Presenter.Search(term, done)` and `paint()` shows the result.
+   Under the list, the «Show more results» button (`moreBtn`) calls `Presenter.More(done)` to
+   append the next page while `Presenter.HasMore()` is true, and a muted note displays when no more results exist.
 2. Save/Delete/Update follow the same shape: `crudview` syncs form values into
    `Presenter.Record()`, then calls `Presenter.Save([...], done)` /
    `Presenter.Delete([...], done)` / `Presenter.Update([...], done)`. The outcome — success
@@ -323,7 +326,8 @@ A presenter with no actions renders no band at all.
 |---|---|---|
 | `items` | `*SignalNodes` | Holds the rendered card elements for the list. |
 | `selected` | `*SignalString` | Holds the ID of the currently selected item. |
-| `search` | `*SignalString` | Holds the current search term; triggers `filter()`. |
+| `search` | `*SignalString` | Holds the current search term; triggers `filter()` (server search). |
+| `hasMore` | `*SignalBool` | Mirrors `Presenter.HasMore()`; controls the «Show more results» button. |
 | `canSave` | `*SignalBool` | Controls the enabled state of the Save button. |
 | `canDelete` | `*SignalBool` | Controls the enabled state of the Delete button. |
 

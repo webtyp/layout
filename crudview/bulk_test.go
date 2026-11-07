@@ -343,7 +343,8 @@ type noSaveBackend struct {
 }
 
 func (b *noSaveBackend) Records() *view.Records { return view.NewRecords() }
-func (b *noSaveBackend) List(done func([]view.Record, error)) {
+func (b *noSaveBackend) Page() view.Page        { return view.Page{First: view.All} }
+func (b *noSaveBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)
