@@ -2,6 +2,8 @@
 PLAN: "refactor!: layout uses view's contracts, LocalTools on crud.Module, layout/app owns Browser and Demo, the chassis draws the entry screens"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: running
+SESSION: 6353811879617294185
 ---
 
 > Read AGENTS.md at the repo root before any change.
