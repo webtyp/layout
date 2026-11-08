@@ -6,7 +6,7 @@ require (
 	webtyp.com/appkit v0.2.29
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.71
-	webtyp.com/crud v0.0.4
+	webtyp.com/crud v0.0.5
 	webtyp.com/css v0.4.31
 	webtyp.com/ddl v0.0.46
 	webtyp.com/dom v0.13.29
@@ -51,7 +51,7 @@ require (
 	webtyp.com/filepath v0.1.0 // indirect
 	webtyp.com/keyring v0.2.9 // indirect
 	webtyp.com/mcp v0.3.23 // indirect
-	webtyp.com/orm v0.12.26 // indirect
+	webtyp.com/orm v0.12.28 // indirect
 	webtyp.com/pwa v0.2.13 // indirect
 	webtyp.com/rbac v0.0.33 // indirect
 	webtyp.com/server v0.2.119 // indirect
