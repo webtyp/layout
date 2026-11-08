@@ -55,7 +55,7 @@ require (
 	webtyp.com/pwa v0.2.13 // indirect
 	webtyp.com/rbac v0.0.33 // indirect
 	webtyp.com/server v0.2.119 // indirect
-	webtyp.com/storage v0.1.18 // indirect
+	webtyp.com/storage v0.1.19 // indirect
 	webtyp.com/user v0.3.14 // indirect
 	webtyp.com/webauthn v0.1.16 // indirect
 )
