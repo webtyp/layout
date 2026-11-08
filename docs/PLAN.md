@@ -2,8 +2,6 @@
 PLAN: "refactor!: layout uses view's contracts, LocalTools on crud.Module, layout/app owns Browser and Demo, the chassis draws the entry screens"
 EXECUTOR: jules
 REVIEWER: none
-STATUS: running
-SESSION: 6353811879617294185
 ---
 
 > Read AGENTS.md at the repo root before any change.
@@ -20,7 +18,7 @@ go install webtyp.com/devflow/cmd/gotest@latest
 go install webtyp.com/lang/cmd/langc@latest
 ```
 ```bash
-go get webtyp.com/view@latest webtyp.com/appkit@latest webtyp.com/crud@v0.0.3 webtyp.com/rpc@v0.2.17 webtyp.com/router@v0.4.19 webtyp.com/auth@latest
+go get webtyp.com/view@latest webtyp.com/appkit@latest webtyp.com/crud@latest webtyp.com/rpc@latest webtyp.com/router@latest webtyp.com/auth@latest
 ```
 `view@latest` and `appkit@latest` must already contain `view.Demo` and `appkit.Entry` (plans L1, L2); if `go doc webtyp.com/view Demo`
 fails, stop and say so in the PR. Remove every `replace` and the old «TEMPORAL» comment block from `go.mod`; `go mod tidy`.
