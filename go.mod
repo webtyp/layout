@@ -3,10 +3,10 @@ module webtyp.com/layout
 go 1.26.8
 
 require (
-	webtyp.com/appkit v0.2.28
+	webtyp.com/appkit v0.2.29
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.71
-	webtyp.com/crud v0.0.3
+	webtyp.com/crud v0.0.4
 	webtyp.com/css v0.4.31
 	webtyp.com/ddl v0.0.46
 	webtyp.com/dom v0.13.29
@@ -20,7 +20,7 @@ require (
 	webtyp.com/lang v0.1.16
 	webtyp.com/model v0.2.15
 	webtyp.com/msgtype v0.1.0
-	webtyp.com/rpc v0.2.17
+	webtyp.com/rpc v0.2.18
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
@@ -53,8 +53,10 @@ require (
 	webtyp.com/mcp v0.3.23 // indirect
 	webtyp.com/orm v0.12.26 // indirect
 	webtyp.com/pwa v0.2.13 // indirect
+	webtyp.com/rbac v0.0.33 // indirect
 	webtyp.com/server v0.2.119 // indirect
 	webtyp.com/storage v0.1.18 // indirect
+	webtyp.com/user v0.3.14 // indirect
 	webtyp.com/webauthn v0.1.16 // indirect
 )
 
