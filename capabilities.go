@@ -2,53 +2,9 @@ package layout
 
 import (
 	"webtyp.com/components/countbadge"
-	"webtyp.com/fmt"
 	"webtyp.com/lang"
-	"webtyp.com/msgtype"
+	"webtyp.com/view"
 )
-
-// Duration is how long a notification stays before dismissing itself.
-type Duration struct {
-	millis func(msg string) int // nil = persistent
-	auto   bool                 // built by Auto(): the caller left the length to the chassis
-}
-
-// IsAuto reports whether the duration was created with Auto().
-func (d Duration) IsAuto() bool { return d.auto }
-
-// HasTimer reports whether the duration auto-dismisses after a positive number of milliseconds.
-func (d Duration) HasTimer() bool { return d.millis != nil }
-
-// Millis computes the duration in milliseconds for msg, or 0 if persistent.
-func (d Duration) Millis(msg string) int {
-	if d.millis == nil {
-		return 0
-	}
-	return d.millis(msg)
-}
-
-// Auto sizes the duration to the message (~350ms per word plus 2.5s, floored at 4s and capped at 10s).
-func Auto() Duration {
-	return Duration{auto: true, millis: func(msg string) int {
-		words := fmt.Count(msg, " ") + 1
-		ms := 2500 + words*350
-		if ms < 4000 {
-			return 4000
-		}
-		if ms > 10000 {
-			return 10000
-		}
-		return ms
-	}}
-}
-
-// Persistent keeps the notification until the user dismisses it.
-func Persistent() Duration { return Duration{} }
-
-// For pins an exact duration in milliseconds.
-func For(ms int) Duration {
-	return Duration{millis: func(string) int { return ms }}
-}
 
 // Badged is an optional capability of a UIModule: a count the nav rail draws
 // over the module's entry.
@@ -80,16 +36,6 @@ type ModuleAlert struct {
 	Subject string
 	OnView  func()
 	OnSeen  func()
-}
-
-// Notifier raises a notification in the chassis.
-type Notifier interface {
-	Notify(t msgtype.Type, msg string, d Duration)
-}
-
-// UsesNotifier is an optional capability of a UIModule that raises notifications.
-type UsesNotifier interface {
-	UseNotifier(n Notifier)
 }
 
 // GroupModule is an optional capability of a UIModule indicating that it groups
@@ -124,8 +70,8 @@ type describedModule struct {
 func (m *describedModule) Description() lang.Text { return m.text }
 func (m *describedModule) Steps() []Step          { return m.steps }
 
-func (m *describedModule) UseNotifier(n Notifier) {
-	if u, ok := m.UIModule.(UsesNotifier); ok {
+func (m *describedModule) UseNotifier(n view.Notifier) {
+	if u, ok := m.UIModule.(view.UsesNotifier); ok {
 		u.UseNotifier(n)
 	}
 }
@@ -146,8 +92,8 @@ type describedGroup struct {
 func (m *describedGroup) Description() lang.Text { return m.text }
 func (m *describedGroup) Steps() []Step          { return m.steps }
 
-func (m *describedGroup) UseNotifier(n Notifier) {
-	if u, ok := m.GroupModule.(UsesNotifier); ok {
+func (m *describedGroup) UseNotifier(n view.Notifier) {
+	if u, ok := m.GroupModule.(view.UsesNotifier); ok {
 		u.UseNotifier(n)
 	}
 }
@@ -158,3 +104,4 @@ func (m *describedGroup) Badge() *countbadge.CountBadge {
 	}
 	return nil
 }
+

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"webtyp.com/crud"
 	"webtyp.com/ddl"
 	"webtyp.com/erd"
 	"webtyp.com/fmt"
@@ -44,11 +45,11 @@ type Tools struct {
 // the pieces the server uses: the routes its operations declare (rpc.Routes)
 // and its migration steps (erd.ReadSteps). No modules leaves the explorer out;
 // no steps leaves the diagram out.
-// Example: tools, err := app.LocalTools([]router.OperationModule{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})
-func LocalTools(modules []router.OperationModule, steps ...ddl.Step) (Tools, error) {
+// Example: tools, err := app.LocalTools([]crud.Module{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})
+func LocalTools(modules []crud.Module, steps ...ddl.Step) (Tools, error) {
 	var t Tools
 	if len(modules) > 0 {
-		routes, err := rpc.Routes(rpc.DefaultPrefix, modules...)
+		routes, err := rpc.Routes(rpc.DefaultPrefix, nil, modules...)
 		if err != nil {
 			return Tools{}, err
 		}

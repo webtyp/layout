@@ -1,23 +1,26 @@
 package platformd
 
-import "webtyp.com/layout"
+import (
+	"webtyp.com/layout"
+	"webtyp.com/view"
+)
 
 type (
-	Duration      = layout.Duration
+	Duration      = view.Duration
 	Badged        = layout.Badged
 	Described     = layout.Described
 	Step          = layout.Step
 	AlertedModule = layout.AlertedModule
 	ModuleAlert   = layout.ModuleAlert
-	Notifier      = layout.Notifier
-	UsesNotifier  = layout.UsesNotifier
+	Notifier      = view.Notifier
+	UsesNotifier  = view.UsesNotifier
 	GroupModule   = layout.GroupModule
 )
 
 var (
-	Auto       = layout.Auto
-	Persistent = layout.Persistent
-	For        = layout.For
+	Auto       = view.Auto
+	Persistent = view.Persistent
+	For        = view.For
 	Describe   = layout.Describe
 )
 

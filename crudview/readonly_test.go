@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/model"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
@@ -48,7 +49,7 @@ func (l *listOnly) Records() *view.Records {
 	return l.records
 }
 func (l *listOnly) Page() view.Page                                       { return view.Page{First: view.All} }
-func (l *listOnly) List(_ view.ListArgs, done func([]view.Record, error)) { done(l.rows, nil) }
+func (l *listOnly) List(_ crud.ReadArgs, done func([]view.Record, error)) { done(l.rows, nil) }
 
 // A read-only presenter over a widget-less record is a standalone list.
 func TestReadOnlyWithoutWidgets_IsAStandaloneList(t *testing.T) {

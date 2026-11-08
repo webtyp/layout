@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -31,7 +32,7 @@ type countingLister struct {
 	lists int
 }
 
-func (c *countingLister) List(args view.ListArgs, done func([]view.Record, error)) {
+func (c *countingLister) List(args crud.ReadArgs, done func([]view.Record, error)) {
 	c.lists++
 	c.FakeLister.List(args, done)
 }

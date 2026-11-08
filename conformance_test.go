@@ -149,9 +149,7 @@ func TestNoLocallyDeclaredSeams(t *testing.T) {
 			}
 			var methods []*ast.Ident
 			for _, field := range it.Methods.List {
-				for _, name := range field.Names {
-					methods = append(methods, name)
-				}
+				methods = append(methods, field.Names...)
 			}
 			if len(methods) != 1 {
 				return true

@@ -3,7 +3,7 @@
 ## Package Layout
 
     webtyp/layout/
-    ├── app/            # BuildMenu: []view.Screen → []layout.UIModule + CanView
+    ├── app/            # Browser & Demo entry points; BuildMenu: []view.Screen → []layout.UIModule + CanView
     ├── platformd/      # Shell: header, nav rail, hash routing, notifications
     │   └── modules/    # Demo modules, one package each (devices, medicalhistory, about):
     │                   # view + data + icon, owned by the module, not the chassis
@@ -19,6 +19,15 @@
     ├── login/          # Pre-authentication screen: card on a brand backdrop.
     └── landing/        # Public multi-page website: typed sections in call
                         # order, explicit anchors, RenderPages() per URL.
+
+## Ecosystem Placement & Invariants
+
+`webtyp/layout` is the top-level UI presentation layer:
+- **Imported only by:**
+  1. An application's generated browser main (`web/browser/main.go` calls `layoutapp.Browser`).
+  2. The daemon's generated demo main (`web/browser/main.go` in demo mode calls `layoutapp.Demo`).
+  3. Developer tools (`webtyp/devtools`).
+- **Never imported by a domain module** (domain modules build `view.Screen` or return `view.Demo` from `seed.Demo`; they never import `webtyp/layout`).
 
 ## Who owns what
 

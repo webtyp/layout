@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/view"
 )
 
@@ -11,7 +12,7 @@ type pagedLister struct {
 	rows     []*Device
 	page     view.Page
 	calls    int
-	lastArgs view.ListArgs
+	lastArgs crud.ReadArgs
 	records  *view.Records
 }
 
@@ -26,7 +27,7 @@ func (l *pagedLister) Page() view.Page {
 	return l.page
 }
 
-func (l *pagedLister) List(args view.ListArgs, done func([]view.Record, error)) {
+func (l *pagedLister) List(args crud.ReadArgs, done func([]view.Record, error)) {
 	l.calls++
 	l.lastArgs = args
 	var filtered []view.Record

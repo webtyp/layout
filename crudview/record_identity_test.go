@@ -3,6 +3,7 @@ package crudview
 import (
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/model"
 	"webtyp.com/view"
 )
@@ -30,7 +31,7 @@ func (b *memoryBackend) Records() *view.Records {
 
 func (b *memoryBackend) Page() view.Page { return view.Page{First: view.All} }
 
-func (b *memoryBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
+func (b *memoryBackend) List(_ crud.ReadArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	for i := range b.rows {
 		cpy := b.rows[i]
@@ -276,7 +277,7 @@ type laterBackend struct {
 
 func (b *laterBackend) Records() *view.Records { return b.memoryBackend.Records() }
 
-func (b *laterBackend) List(args view.ListArgs, done func([]view.Record, error)) {
+func (b *laterBackend) List(args crud.ReadArgs, done func([]view.Record, error)) {
 	b.pending = append(b.pending, func() { b.memoryBackend.List(args, done) })
 }
 

@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"webtyp.com/components/targetlist"
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/form"
 	"webtyp.com/model"
@@ -283,7 +284,6 @@ func TestFooterToneHoldsOnlyWhileDeleting(t *testing.T) {
 // normal mode — but the SAME button still has to work as "↺" to leave
 // selection mode.
 func TestCreateActionGatedOnSaver(t *testing.T) {
-	v, _ := setupBulkTest(t, true)
 	// We need a presenter that is NOT a view.Saver.
 	// Create a custom double without Save method.
 	nosaveBackend := &noSaveBackend{
@@ -291,13 +291,12 @@ func TestCreateActionGatedOnSaver(t *testing.T) {
 			&Device{Id: "id-1", Name: "Device One", Ip: "192.168.1.1"},
 		},
 	}
-	vNoSave, err := New(Config{ParentID: "no-save-parent", Presenter: view.New(nosaveBackend, &Device{}), IDs: testIDs})
+	v, err := New(Config{ParentID: "no-save-parent", Presenter: view.New(nosaveBackend, &Device{}), IDs: testIDs})
 	if err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	vNoSave.Init(&fakeCtx{})
-	vNoSave.Activate()
-	v = vNoSave
+	v.Init(&fakeCtx{})
+	v.Activate()
 
 	if _, ok := v.Presenter.(view.Saver); ok {
 		t.Fatal("precondition: this presenter must not be a view.Saver")
@@ -344,7 +343,7 @@ type noSaveBackend struct {
 
 func (b *noSaveBackend) Records() *view.Records { return view.NewRecords() }
 func (b *noSaveBackend) Page() view.Page        { return view.Page{First: view.All} }
-func (b *noSaveBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
+func (b *noSaveBackend) List(_ crud.ReadArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)

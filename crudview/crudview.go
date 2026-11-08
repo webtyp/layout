@@ -13,7 +13,6 @@ import (
 	"webtyp.com/icons/trash"
 	"webtyp.com/icons/undo"
 	"webtyp.com/lang"
-	"webtyp.com/layout"
 	"webtyp.com/layout/rightpanel"
 	"webtyp.com/model"
 	"webtyp.com/msgtype"
@@ -217,16 +216,16 @@ type CrudView struct {
 	confirmQuestion *SignalString // its translated Confirm text
 	confirmLabel    *SignalString // its translated Label, on the confirm button
 	confirmAction   *modaldialog.ModalDialog
-	notifier        layout.Notifier
+	notifier        view.Notifier
 }
 
-// UseNotifier satisfies layout.UsesNotifier so the chassis automatically
+// UseNotifier satisfies view.UsesNotifier so the chassis automatically
 // wires toast notifications to this CRUD controller.
-func (v *CrudView) UseNotifier(n layout.Notifier) {
+func (v *CrudView) UseNotifier(n view.Notifier) {
 	v.notifier = n
 }
 
-var _ layout.UsesNotifier = (*CrudView)(nil)
+var _ view.UsesNotifier = (*CrudView)(nil)
 
 // active reports whether the toggle button should show "↺" (cancel/undo):
 // either an existing row is selected, or the user is mid-composing a new one
@@ -512,7 +511,7 @@ func (v *CrudView) confirmDeleteAction() {
 						v.setMode(modeNormal)
 						v.Reload(nil)
 						if v.notifier != nil {
-							v.notifier.Notify(msgtype.Success, "Eliminado con éxito", layout.Auto())
+							v.notifier.Notify(msgtype.Success, "Eliminado con éxito", view.Auto())
 						}
 					}
 					if v.OnDeleted != nil {
@@ -581,8 +580,6 @@ func (v *CrudView) Reload(done func(error)) {
 func (v *CrudView) selectAction(it model.Item) {
 	v.selected.Set(it.ID)
 	v.canDelete.Set(it.ID != "")
-	if v.list != nil {
-	}
 	if it.ID != "" {
 		v.composing.Set(false) // picking an existing row abandons any new-record draft
 	}
@@ -609,8 +606,6 @@ func (v *CrudView) selectAction(it model.Item) {
 func (v *CrudView) newAction() {
 	v.selected.Set("")
 	v.canDelete.Set(false)
-	if v.list != nil {
-	}
 	v.Presenter.Deselect()
 	if v.form != nil {
 		if v.NewRecord != nil {
@@ -692,8 +687,6 @@ func (v *CrudView) clearSelection() {
 	v.selected.Set("")
 	v.canDelete.Set(false)
 	v.composing.Set(false)
-	if v.list != nil {
-	}
 	if v.Presenter != nil {
 		v.Presenter.Deselect()
 	}
@@ -772,7 +765,7 @@ func (v *CrudView) notifyError(action lang.Text, err error) {
 	if v.notifier == nil {
 		return
 	}
-	v.notifier.Notify(msgtype.Error, lang.Translate("Could not", action).String()+": "+err.Error(), layout.Auto())
+	v.notifier.Notify(msgtype.Error, lang.Translate("Could not", action).String()+": "+err.Error(), view.Auto())
 }
 
 // reportSave funnels every save outcome through one place: a non-nil err is
@@ -787,7 +780,7 @@ func (v *CrudView) reportSave(err error) {
 		}
 	} else {
 		if v.notifier != nil {
-			v.notifier.Notify(msgtype.Success, "Guardado con éxito", layout.Auto())
+			v.notifier.Notify(msgtype.Success, "Guardado con éxito", view.Auto())
 		}
 	}
 	if v.OnSaved != nil {
@@ -834,7 +827,7 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 			v.selected.Set("")
 			v.canDelete.Set(false)
 			if v.notifier != nil {
-				v.notifier.Notify(msgtype.Success, "Eliminado con éxito", layout.Auto())
+				v.notifier.Notify(msgtype.Success, "Eliminado con éxito", view.Auto())
 			}
 		}
 		if v.OnDeleted != nil {
@@ -962,7 +955,7 @@ func (v *CrudView) bulkEditAction() {
 			v.form.Reset()
 			v.Reload(nil)
 			if v.notifier != nil {
-				v.notifier.Notify(msgtype.Success, "Actualizado con éxito", layout.Auto())
+				v.notifier.Notify(msgtype.Success, "Actualizado con éxito", view.Auto())
 			}
 		}
 		if v.OnUpdated != nil {

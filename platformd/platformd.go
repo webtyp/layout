@@ -1204,7 +1204,7 @@ func (p *Platform) refreshHelp(m UIModule) {
 	key := "pd-welcome-" + m.ModelName()
 	firstVisit := false
 	if hasSteps && LocalStorageAvailable() {
-		if val, err := LocalStorageGet(key); err == nil && val == "" {
+		if val, _ := LocalStorageGet(key); val == "" {
 			firstVisit = true
 		}
 	}

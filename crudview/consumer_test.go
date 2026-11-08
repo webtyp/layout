@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/fmt"
 	"webtyp.com/input"
 	"webtyp.com/lang"
@@ -81,7 +82,7 @@ func (b *listSaveDeleteBackend) Records() *view.Records {
 
 func (b *listSaveDeleteBackend) Page() view.Page { return view.Page{First: view.All} }
 
-func (b *listSaveDeleteBackend) List(_ view.ListArgs, done func([]view.Record, error)) {
+func (b *listSaveDeleteBackend) List(_ crud.ReadArgs, done func([]view.Record, error)) {
 	out := make([]view.Record, len(b.rows))
 	copy(out, b.rows)
 	done(out, nil)

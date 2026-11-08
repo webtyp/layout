@@ -44,9 +44,12 @@ a solid colour: a gradient never reaches an icon, by design.
 
 ### layout & layout/app
 
-The `layout` package defines the root chassis contracts: `UIModule` (identity, presentation, activation), `GroupModule` (nested children), `Described` (help strings and steps), and `Notifier`. These allow a module to declare its capabilities without importing a specific shell.
+The `layout` package defines the root chassis contracts: `UIModule` (identity, presentation, activation), `GroupModule` (nested children), and `Described` (help strings and steps). These allow a module to declare its capabilities without importing a specific shell.
 
-The `webtyp.com/layout/app` subpackage (`app.BuildMenu`) turns a tree of `view.Screen` into a layout-agnostic `[]layout.UIModule` plus a `CanView` rule for visibility based on user permissions, usable with `platformd` or any custom layout chassis.
+The `webtyp.com/layout/app` subpackage (`layoutapp`) owns the browser entry points:
+- **Run the app's browser** → `layoutapp.Browser(config.App, devtools.Menu())` (generated into `web/browser/main.go`). It queries `authority.me` for the profile, routes to first-setup, login, or the platform chassis, and manages user session and idle timeouts.
+- **A module's demo** → the module returns `view.Demo` from `seed.Demo`; the daemon calls `layoutapp.Demo(seed.Demo)` (generated into `web/browser/main.go` for isolated demo testing).
+- `app.BuildMenu`: turns a tree of `view.Screen` into a layout-agnostic `[]layout.UIModule` plus a `CanView` rule for visibility based on user permissions.
 
 ### platformd
 
@@ -72,7 +75,7 @@ A screen that lists every endpoint of the running server (`GET /_routes`) with i
 permission and the roles that hold it, and lets an authorized user call each one. Never expose
 it publicly in production — see `apiexplorer/README.md`. In the menu it lives inside the «Developer tools» group.
 
-An app with a server declares its tools using `app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()}`. A demo uses `app.LocalTools([]router.OperationModule{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})` to build them from in-process data. Passing no tools (`app.Tools{}`) leaves the whole group out.
+An app with a server declares its tools using `app.Tools{API: apiexplorer.FromServer(), Database: schemaview.FromServer()}`. A demo uses `app.LocalTools([]crud.Module{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})` to build them from in-process data. Passing no tools (`app.Tools{}`) leaves the whole group out.
 
 ### schemaview
 

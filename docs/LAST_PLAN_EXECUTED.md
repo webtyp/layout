@@ -1,181 +1,208 @@
 ---
-PLAN: "feat!: crudview lists paged and searched on the server (view v0.6.64: Search/HasMore/More)"
-EXECUTOR: local
+PLAN: "refactor!: layout uses view's contracts, LocalTools on crud.Module, layout/app owns Browser and Demo, the chassis draws the entry screens"
+EXECUTOR: antigravity
 REVIEWER: none
 ---
 
 > Read AGENTS.md at the repo root before any change.
 > **Finish by yourself:** when the delivery check passes, commit, push and open the pull request. Never ask whether to
-> proceed or finalize — nobody answers, and a session that waits ends without your work.
+> proceed or finalize — nobody answers, and a session that waits ends without your work. Commit after every stage.
+> Never run `git reset`, `git restore`, `git checkout -- <file>` or `git stash` on your own work.
 
-# crudview — paged lists searched on the server
+# Plan: `layout` is the chassis only the app chooses
 
-`webtyp.com/view` v0.6.64 changed its contract: a list loads what the module declares (`view.Page`) and searches on
-the server. `crudview` still calls the deleted `Presenter.Filter` (`crudview/crudview.go:835`), so this repo — and
-every module that renders with it — does not compile against the new `view`. This plan moves `crudview` to the new
-contract and adds the «Show more results» control.
+## Tools and local dependencies
 
-## Tools
-
-```
+```bash
 go install webtyp.com/devflow/cmd/gotest@latest
 go install webtyp.com/lang/cmd/langc@latest
-go get webtyp.com/view@v0.6.64
 ```
+```bash
+go get webtyp.com/view@latest webtyp.com/appkit@latest webtyp.com/crud@latest webtyp.com/rpc@latest webtyp.com/router@latest webtyp.com/auth@latest
+```
+`view@latest` and `appkit@latest` must already contain `view.Demo` and `appkit.Entry` (plans L1, L2); if `go doc webtyp.com/view Demo`
+fails, stop and say so in the PR. Remove every `replace` and the old «TEMPORAL» comment block from `go.mod`; `go mod tidy`.
+Any `webtyp.com/router/loopback` use becomes `crud.Loopback` (`grep -rn "router/loopback" .` → empty).
 
-Environment: `GOPRIVATE=webtyp.com/*,github.com/veltylabs/*`, `GOFLAGS=-mod=mod`, run `go mod tidy` after `go get`.
+## Why
 
-## APIs used (webtyp.com/view v0.6.64)
+Decisions D15, D16, D17 of `webtyp/docs/ARCHITECTURE_MASTER_PLAN.md`. Modules stop importing `layout`: the contracts
+they implement moved to `view` (plan L1); `appkit` stopped importing `layout` (plan L2). `layout` now owns the whole
+page: the app's bootstrap (`Browser`, moved from `appkit`), a module's demo (`Demo`, new) and the entry screens drawn
+with the app's brand.
 
-| Symbol | Exact signature | File |
+## APIs used
+
+| Symbol | Signature | From |
 |---|---|---|
-| `view.Presenter.Reload` | `Reload(done func(error))` — loads `Page.First` rows (0 = none, the screen waits for a search; `All` = up to `MaxPage`) and clears the search | view.go |
-| `view.Presenter.Search` | `Search(term string, done func(error))` — server search, `Page.Size` rows; `""` = same as `Reload` | view.go |
-| `view.Presenter.HasMore` | `HasMore() bool` — the last page was full | view.go |
-| `view.Presenter.More` | `More(done func(error))` — appends the rows after the last one shown, same search; does nothing when `!HasMore()` | view.go |
-| `view.Presenter.Items` | `Items() []model.Item` — listed rows plus those saved since | view.go |
-| `view.Lister.List` | `List(args view.ListArgs, done func(rows []view.Record, err error))` | lister.go |
-| `view.Lister.Page` | `Page() view.Page` | lister.go |
-| `view.Page` | `struct{ First, Size int; More bool }`; `view.All = -1`; `view.MaxPage = 500` | page.go |
-| `view.ListArgs` | `struct{ Search, After string; Limit int64 }` | page.go |
+| `view.Notifier`, `view.UsesNotifier`, `view.Duration`, `view.Auto/Persistent/For` | identical to today's `layout` ones | plan L1 |
+| `view.EntryScreens`, `view.Entry` | `struct{ Login, Setup Entry; IdleSeconds int }`, `struct{ Subtitle lang.Text; Form dom.Component; Message *dom.SignalString }` | plan L1 |
+| `view.Demo` | `struct{ Label, Timezone, ActingAs string; Modules []crud.Module; Migrations []ddl.Step; Screens func(view.BrowserDeps) []view.Screen }` + `Validate() error` | plan L1 |
+| `view.BrowserDeps` | `struct{ Caller router.Caller; Zone time.Zone }` | plan L1 |
+| `view.NewRecords().Caller(c router.Caller) router.Caller` | one record store per page | `view` |
+| `appkit.App`, `appkit.Brand{Name, LogoMark string}` | unchanged | `appkit` |
+| `appkit.Screens(app, caller) ([]view.Screen, error)`, `appkit.Entry(app, caller) (view.EntryScreens, error)` | | plan L2 |
+| `rpc.Routes(prefix string, public []model.ModuleNaming, modules ...crud.Module) ([]router.RouteInfo, error)` | | `rpc v0.2.17` |
+| `crud.LoopbackActingAs(userID string, mods ...crud.Module) router.Caller` | panics on a wiring mistake | `crud v0.0.3` |
+| `rpc.NewCaller(prefix string) router.Caller` | | `rpc v0.2.17` |
 
-`Presenter.Filter` no longer exists. If a signature in the published tag differs from this table, stop and name the
-symbol in the PR; never adapt it by guessing.
+If a signature differs, stop and name the symbol; never adapt it by guessing.
 
-## Stage 1 — the search goes to the server (`crudview/crudview.go`)
+## Explicit deletions (grep must be empty)
 
-Replace the body of `func (v *CrudView) filter()` (line 834). Today it filters locally:
+- from `capabilities.go`: `Duration` and methods, `Auto`, `Persistent`, `For`, `Notifier`, `UsesNotifier` →
+  `grep -rn "^func Auto\|^type Notifier\|^type UsesNotifier\|^type Duration" --include=*.go .`
+- `router.OperationModule` → `grep -rn "OperationModule" --include=*.go .`
+- `view.ListArgs` → `grep -rn "view.ListArgs" --include=*.go .`
+
+## Stage 1 — test doubles on `crud.ReadArgs` (was A3)
+
+Replace `view.ListArgs` with `crud.ReadArgs` (import `webtyp.com/crud`) in: `crudview/actions_test.go`
+(`(*countingLister).List`), `crudview/bulk_test.go` (`(*noSaveBackend).List`), `crudview/consumer_test.go`
+(`(*listSaveDeleteBackend).List`), `crudview/paging_test.go` (`pagedLister.lastArgs`, `(*pagedLister).List`),
+`crudview/readonly_test.go` (`(*listOnly).List`), `crudview/record_identity_test.go` (`(*memoryBackend).List`,
+`(*laterBackend).List`), `crudview/shared_records_test.go` (`(*sharedBackend).List`), `tests/menu_test.go`
+(`(*localSavingLister).List`).
+
+## Stage 2 — contracts from `view`
+
+Delete the six symbols above from `capabilities.go`. Every use in this repo becomes `view.<Name>`: `factory.go`
+(`UseNotifier(n view.Notifier)` ×2, and in `describedModule`/`describedGroup` of `capabilities.go`),
+`platformd/platformd.go:968` (`Notify(t msgtype.Type, msg string, d view.Duration)`), `platformd/capabilities.go`,
+`crudview/crudview.go`, and the tests `platformd/platformd_test.go`, `crudview/crudview_test.go`. Find every site with
+`grep -rn "Notifier\|Duration\|Auto()\|Persistent()\|For(" --include=*.go .` and fix each. `Badged`, `Described`, `Step`,
+`AlertedModule`, `ModuleAlert`, `GroupModule`, `UIModule` stay here.
+
+## Stage 3 — `LocalTools` on `crud.Module` (`app/menu.go`)
 
 ```go
-v.list.SetItems(v.Presenter.Filter(v.search.Get()))
-```
-
-New behaviour: a term change asks the server, and the list is painted when the answer arrives. Split it in two:
-
-```go
-// filter asks the server for the current term; paint shows the result.
-func (v *CrudView) filter() {
-	v.Presenter.Search(v.search.Get(), func(err error) {
+// LocalTools builds the tools of a page with no server — a module's demo.
+//
+//	tools, err := app.LocalTools([]crud.Module{mod}, ddl.Step{Name: "shop", Run: migrate.Migrate})
+func LocalTools(modules []crud.Module, steps ...ddl.Step) (Tools, error) {
+	var t Tools
+	if len(modules) > 0 {
+		routes, err := rpc.Routes(rpc.DefaultPrefix, nil, modules...)
 		if err != nil {
-			Log(err.Error())
-			if v.OnLoadError != nil {
-				v.OnLoadError(err)
-			}
-			return
+			return Tools{}, err
 		}
-		v.paint()
-	})
-}
-
-// paint repopulates the list from the presenter and keeps the invariants filter() kept before.
-func (v *CrudView) paint() {
-	v.list.SetItems(v.Presenter.Items())
-	// … every line that followed the old SetItems call in filter() stays here unchanged:
-	//     hasRows, hasMultiRows, itemsLoaded, dropSelectionOutOfScope, …
-	if v.hasMore != nil {
-		v.hasMore.Set(v.Presenter.HasMore())
+		t.API = apiexplorer.FromTable(router.Table(routes, nil))
 	}
+	// steps part unchanged
 }
 ```
+`tests/menu_test.go:387-396`: `fakeOpMod` implements `crud.Module` (`ModelName() string`, `MountOperations(crud.Registry)`
+registering one `reg.Read(...)`), call `app.LocalTools([]crud.Module{fakeOpMod{}}, fakeStep)`.
 
-- In `Reload` (line ~552) replace the call `v.filter()` with `v.paint()`: `Presenter.Reload` already loaded the rows;
-  calling `filter()` there would ask the server a second time.
-- Every other caller of `v.filter()` that runs after a local change (save, delete, records changed) calls
-  `v.paint()` instead; only the search control's `OnFilterChange` callback (line ~289) calls `v.filter()`.
-  Verify with `grep -n "v.filter()" crudview/crudview.go` → exactly one hit, inside `OnFilterChange`.
+## Stage 4 — `app/browser.go` (moved from `appkit`, `//go:build wasm`)
 
-## Stage 2 — «Show more results» at the end of the list
+Copy `browser.go` from `appkit` at its last published tag (`git -C ../appkit show v0.2.27:browser.go`) into
+`app/browser.go`, package `app`, then change exactly:
 
-- New field `hasMore *SignalBool` on `CrudView`, created with `NewBool(false)` next to `v.hasRows` (line ~261).
-- In the render code that builds `asideContent` (line ~993), after `Child(v.list)` and after the empty-message
-  paragraph, add a button shown only while `v.hasMore` is true:
-
-```go
-asideContent.Child(
-	Button().Set(clsMoreBtn.AsAttr()).Text(lang.Translate(textShowMore).String()).
-		On(Click, func() {
-			v.Presenter.More(func(err error) {
-				if err != nil {
-					Log(err.Error())
-					return
-				}
-				v.paint()
-			})
-		}).
-		BindStateFunc(widget.Open, func() bool { return v.hasMore.Get() }),
-)
-```
-
-  Use the same element builders, `On(Click, …)` form and `BindStateFunc` pattern the file already uses for its other
-  buttons; `clsMoreBtn` is a new class constant declared next to `clsListaBox`, styled in `crudview/css.go` like the
-  existing secondary buttons (a full-width text button). Do not invent new style recipes.
-- When the search returned rows but `HasMore()` is false and a term is set, show a muted line under the list with
-  `textNoMore` (same `BindStateFunc` pattern: open when `v.search.Get() != "" && v.hasRows.Get() && !v.hasMore.Get()`).
-- Text keys (English, in the code; translations in `lang.json`):
+1. `func Browser(app appkit.App, tools Tools)` — the doc example becomes `func main() { layoutapp.Browser(config.App, devtools.Menu()) }`.
+2. `appmenu.BuildMenu` / `appmenu.Tools` → `BuildMenu` / `Tools` (same package now).
+3. Remove the entry loop (old lines 86-95) and the local `Screens` function (old lines 178-196): use
+   `entry, err := appkit.Entry(app, caller)` and `screens, errScreens := appkit.Screens(app, view.NewRecords().Caller(caller))`;
+   an `err` from `appkit.Entry` is logged with `app.Log` and treated as «no entry screens».
+4. The session keeps `entry view.EntryScreens`; the two `Show` blocks draw the entry screens with the brand:
 
 ```go
-const (
-	textShowMore lang.Text = "Show more results"
-	textNoMore   lang.Text = "No more results for this search"
-)
+func entryScreen(b appkit.Brand, title lang.Text, e view.Entry) *Element {
+	if e.Form == nil {
+		return Div()
+	}
+	l := &login.Login{Title: title, Subtitle: e.Subtitle, Form: e.Form, Message: e.Message, LogoMark: b.LogoMark}
+	return l.Render()
+}
+// login view:  entryScreen(s.brand, lang.Text(s.brand.Name), s.entry.Login)
+// setup view:  entryScreen(s.brand, lang.Text(s.brand.Name), s.entry.Setup)
 ```
 
-## Stage 3 — test doubles and tests
+`emptyArgs`, `profileIdentity`, `reload`, `logout` move unchanged. New imports: `webtyp.com/appkit`, `webtyp.com/auth`,
+`webtyp.com/components/usermenu`, `webtyp.com/fetch`, `webtyp.com/layout/login`, `webtyp.com/layout/platformd`.
 
-Every type in this repo that implements `view.Lister` gets the new method set. The sites (grep
-`func (.*) List(done` → these 8):
+## Stage 5 — `app/demo.go` (new, `//go:build wasm`)
 
-`crudview/actions_test.go:34`, `crudview/record_identity_test.go:31`, `crudview/record_identity_test.go:278`,
-`crudview/consumer_test.go:82`, `crudview/readonly_test.go:45`, `tests/menu_test.go:281`, `crudview/bulk_test.go:346`,
-`crudview/shared_records_test.go:14`.
+```go
+// Demo draws a module's demo with the chassis: the module's operations through a loopback signed in as
+// Demo.ActingAs, its screens, and the developer tools from its operations and migrations. It never returns.
+// The webtyp daemon generates the only caller:  func main() { layoutapp.Demo(seed.Demo) }
+func Demo(build func() (view.Demo, error)) {
+	d, err := build()
+	if err == nil {
+		err = d.Validate()
+	}
+	if err != nil {
+		Append("body", P().Text(err.Error())) // a broken demo says why on the page, never a blank screen
+		select {}
+	}
+	ids, err := unixid.NewUnixID()
+	if err != nil {
+		panic(err) // never fails in the browser
+	}
+	zone, err := time.LoadZone(d.Timezone)
+	if err != nil {
+		Append("body", P().Text(appkit.ErrNoTimezone.Error()))
+		select {}
+	}
+	caller := view.NewRecords().Caller(crud.LoopbackActingAs(d.ActingAs, d.Modules...))
+	screens := d.Screens(view.BrowserDeps{Caller: caller, Zone: zone})
+	tools, err := LocalTools(d.Modules, d.Migrations...)
+	if err == nil {
+		var menu Menu
+		menu, err = BuildMenu(screens, ids, func(model.Resource) bool { return true }, tools)
+		if err == nil {
+			p := &platformd.Platform{AppName: d.Label + " — demo", Modules: menu.Modules, CanView: menu.CanView,
+				User: demoUser{id: d.ActingAs}}
+			p.Init(nil)
+			Append("body", p)
+			select {}
+		}
+	}
+	Append("body", P().Text(err.Error()))
+	select {}
+}
 
-For each: `List(done …)` → `List(_ view.ListArgs, done …)` and add `func (x *T) Page() view.Page { return
-view.Page{First: view.All} }` (they list everything today; `All` keeps that). Replace every `.Filter(` call in tests
-with `Search(term, nil)` followed by reading `Items()`.
+type demoUser struct{ id string }
 
-New tests in `crudview/paging_test.go` (stdlib, no wasm), with a double `pagedLister` that answers like a server
-(rows whose label contains `args.Search`, after `args.After`, at most `args.Limit`):
+func (u demoUser) UserName() string    { return u.id }
+func (u demoUser) UserAvatar() string  { return "" }
+func (u demoUser) UserRoles() []string { return nil }
+```
+Use the same `dom`/`html` dot-import style as `app/browser.go`. If `Append` is named differently in `dom v0.13.29`, use
+the one `appkit/browser.go` used (`Render("app", …)` targets `#app`; the demo page has only `body`).
 
-| Test | Setup → call → expected |
-|---|---|
-| `TestCrudView_SearchAsksTheServer` | double with 5 rows "maria a…e" + "pedro", `Page{First: 0, Size: 2, More: true}`; `Reload(nil)` → list empty and the double saw 0 calls; set the search term "maria" through the filter control → the double's last args `Search == "maria"`, `Limit == 2`; the list shows 2 rows |
-| `TestCrudView_ShowMoreAppendsTheNextPage` | same double; after the search, `hasMore` is true; trigger the «Show more results» action → last args `After` = id of the 2nd row; the list shows 4; trigger again → 5 rows and `hasMore` false |
-| `TestCrudView_ReloadDoesNotSearchTwice` | double with `Page{First: view.All}`; `Reload(nil)` → exactly 1 `List` call |
+## Stage 6 — tests (`tests/`, rows in `docs/TESTS.md`, `-tags wasm` run by `gotest` in headless Chrome)
 
-Add each test's row to `docs/TESTS.md` if the repo has one.
+| Test | File | Setup → call → expected |
+|---|---|---|
+| `TestLocalTools_CrudModule` | `tests/menu_test.go` | `LocalTools([]crud.Module{fakeOpMod{}}, fakeStep)` → `t.API != nil`, `t.Database != nil` |
+| `TestBrowser_ShapeOfApp` | `tests/browser_test.go` | moved from `appkit/tests/browser_test.go` (`TestApp_BrowserShape`) |
+| `TestDemo_InvalidShowsReason` | `tests/demo_test.go` | `Demo(func() (view.Demo, error) { return view.Demo{}, nil })` in a goroutine; the body text contains the text of `view.ErrDemoNoLabel` |
 
-## Stage 4 — translations
+## Stage 7 — translations and documentation
 
-Run `langc sync .`; fill the `es` (and every other column `languages` lists) for `Show more results` («Mostrar más
-resultados») and `No more results for this search` («No hay más resultados para esta búsqueda»). The delivery check
-requires 0 untranslated keys and 0 reuse warnings.
-
-## Stage 5 — documentation
-
-- `README.md`: in the step-by-step section, the list paragraph says the list is loaded as the module's
-  `view.Page` declares, searched on the server, and shows «Show more results» while there are more rows; link
-  `https://github.com/webtyp/view/blob/main/docs/LIST_PAGING.md`. Remove any sentence that says the search filters
-  locally.
-- `docs/ARCHITECTURE.md`: the crudview section describes `filter()` (asks the server) and `paint()` (repaints from
-  `Items()`), and the «Show more results» control. Keep its 4 mandatory sections.
+`langc sync .`, fill every empty value (zero reuse warnings). `README.md`: «Run the app's browser →
+`layoutapp.Browser(config.App, devtools.Menu())` (generated)», «A module's demo → the module returns `view.Demo` from
+`seed.Demo`; the daemon calls `layoutapp.Demo`». `docs/ARCHITECTURE.md`: `layout` is imported only by an app's generated
+browser main, by `webtyp/devtools` and by the daemon's generated demo main — never by a module.
 
 ## Delivery check
 
-```
+```bash
 gotest
 langc sync .
-grep -rn "\.Filter(" --include=*.go .        # → empty
-grep -n "v.filter()" crudview/crudview.go    # → exactly 1 line (OnFilterChange)
+grep -rn "router/loopback\|OperationModule\|view.ListArgs" --include=*.go .   # empty
 ```
 
-A PR that does not compile, or whose tests could not run, is a failed delivery. Commit after every stage; never run
-`git reset`, `git restore`, `git checkout -- <file>` or `git stash` on your own work. Stuck for 30 minutes: open the
-PR anyway listing what fails.
+A PR that does not compile, or whose tests could not run, is a failed delivery.
 
 | Stage | Files |
 |---|---|
-| 1 | `crudview/crudview.go` |
-| 2 | `crudview/crudview.go`, `crudview/css.go` |
-| 3 | the 8 test files above, `crudview/paging_test.go` (new), `docs/TESTS.md` if present |
-| 4 | `lang.json` |
-| 5 | `README.md`, `docs/ARCHITECTURE.md` |
+| 1 | `crudview/*_test.go`, `tests/menu_test.go`, `go.mod` |
+| 2 | `capabilities.go`, `factory.go`, `platformd/*.go`, `crudview/crudview.go`, their tests |
+| 3 | `app/menu.go`, `tests/menu_test.go` |
+| 4 | `app/browser.go` |
+| 5 | `app/demo.go` |
+| 6 | `tests/browser_test.go`, `tests/demo_test.go`, `docs/TESTS.md` |
+| 7 | `lang.json`, `README.md`, `docs/ARCHITECTURE.md` |

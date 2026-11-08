@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"webtyp.com/crud"
 	"webtyp.com/ddl"
 	"webtyp.com/erd"
 	"webtyp.com/fmt"
@@ -279,7 +280,7 @@ type localSavingLister struct {
 }
 func (l *localSavingLister) Records() *view.Records { return l.records }
 func (l *localSavingLister) Page() view.Page { return view.Page{First: view.All} }
-func (l *localSavingLister) List(_ view.ListArgs, done func([]view.Record, error)) { done([]view.Record{}, nil) }
+func (l *localSavingLister) List(_ crud.ReadArgs, done func([]view.Record, error)) { done([]view.Record{}, nil) }
 func (l *localSavingLister) Save(recs []model.Model, done func(error)) {
 	for _, rec := range recs {
 		if r, ok := rec.(view.Record); ok {
@@ -378,13 +379,13 @@ type fakeOpMod struct{}
 
 func (fakeOpMod) ModelName() string { return "demo" }
 
-func (fakeOpMod) MountOperations(reg router.OperationRegistry) {
-	noop := func(router.Context) {}
-	reg.Operation("list", noop).Requires("demo_item", model.Read)
-	reg.Operation("save", noop).Requires("demo_item", model.Create)
+func (fakeOpMod) MountOperations(reg crud.Registry) {
+	reg.Read(&testSpecialty{}, nil, func(c crud.Caller, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
+		return nil, nil
+	})
 }
 
-var _ router.OperationModule = fakeOpMod{}
+var _ crud.Module = fakeOpMod{}
 
 func TestLocalTools(t *testing.T) {
 	fakeStep := ddl.Step{
@@ -393,7 +394,7 @@ func TestLocalTools(t *testing.T) {
 			return ddl.New(c, k).Sync(&testSpecialty{})
 		},
 	}
-	tools, err := app.LocalTools([]router.OperationModule{fakeOpMod{}}, fakeStep)
+	tools, err := app.LocalTools([]crud.Module{fakeOpMod{}}, fakeStep)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -421,5 +422,21 @@ func TestLocalTools(t *testing.T) {
 	}
 	if !strings.Contains(errBoom.Error(), "broken") || !strings.Contains(errBoom.Error(), "boom") {
 		t.Errorf("expected error containing step name and boom, got %v", errBoom)
+	}
+}
+
+func TestLocalTools_CrudModule(t *testing.T) {
+	fakeStep := ddl.Step{
+		Name: "demo",
+		Run: func(c ddl.Execer, k ddl.Compiler) error {
+			return ddl.New(c, k).Sync(&testSpecialty{})
+		},
+	}
+	tools, err := app.LocalTools([]crud.Module{fakeOpMod{}}, fakeStep)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if tools.API == nil || tools.Database == nil {
+		t.Error("expected API and Database to be not nil")
 	}
 }

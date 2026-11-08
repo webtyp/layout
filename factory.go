@@ -4,6 +4,7 @@ import (
 	"webtyp.com/components/countbadge"
 	"webtyp.com/dom"
 	"webtyp.com/svg"
+	"webtyp.com/view"
 )
 
 // NewUIModule returns an implementation of UIModule with an optional onActivate hook.
@@ -41,8 +42,8 @@ func (m *uiModule) Activate() {
 	}
 }
 
-func (m *uiModule) UseNotifier(n Notifier) {
-	if u, ok := m.view.(UsesNotifier); ok {
+func (m *uiModule) UseNotifier(n view.Notifier) {
+	if u, ok := m.view.(view.UsesNotifier); ok {
 		u.UseNotifier(n)
 	}
 }
@@ -55,7 +56,7 @@ func (m *uiModule) Badge() *countbadge.CountBadge {
 }
 
 var _ UIModule = (*uiModule)(nil)
-var _ UsesNotifier = (*uiModule)(nil)
+var _ view.UsesNotifier = (*uiModule)(nil)
 var _ Badged = (*uiModule)(nil)
 
 // NewGroupUIModule returns an implementation of GroupModule that wraps child UIModules.
@@ -86,13 +87,13 @@ func (m *uiGroupModule) Activate() {
 	}
 }
 
-func (m *uiGroupModule) UseNotifier(n Notifier) {
+func (m *uiGroupModule) UseNotifier(n view.Notifier) {
 	for _, ch := range m.children {
-		if u, ok := ch.(UsesNotifier); ok {
+		if u, ok := ch.(view.UsesNotifier); ok {
 			u.UseNotifier(n)
 		}
 	}
 }
 
 var _ GroupModule = (*uiGroupModule)(nil)
-var _ UsesNotifier = (*uiGroupModule)(nil)
+var _ view.UsesNotifier = (*uiGroupModule)(nil)

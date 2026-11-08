@@ -2,6 +2,8 @@ package crudview
 
 import (
 	"testing"
+
+	"webtyp.com/crud"
 	"webtyp.com/model"
 	"webtyp.com/view"
 )
@@ -12,7 +14,7 @@ type sharedBackend struct {
 
 func (b *sharedBackend) Records() *view.Records                                { return b.records }
 func (b *sharedBackend) Page() view.Page                                       { return view.Page{First: view.All} }
-func (b *sharedBackend) List(_ view.ListArgs, done func([]view.Record, error)) { done(nil, nil) }
+func (b *sharedBackend) List(_ crud.ReadArgs, done func([]view.Record, error)) { done(nil, nil) }
 func (b *sharedBackend) Save(recs []model.Model, done func(error)) {
 	for _, rec := range recs {
 		if r, ok := rec.(view.Record); ok {

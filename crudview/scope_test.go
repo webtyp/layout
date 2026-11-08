@@ -39,7 +39,7 @@ func TestScope_RendersAboveTheFilter(t *testing.T) {
 	if scope < 0 || filter < 0 || aside < 0 {
 		t.Fatalf("expected the scope and the filter inside the aside header, markup:\n%s", html)
 	}
-	if !(aside < scope && scope < filter) {
+	if aside >= scope || scope >= filter {
 		t.Errorf("expected the scope control above the filter inside the list header, markup:\n%s", html)
 	}
 	if strings.Contains(html, "<h1") || strings.Contains(html, "rp__controls") {

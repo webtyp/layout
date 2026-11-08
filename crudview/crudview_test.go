@@ -8,7 +8,6 @@ import (
 	"webtyp.com/dom"
 	. "webtyp.com/fmt"
 	. "webtyp.com/html"
-	"webtyp.com/layout"
 	"webtyp.com/model"
 	"webtyp.com/msgtype"
 	"webtyp.com/view"
@@ -163,7 +162,7 @@ type mockNotifier struct {
 	lastMsg  string
 }
 
-func (n *mockNotifier) Notify(t msgtype.Type, msg string, dur layout.Duration) {
+func (n *mockNotifier) Notify(t msgtype.Type, msg string, dur view.Duration) {
 	n.lastType = t
 	n.lastMsg = msg
 }
