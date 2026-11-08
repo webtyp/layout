@@ -53,7 +53,7 @@ require (
 	webtyp.com/mcp v0.3.23 // indirect
 	webtyp.com/orm v0.12.26 // indirect
 	webtyp.com/pwa v0.2.13 // indirect
-	webtyp.com/server v0.2.115 // indirect
+	webtyp.com/server v0.2.119 // indirect
 	webtyp.com/storage v0.1.18 // indirect
 	webtyp.com/webauthn v0.1.16 // indirect
 )
