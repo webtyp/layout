@@ -11,7 +11,7 @@ require (
 	webtyp.com/ddl v0.0.46
 	webtyp.com/dom v0.13.29
 	webtyp.com/erd v0.0.14
-	webtyp.com/fetch v0.1.29
+	webtyp.com/fetch v0.1.30
 	webtyp.com/fmt v1.0.0
 	webtyp.com/form v0.4.52
 	webtyp.com/html v0.0.30
