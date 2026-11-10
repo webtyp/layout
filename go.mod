@@ -5,7 +5,7 @@ go 1.26.8
 require (
 	webtyp.com/calendar v0.1.0
 	webtyp.com/components v0.8.71
-	webtyp.com/crud v0.0.10
+	webtyp.com/crud v0.0.11
 	webtyp.com/css v0.4.31
 	webtyp.com/ddl v0.0.49
 	webtyp.com/dom v0.13.29
