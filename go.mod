@@ -17,7 +17,7 @@ require (
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.0.36
 	webtyp.com/lang v0.1.16
-	webtyp.com/model v0.2.18
+	webtyp.com/model v0.2.19
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/rpc v0.2.21
 	webtyp.com/svg v0.3.30
