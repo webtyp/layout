@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"webtyp.com/model"
+	"webtyp.com/router"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -68,11 +69,11 @@ func TestViewConformance(t *testing.T) {
 					}
 					return buttonTexts(band)
 				},
-				ActionEnabled: func(op string) bool { return v.actionEnabled(op) },
-				ClickAction: func(op string) {
+				ActionEnabled: func(op router.Operation) bool { return v.actionEnabled(op) },
+				ClickAction: func(op router.Operation) {
 					if a, ok := p.(view.Actioner); ok {
 						for _, act := range a.Actions() {
-							if act.Op == op {
+							if act.Operation == op {
 								v.actionRequest(act)
 								return
 							}

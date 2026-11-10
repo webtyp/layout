@@ -6,9 +6,16 @@ import (
 	"testing"
 
 	"webtyp.com/crud"
+	"webtyp.com/model"
+	"webtyp.com/router"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
+
+// opOf is the typed operation of an action named by its entity: the module is fixed, the action is a create.
+func opOf(entity string) router.Operation {
+	return router.Operation{Module: "m", Entity: entity, Action: model.Create}
+}
 
 // buttonTexts returns the text of every <button> in el's markup, in order.
 func buttonTexts(el interface{ String() string }) []string {
@@ -50,11 +57,11 @@ func newActionView(t *testing.T, fl *conformance.FakeLister) (*CrudView, *counti
 
 func TestActions_BandRendersLabelsInOrder(t *testing.T) {
 	fl := fakeListBackend()
-	fl.ActionList = []view.Action{{Op: "apply", Label: "Apply"}, {Op: "resend", Label: "Resend"}}
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}, {Operation: opOf("resend"), Label: "Resend"}}
 	v, _ := newActionView(t, fl)
 
 	html := v.Render().String()
-	for _, want := range []string{"name='cv-action-apply'", "name='cv-action-resend'", string(clsActions)} {
+	for _, want := range []string{"name='cv-action-m.apply.create'", "name='cv-action-m.resend.create'", string(clsActions)} {
 		if !strings.Contains(html, want) {
 			t.Errorf("expected %q in markup", want)
 		}
@@ -80,14 +87,14 @@ func TestActions_NoBandWithoutActions(t *testing.T) {
 // term that hides every row must not disable it.
 func TestActions_EnabledByPresenterItemsNotByFilter(t *testing.T) {
 	fl := fakeListBackend()
-	fl.ActionList = []view.Action{{Op: "apply", Label: "Apply"}}
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}}
 	v, _ := newActionView(t, fl)
 
-	if v.actionEnabled("apply") {
+	if v.actionEnabled(opOf("apply")) {
 		t.Fatal("enabled before any items were loaded")
 	}
 	v.Reload(nil)
-	if !v.actionEnabled("apply") {
+	if !v.actionEnabled(opOf("apply")) {
 		t.Fatal("disabled after items loaded")
 	}
 	v.search.Set("no-row-matches-this")
@@ -95,21 +102,21 @@ func TestActions_EnabledByPresenterItemsNotByFilter(t *testing.T) {
 	if v.hasRows.Get() {
 		t.Fatal("test premise: the filter should hide every row")
 	}
-	if !v.actionEnabled("apply") {
+	if !v.actionEnabled(opOf("apply")) {
 		t.Error("a filter that hides every row disabled the action")
 	}
 }
 
 func TestActions_FailureReportsOnceAndDoesNotReload(t *testing.T) {
 	fl := fakeListBackend()
-	fl.ActionList = []view.Action{{Op: "apply", Label: "Apply"}}
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}}
 	v, cl := newActionView(t, fl)
 	v.Reload(nil)
 
 	var calls []error
-	v.OnAction = func(op string, err error) {
-		if op != "apply" {
-			t.Errorf("OnAction op = %q, want apply", op)
+	v.OnAction = func(op router.Operation, err error) {
+		if op != opOf("apply") {
+			t.Errorf("OnAction op = %v, want %v", op, opOf("apply"))
 		}
 		calls = append(calls, err)
 	}
@@ -130,12 +137,12 @@ func TestActions_FailureReportsOnceAndDoesNotReload(t *testing.T) {
 
 func TestActions_SuccessReloadsAndReportsOnce(t *testing.T) {
 	fl := fakeListBackend()
-	fl.ActionList = []view.Action{{Op: "apply", Label: "Apply", Confirm: "Apply these changes?"}}
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply", Confirm: "Apply these changes?"}}
 	v, cl := newActionView(t, fl)
 	v.Reload(nil)
 
 	var calls int
-	v.OnAction = func(op string, err error) {
+	v.OnAction = func(op router.Operation, err error) {
 		calls++
 		if err != nil {
 			t.Errorf("OnAction err = %v", err)
@@ -150,7 +157,7 @@ func TestActions_SuccessReloadsAndReportsOnce(t *testing.T) {
 		t.Errorf("confirm button label = %q, want the action's own label", got)
 	}
 	v.confirmActionRun()
-	if len(fl.Ran) != 1 || fl.Ran[0] != "apply" || calls != 1 {
+	if len(fl.Ran) != 1 || fl.Ran[0] != opOf("apply") || calls != 1 {
 		t.Fatalf("after confirm: Ran=%v calls=%d, want [apply] and 1", fl.Ran, calls)
 	}
 	if cl.lists != listsBefore+1 {
@@ -159,5 +166,45 @@ func TestActions_SuccessReloadsAndReportsOnce(t *testing.T) {
 	v.confirmActionRun() // nothing pending any more
 	if len(fl.Ran) != 1 {
 		t.Errorf("a second confirm without a pending action ran again: %v", fl.Ran)
+	}
+}
+
+// The button is named by its operation's text, so a host finds it by that name.
+func TestActions_ButtonNameIsTheOperationText(t *testing.T) {
+	fl := fakeListBackend()
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}}
+	v, _ := newActionView(t, fl)
+
+	if html := v.Render().String(); !strings.Contains(html, "name='cv-action-m.apply.create'") {
+		t.Errorf("button not named by its operation text:\n%s", html)
+	}
+}
+
+// Clicking an action runs exactly the typed operation the action declares.
+func TestActions_RunPassesTheTypedOperation(t *testing.T) {
+	fl := fakeListBackend()
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}}
+	v, _ := newActionView(t, fl)
+	v.Reload(nil)
+
+	v.actionRequest(fl.ActionList[0])
+	if len(fl.Ran) != 1 || fl.Ran[0] != opOf("apply") {
+		t.Fatalf("Ran = %v, want [%v]", fl.Ran, opOf("apply"))
+	}
+}
+
+// While one action runs, only that action is disabled; the others stay enabled.
+func TestActions_RunningDisablesOnlyThatAction(t *testing.T) {
+	fl := fakeListBackend()
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply"}, {Operation: opOf("resend"), Label: "Resend"}}
+	v, _ := newActionView(t, fl)
+	v.Reload(nil)
+
+	v.actionRunning.Set(opOf("apply").String())
+	if v.actionEnabled(opOf("apply")) {
+		t.Error("the running action is still enabled")
+	}
+	if !v.actionEnabled(opOf("resend")) {
+		t.Error("an action that is not running was disabled")
 	}
 }

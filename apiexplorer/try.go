@@ -129,23 +129,19 @@ func buildTryPanel(r router.RouteRecord) *Element {
 		statusMsg.Set(lang.Translate("Sending...").String())
 		bodyMsg.Set("")
 
-		var req *fetch.Request
-		switch r.Method {
-		case "POST":
-			req = fetch.Post(finalPath)
-		case "PUT":
-			req = fetch.Put(finalPath)
-		case "DELETE":
-			req = fetch.Delete(finalPath)
-		default:
-			req = fetch.Get(finalPath)
+		hasBody := r.Method != "GET" && r.Method != "HEAD"
+		if !hasBody && r.HasArgs {
+			if q := buildQuery(argRecords, argSignals); q != "" {
+				finalPath += "?" + q
+			}
 		}
+		req := requestFor(r.Method, finalPath)
 
-		if r.Method != "GET" && r.Method != "HEAD" {
+		if hasBody {
 			req.ContentTypeJSON()
 			if !r.HasArgs {
 				req.Body([]byte(rawBodySig.Get()))
-			} else if r.HasArgs {
+			} else {
 				req.Body([]byte(buildJSON(argRecords, argSignals)))
 			}
 		}
@@ -227,4 +223,36 @@ func buildJSON(args []router.ArgRecord, signals []*SignalString) string {
 	}
 	jsonStr += "}"
 	return jsonStr
+}
+
+// requestFor builds the request a route needs: the method is the route's method, the arguments travel in the query for a GET
+// and in a JSON body for every other method.
+func requestFor(method, path string) *fetch.Request {
+	switch method {
+	case "POST":
+		return fetch.Post(path)
+	case "PUT":
+		return fetch.Put(path)
+	case "PATCH":
+		return fetch.Patch(path)
+	case "DELETE":
+		return fetch.Delete(path)
+	}
+	return fetch.Get(path)
+}
+
+// buildQuery writes the arguments the person filled in as "name=value&…", leaving out the empty ones.
+func buildQuery(args []router.ArgRecord, signals []*SignalString) string {
+	query := ""
+	for i, arg := range args {
+		val := signals[i].Get()
+		if val == "" {
+			continue
+		}
+		if query != "" {
+			query += "&"
+		}
+		query += router.QueryEscape(arg.Name) + "=" + router.QueryEscape(val)
+	}
+	return query
 }

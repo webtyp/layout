@@ -55,3 +55,25 @@ func TestBuildJSON(t *testing.T) {
 		t.Errorf("buildJSON empty number = %q, want %q", gotEmpty, wantEmpty)
 	}
 }
+
+func TestBuildQuery_EscapesAndSkipsEmpty(t *testing.T) {
+	args := []router.ArgRecord{
+		{Name: "username", Kind: "string"},
+		{Name: "age", Kind: "int"},
+		{Name: "active", Kind: "bool"},
+		{Name: "note", Kind: "string"},
+	}
+	signals := []*dom.SignalString{dom.NewString("jules ñ"), dom.NewString("42"), dom.NewString("true"), dom.NewString("")}
+
+	got := buildQuery(args, signals)
+	want := "username=jules%20%C3%B1&age=42&active=true"
+	if got != want {
+		t.Errorf("buildQuery = %q, want %q", got, want)
+	}
+}
+
+func TestBuildQuery_NoArgsIsEmpty(t *testing.T) {
+	if got := buildQuery(nil, nil); got != "" {
+		t.Errorf("buildQuery without args = %q, want empty", got)
+	}
+}

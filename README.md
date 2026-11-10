@@ -47,7 +47,7 @@ a solid colour: a gradient never reaches an icon, by design.
 The `layout` package defines the root chassis contracts: `UIModule` (identity, presentation, activation), `GroupModule` (nested children), and `Described` (help strings and steps). These allow a module to declare its capabilities without importing a specific shell.
 
 The `webtyp.com/layout/app` subpackage (`layoutapp`) owns the browser entry points:
-- **Run the app's browser** → `layoutapp.Browser(config.App, devtools.Menu())` (generated into `web/browser/main.go`). It queries `authority.me` for the profile, routes to first-setup, login, or the platform chassis, and manages user session and idle timeouts.
+- **Run the app's browser** → `appkit.Browser(config.App, layoutapp.New(devtools.Menu()))` (generated into `web/browser/main.go`). It queries `authority.me` for the profile, routes to first-setup, login, or the platform chassis, and manages user session and idle timeouts.
 - **A module's demo** → the module returns `view.Demo` from `seed.Demo`; the daemon calls `layoutapp.Demo(seed.Demo)` (generated into `web/browser/main.go` for isolated demo testing).
 - `app.BuildMenu`: turns a tree of `view.Screen` into a layout-agnostic `[]layout.UIModule` plus a `CanView` rule for visibility based on user permissions.
 

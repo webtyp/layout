@@ -379,8 +379,14 @@ type fakeOpMod struct{}
 
 func (fakeOpMod) ModelName() string { return "demo" }
 
+// Definition lists exactly the entities the module mounts: crud refuses a module whose declaration and mount differ.
+func (fakeOpMod) Definition() model.ModuleDefinition {
+	return model.ModuleDefinition{Name: "demo", Entities: []model.Definition{{
+		Name: (&testSpecialty{}).ModelName(), Wire: true, Allow: model.Read, Rules: model.Rules{Read: model.AddMyBusinessRule}}}}
+}
+
 func (fakeOpMod) MountOperations(reg crud.Registry) {
-	reg.Read(&testSpecialty{}, nil, func(c crud.Caller, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
+	reg.AddReadOnlyEntity(&testSpecialty{}, nil, func(c crud.CurrentUser, args crud.ReadArgs, filter model.Model) (model.ModelSlice, error) {
 		return nil, nil
 	})
 }

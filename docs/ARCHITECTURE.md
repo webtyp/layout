@@ -24,7 +24,7 @@
 
 `webtyp/layout` is the top-level UI presentation layer:
 - **Imported only by:**
-  1. An application's generated browser main (`web/browser/main.go` calls `layoutapp.Browser`).
+  1. An application's generated browser main (`web/browser/main.go` calls `appkit.Browser(config.App, layoutapp.New(tools))`; `layout` never imports `appkit`).
   2. The daemon's generated demo main (`web/browser/main.go` in demo mode calls `layoutapp.Demo`).
   3. Developer tools (`webtyp/devtools`).
 - **Never imported by a domain module** (domain modules build `view.Screen` or return `view.Demo` from `seed.Demo`; they never import `webtyp/layout`).
@@ -315,7 +315,7 @@ A presenter may declare **actions** (`view.Actioner`, spec in `webtyp.com/view` 
 commands on the whole list, such as "Apply" on a list of pending network changes. They are not record
 edits: no form, usually not undoable.
 
-`crudview` draws one **text button per action** (`name="cv-action-<op>"`) in an action bar
+`crudview` draws one **text button per action** (`name="cv-action-<module>.<entity>.<verb>"`, the text of the action's `router.Operation`) in an action bar
 (`crudview__action-bar`) inside the aside's controls band, below the filter — that band keeps its
 size, so the list below keeps its fill. Labels are `lang.Translate(action.Label)`:
 
@@ -324,7 +324,7 @@ size, so the list below keeps its fill. Labels are `lang.Translate(action.Label)
 - with `Confirm` set, the click opens a confirmation modal — a second `modaldialog` built like the
   delete confirmation: the question (`action.Confirm`, translated), **Cancel** and a button labelled
   with the action itself. Two explicit exits, no "×";
-- the outcome goes to `CrudView.OnAction func(op string, err error)`, fired exactly once per run (the
+- the outcome goes to `CrudView.OnAction func(op router.Operation, err error)`, fired exactly once per run (the
   sibling of `OnSaved`); on success `Presenter.Run` has already reloaded the list.
 
 A presenter with no actions renders no band at all.

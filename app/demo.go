@@ -3,7 +3,6 @@
 package app
 
 import (
-	"webtyp.com/appkit"
 	"webtyp.com/crud"
 	. "webtyp.com/dom"
 	. "webtyp.com/html"
@@ -32,10 +31,10 @@ func Demo(build func() (view.Demo, error)) {
 	}
 	zone, err := time.LoadZone(d.Timezone)
 	if err != nil {
-		Append("body", P().Text(appkit.ErrNoTimezone.Error()))
+		Append("body", P().Text(err.Error()))
 		select {}
 	}
-	caller := view.NewRecords().Caller(crud.LoopbackActingAs(d.ActingAs, d.Modules...))
+	caller := view.NewRecords().Caller(crud.LoopbackActingAs(nil, d.ActingAs, d.Modules...))
 	screens := d.Screens(view.BrowserDeps{Caller: caller, Zone: zone})
 	tools, err := LocalTools(d.Modules, d.Migrations...)
 	if err == nil {

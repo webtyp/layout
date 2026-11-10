@@ -16,6 +16,7 @@ import (
 	"webtyp.com/layout/rightpanel"
 	"webtyp.com/model"
 	"webtyp.com/msgtype"
+	"webtyp.com/router"
 	"webtyp.com/view"
 	"webtyp.com/widget"
 )
@@ -43,7 +44,7 @@ var (
 	clsActionBtn           = NameCrudView.Class("action-bar-btn")
 )
 
-// actionNamePrefix names each action button "cv-action-<op>", so a host or a
+// actionNamePrefix names each action button "cv-action-<module>.<entity>.<verb>", so a host or a
 // test can find the control of one action without depending on its label.
 const actionNamePrefix = "cv-action-"
 
@@ -174,7 +175,7 @@ type CrudView struct {
 	// list, such as "Apply") — the sibling of OnSaved. Fired exactly once per
 	// run, with the op that ran; on success the list has already been reloaded.
 	// nil disables it silently; failures are Logged regardless.
-	OnAction func(op string, err error)
+	OnAction func(op router.Operation, err error)
 
 	// internal
 	form          *form.Form             // typed handle set by New; nil when standalone
@@ -343,14 +344,14 @@ func (v *CrudView) renderActionConfirm() *Element {
 // presenter has items (an action runs over the list) and this action is not
 // already running (no double submit). The DOM binding and the conformance
 // driver both read it.
-func (v *CrudView) actionEnabled(op string) bool {
-	return v.Presenter != nil && v.itemsLoaded != nil && v.itemsLoaded.Get() && v.actionRunning.Get() != op
+func (v *CrudView) actionEnabled(op router.Operation) bool {
+	return v.Presenter != nil && v.itemsLoaded != nil && v.itemsLoaded.Get() && v.actionRunning.Get() != op.String()
 }
 
 // actionRequest is an action button's click: with a Confirm question it opens
 // the confirmation; otherwise it runs right away.
 func (v *CrudView) actionRequest(a view.Action) {
-	if !v.actionEnabled(a.Op) {
+	if !v.actionEnabled(a.Operation) {
 		return
 	}
 	if a.Confirm != "" {
@@ -360,28 +361,28 @@ func (v *CrudView) actionRequest(a view.Action) {
 		v.confirmAction.Open()
 		return
 	}
-	v.runAction(a.Op)
+	v.runAction(a.Operation)
 }
 
 // confirmActionRun is the confirmation's accept button: closes the dialog and
 // runs the pending action. A no-op when no confirmation is pending.
 func (v *CrudView) confirmActionRun() {
-	op := v.pendingAction.Op
+	op := v.pendingAction.Operation
 	v.pendingAction = view.Action{}
 	v.confirmAction.Close()
-	if op != "" {
+	if op.Valid() {
 		v.runAction(op)
 	}
 }
 
 // runAction asks the presenter to run op. Presenter.Run reloads it on
 // success, so the list repaints from the fresh items here.
-func (v *CrudView) runAction(op string) {
+func (v *CrudView) runAction(op router.Operation) {
 	actioner, ok := v.Presenter.(view.Actioner)
 	if !ok {
 		return
 	}
-	v.actionRunning.Set(op)
+	v.actionRunning.Set(op.String())
 	actioner.Run(op, func(err error) {
 		v.actionRunning.Set("")
 		if err == nil {
@@ -396,7 +397,7 @@ func (v *CrudView) runAction(op string) {
 
 // reportAction funnels every action outcome through one place, exactly once
 // per run: Log on error, then the OnAction hook.
-func (v *CrudView) reportAction(op string, err error) {
+func (v *CrudView) reportAction(op router.Operation, err error) {
 	if err != nil {
 		Log(err.Error())
 	}
@@ -416,13 +417,13 @@ func (v *CrudView) renderActions() (*Element, bool) {
 	for _, a := range actioner.Actions() {
 		a := a
 		btn := Button().Set(clsActionBtn.AsAttr()).
-			Attr("name", actionNamePrefix+a.Op).
+			Attr("name", actionNamePrefix+a.Operation.String()).
 			Text(lang.Translate(a.Label).String()).
 			BindAttrBool("disabled", DeriveBool(func() bool {
 				// itemsLoaded is read so the binding re-evaluates on every
 				// reload; the decision itself is actionEnabled.
 				_ = v.itemsLoaded.Get()
-				return !v.actionEnabled(a.Op)
+				return !v.actionEnabled(a.Operation)
 			}))
 		btn.OnClick(func(Event) { v.actionRequest(a) })
 		band.Child(btn)

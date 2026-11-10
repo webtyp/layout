@@ -5,7 +5,6 @@ package app
 import (
 	"strings"
 
-	"webtyp.com/appkit"
 	"webtyp.com/components/usermenu"
 	. "webtyp.com/dom"
 	"webtyp.com/fetch"
@@ -15,7 +14,6 @@ import (
 	"webtyp.com/layout/platformd"
 	"webtyp.com/model"
 	"webtyp.com/router"
-	"webtyp.com/rpc"
 	"webtyp.com/unixid"
 	"webtyp.com/view"
 )
@@ -25,8 +23,10 @@ var textLogOut = lang.Text("Log out")
 const (
 	pathSetup  = "/setup"
 	pathLogout = "/logout"
-	opMe       = "authority.me"
 )
+
+// opMe is the operation that answers who the user is: the one place that names it.
+var opMe = router.Operation{Module: "authority", Entity: "me", Action: model.Read}
 
 type profileDTO struct {
 	Id          string
@@ -86,19 +86,21 @@ func (p profileDTO) Can(resource model.Resource, action model.Action) bool {
 	return false
 }
 
-// Browser asks the server who the user is and then shows the first-admin
-// setup, the access screen or the chassis with the screens the user may open.
-// It is the whole body of an app's web/browser/main.go; it never returns.
+// New is the layout an app hands to appkit.Browser: it draws the Session that appkit built.
 //
-//	func main() { layoutapp.Browser(config.App, devtools.Menu()) }
-func Browser(app appkit.App, tools Tools) {
-	s := buildSession(app, rpc.NewCaller(""), tools)
-	s.platform.Init(nil)
-	Render("app", s)
-	select {}
+//	func main() { appkit.Browser(config.App, layoutapp.New(devtools.Menu())) }
+func New(tools Tools) view.Layout { return appLayout{tools: tools} }
+
+type appLayout struct{ tools Tools }
+
+// Show asks the server who the user is and shows the first-admin setup, the access screen or the chassis with the screens the user may open.
+func (l appLayout) Show(s view.Session) {
+	st := buildSession(s, l.tools)
+	st.platform.Init(nil)
+	Render("app", st)
 }
 
-func entryScreen(b appkit.Brand, title lang.Text, e view.Entry) *Element {
+func entryScreen(b view.Brand, title lang.Text, e view.Entry) *Element {
 	if e.Form == nil {
 		return Div()
 	}
@@ -109,7 +111,7 @@ func entryScreen(b appkit.Brand, title lang.Text, e view.Entry) *Element {
 // session switches between the three exclusive screens.
 type session struct {
 	Element
-	brand           appkit.Brand
+	brand           view.Brand
 	needsSetup      *SignalBool // the server has no administrator yet (auth.PathSetup answers 200)
 	showLogin       *SignalBool
 	isAuthenticated *SignalBool
@@ -141,19 +143,13 @@ func reload() { Navigate("") }
 
 func logout() { fetch.Post(pathLogout).Send(func(*fetch.Response, error) { reload() }) }
 
-func buildSession(app appkit.App, caller router.Caller, tools Tools) *session {
+func buildSession(s view.Session, tools Tools) *session {
 	ids, err := unixid.NewUnixID()
 	if err != nil {
 		panic(err) // NewUnixID never fails in the browser
 	}
-
-	entry, errEntry := appkit.EntryScreens(app, caller)
-	if errEntry != nil {
-		if app.Log != nil {
-			app.Log("layout/app:", errEntry)
-		}
-		entry = view.EntryScreens{}
-	}
+	caller := s.Caller
+	entry := s.Entry
 
 	// Who the user is comes first: blocking here is valid because Browser is
 	// called from main, not from a JS callback.
@@ -181,18 +177,8 @@ func buildSession(app appkit.App, caller router.Caller, tools Tools) *session {
 	needsSetup := NewBool(setupRequired)
 	showLogin := DeriveBool(func() bool { return !isAuthenticated.Get() && !needsSetup.Get() })
 
-	// One record store per page: what one screen saves, the others see.
-	screens, errScreens := appkit.Screens(app, view.NewRecords().Caller(caller))
-	if errScreens != nil {
-		if app.Log != nil {
-			app.Log("layout/app:", errScreens)
-		}
-		isAuthenticated.Set(false)
-		needsSetup.Set(false)
-		screens = nil
-	}
 	menu, err := BuildMenu(
-		screens,
+		s.Screens,
 		ids,
 		func(r model.Resource) bool { return profile.Can(r, model.Read) },
 		tools,
@@ -209,7 +195,7 @@ func buildSession(app appkit.App, caller router.Caller, tools Tools) *session {
 		}
 	}
 	p := &platformd.Platform{
-		AppName: app.Brand.Name,
+		AppName: s.Brand.Name,
 		Modules: menu.Modules,
 		User:    profileIdentity{profile: profile},
 		UserActions: func() Component {
@@ -223,7 +209,7 @@ func buildSession(app appkit.App, caller router.Caller, tools Tools) *session {
 	}
 
 	return &session{
-		brand: app.Brand, needsSetup: needsSetup, showLogin: showLogin, isAuthenticated: isAuthenticated,
+		brand: s.Brand, needsSetup: needsSetup, showLogin: showLogin, isAuthenticated: isAuthenticated,
 		platform: p, entry: entry,
 	}
 }

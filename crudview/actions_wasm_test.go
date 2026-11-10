@@ -8,6 +8,7 @@ import (
 
 	. "webtyp.com/dom"
 
+	"webtyp.com/router"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -38,10 +39,10 @@ func mountActions(t *testing.T, id string, fl *conformance.FakeLister) (*CrudVie
 // every row (the action runs over the presenter's items, not the filtered list).
 func TestActions_LiveButtonFollowsPresenterItems(t *testing.T) {
 	fl := fakeListBackend()
-	fl.ActionList = []view.Action{{Op: "apply", Label: "Apply", Confirm: "Apply these changes?"}}
+	fl.ActionList = []view.Action{{Operation: opOf("apply"), Label: "Apply", Confirm: "Apply these changes?"}}
 	v, doc := mountActions(t, "cv-actions-live", fl)
 
-	btn := doc.Call("querySelector", "#cv-actions-live button[name='cv-action-apply']")
+	btn := doc.Call("querySelector", "#cv-actions-live button[name='cv-action-m.apply.create']")
 	if btn.IsNull() || btn.IsUndefined() {
 		t.Fatal("action button not rendered")
 	}
@@ -64,7 +65,7 @@ func TestActions_LiveButtonFollowsPresenterItems(t *testing.T) {
 	}
 
 	var reported int
-	v.OnAction = func(op string, err error) { reported++ }
+	v.OnAction = func(op router.Operation, err error) { reported++ }
 	btn.Call("click")
 	if len(fl.Ran) != 0 {
 		t.Fatalf("an action with Confirm ran on click: %v", fl.Ran)
