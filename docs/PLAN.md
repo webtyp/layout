@@ -1,7 +1,11 @@
 ---
-PLAN: "fix: menu and drawer scroll correctly"
+PLAN: "fix: the side menu scrolls when it has more links than the window is tall"
 EXECUTOR: jules
 REVIEWER: none
+STATUS: review
+SESSION: 17455336479303599613
+PR: https://github.com/webtyp/layout/pull/54
+REVIEWED_COMMIT: 1238954015c58f876a55c858982490b0c961cfbc
 ---
 
 ## Steps
