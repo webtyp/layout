@@ -291,6 +291,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Stack(style.Space1),
 			style.Pad(style.Space1),
 			style.Fill(),
+			style.Scroll(),
 		).
 		// Space1 gap between items (was SpaceNone): on desktop the items read as
 		// a spaced list of rounded chips. Mobile restores SpaceNone (below) so
@@ -298,6 +299,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		Part(widget.Part("navbar"),
 			style.Stack(style.Space1),
 			style.Fill(),
+			style.Scroll(),
 		).
 		On(css.Mobile, widget.Part("navbar"), style.Stack(style.SpaceNone)).
 		On(css.Mobile, widget.Part("drawer-panel"), style.Pad(style.SpaceNone)).
