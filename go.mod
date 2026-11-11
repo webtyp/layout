@@ -15,7 +15,7 @@ require (
 	webtyp.com/form v0.4.52
 	webtyp.com/html v0.0.30
 	webtyp.com/image v0.1.16
-	webtyp.com/input v0.0.36
+	webtyp.com/input v0.1.0
 	webtyp.com/lang v0.1.16
 	webtyp.com/model v0.2.20
 	webtyp.com/msgtype v0.1.0
@@ -32,6 +32,7 @@ require (
 	webtyp.com/escape v0.1.0 // indirect
 	webtyp.com/events v0.1.8 // indirect
 	webtyp.com/filepath v0.1.0 // indirect
+	webtyp.com/filetype v0.0.6 // indirect
 	webtyp.com/storage v0.2.1 // indirect
 )
 
