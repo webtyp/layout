@@ -7,6 +7,7 @@ import (
 
 	"webtyp.com/components/themetoggle"
 	"webtyp.com/components/usermenu"
+	"webtyp.com/icons/circleinfo"
 	"webtyp.com/lang"
 	"webtyp.com/layout"
 	"webtyp.com/svg"
@@ -65,6 +66,7 @@ var (
 	clsNavGroupIcon    = NamePlatform.Class("nav-group-icon")
 	clsNavActiveIcon   = NamePlatform.Class("nav-active-icon")
 	clsHelpBtn         = NamePlatform.Class("help-btn")
+	clsHelpIcon        = NamePlatform.Class("help-icon")
 	clsHelpPanel       = NamePlatform.Class("help-panel")
 	clsWelcomeSteps    = NamePlatform.Class("welcome-steps")
 	clsWelcomeStep     = NamePlatform.Class("welcome-step")
@@ -626,9 +628,6 @@ func (p *Platform) Render() *Element {
 	// page); inside the content only <h2> sections exist.
 	headerTitle := Div().Set(clsHeaderTitle.AsAttr()).
 		Child(H1().Set(clsHeaderTitleText.AsAttr()).BindTextFunc(p.activeLabel))
-
-	helpSlotSpan := Span().BindChildren(p.helpSlot)
-	headerTitle.Child(helpSlotSpan)
 	header.Child(headerTitle)
 
 	// Chassis singleton: one per page by construction, so a stable global id is
@@ -639,6 +638,11 @@ func (p *Platform) Render() *Element {
 	msgSlot := Div().Set(clsMsgSlot.AsAttr()).ID("pd-msg-slot").
 		Child(Div().Set(clsMsgTrack.AsAttr()).BindChildren(p.notifications))
 	header.Child(msgSlot)
+
+	// The module's help (i) sits left of the user menu on a desktop and left of
+	// the menu button on a phone, where the right group is hidden. It is not in
+	// the title: the title keeps only the module's name.
+	header.Child(Span().BindChildren(p.helpSlot))
 
 	right := Div().Set(clsHeaderRight.AsAttr()).
 		OnClick(func(e Event) { e.StopPropagation() })
@@ -1215,7 +1219,7 @@ func (p *Platform) refreshHelp(m UIModule) {
 
 	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-" + m.ModelName()).
 		Attr("aria-label", lang.Translate(textHelp).String()).
-		Text("?").
+		Child(circleinfo.Ref.Render(string(clsHelpIcon))).
 		OnClick(func(e Event) {
 			e.StopPropagation()
 			if p.helpShown() {

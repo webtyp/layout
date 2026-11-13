@@ -32,10 +32,12 @@ func TestCrudView_Wasm_EmptyDisplays(t *testing.T) {
 
 	rendered := v.Render().String()
 
-	// The quotes are single quotes around attributes in dom.Render
-	if !strings.Contains(rendered, `data-open='true'>No selection desc</p>`) {
-		t.Errorf("Expected description to be open when nothing is selected. Got:\n%s", rendered)
+	// The module's description is not drawn in the view: it opens from the
+	// header's help (i), never as a fixed paragraph over the form.
+	if strings.Contains(rendered, "No selection desc") {
+		t.Errorf("Description must not be drawn inside the view. Got:\n%s", rendered)
 	}
+	// The quotes are single quotes around attributes in dom.Render
 	if strings.Contains(rendered, `data-open='true'>No items msg</p>`) {
 		t.Errorf("Expected empty message to NOT be open when list has items.")
 	}
@@ -45,10 +47,6 @@ func TestCrudView_Wasm_EmptyDisplays(t *testing.T) {
 
 	v.selectAction(model.Item{ID: "1"})
 	rendered = v.Render().String()
-
-	if strings.Contains(rendered, `data-open='true'>No selection desc</p>`) {
-		t.Errorf("Expected description to hide when an item is selected.")
-	}
 
 	v.search.Set("does-not-exist")
 	v.filter()

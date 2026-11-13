@@ -995,15 +995,9 @@ func (v *CrudView) Render() *Element {
 	// The form's inset. The card around it is rightpanel's own `rp__article`
 	// (the skeleton's Part("article")) — crudview paints no frame, so the form
 	// area is exactly one layer, not a card nested in a card.
+	// The module's description is not drawn here: it opens from the header's
+	// help (i) as a message (platformd), so the form starts at its first field.
 	boxContent := Div().Set(clsBoxContent.AsAttr())
-	if hasSource {
-		if desc := v.Presenter.Description(); desc != "" {
-			boxContent.Child(
-				P().Text(lang.Translate(desc).String()).
-					BindStateFunc(widget.Open, func() bool { return !v.active() }),
-			)
-		}
-	}
 	if v.Form != nil {
 		boxContent.Child(v.Form)
 	}

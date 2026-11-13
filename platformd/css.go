@@ -691,6 +691,10 @@ func (p *Platform) RenderSheet() *style.Sheet {
 		// No Button() recipe — its control box is taller than the header bar and
 		// drew a stretched grey box beside the module's name; IconBox keeps the
 		// glyph a square that fits the bar.
+		Part(widget.Part("help-icon"),
+			style.IconBox(style.IconMd),
+			style.KeepSize(),
+		).
 		Part(widget.Part("help-btn"),
 			style.Row(style.SpaceNone),
 			style.CenterContent(),

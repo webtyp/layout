@@ -17,7 +17,7 @@ require (
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.2.0
 	webtyp.com/lang v0.1.16
-	webtyp.com/model v0.2.20
+	webtyp.com/model v0.2.21
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/rpc v0.2.21
 	webtyp.com/svg v0.3.30
@@ -49,3 +49,12 @@ require (
 	webtyp.com/json v0.5.40
 	webtyp.com/router v0.5.0
 )
+
+// TEMP local verification (help in header, description out of crudview) — remove before commit.
+replace webtyp.com/icons => ../icons
+
+replace webtyp.com/components => ../components
+
+replace webtyp.com/widget => ../widget
+
+replace webtyp.com/form => ../form
