@@ -35,7 +35,7 @@ func Demo(build func() (view.Demo, error)) {
 		select {}
 	}
 	caller := view.NewRecords().Caller(crud.LoopbackActingAs(nil, d.ActingAs, d.Modules...))
-	screens := d.Screens(view.BrowserDeps{Caller: caller, Zone: zone})
+	screens := d.Screens(view.BrowserDeps{Caller: caller, Zone: zone, Countries: d.Countries})
 	tools, err := LocalTools(d.Modules, d.Migrations...)
 	if err == nil {
 		var menu Menu

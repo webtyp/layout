@@ -89,6 +89,11 @@ func New(cfg Config) (*CrudView, error) {
 	}
 	if f != nil {
 		f.HideSubmit() // there is no Save button — auto-save (OnFieldChange) replaces it
+		// The choices the app gave (view.WithOptions): the module declares the
+		// field, the app decides the list.
+		for _, c := range cfg.Presenter.FieldOptions() {
+			f.SetOptions(c.Field, c.Options...)
+		}
 	}
 
 	// The default filter keeps every existing consumer compiling: a host that
