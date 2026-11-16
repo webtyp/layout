@@ -11,19 +11,19 @@ require (
 	webtyp.com/dom v0.13.29
 	webtyp.com/erd v0.0.14
 	webtyp.com/fetch v0.1.30
-	webtyp.com/fmt v1.0.2
+	webtyp.com/fmt v1.0.3
 	webtyp.com/form v0.4.68
 	webtyp.com/html v0.0.30
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.2.4
 	webtyp.com/lang v0.1.16
-	webtyp.com/model v0.2.23
+	webtyp.com/model v0.2.24
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/rpc v0.2.21
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
-	webtyp.com/view v0.6.83
+	webtyp.com/view v0.6.86
 	webtyp.com/widget v0.6.49
 )
 

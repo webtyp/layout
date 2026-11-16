@@ -49,9 +49,10 @@ var (
 const actionNamePrefix = "cv-action-"
 
 const (
-	textShowMore   lang.Text = "Show more results"
-	textNoMore     lang.Text = "No more results for this search"
-	textPressEnter lang.Text = "Press Enter to search"
+	textShowMore     lang.Text = "Show more results"
+	textNoMore       lang.Text = "No more results for this search"
+	textTypeToSearch lang.Text = "Type to search"
+	textPressEnter   lang.Text = "Press Enter to search"
 )
 
 const (
@@ -1025,10 +1026,23 @@ func (v *CrudView) Render() *Element {
 		asideContent := Div().Set(clsListaBox.AsAttr()).
 			Child(v.list)
 
+		// A search-first record (model.SearchFirst) opens with nothing listed: until the person types, say so
+		// instead of the empty message, which would claim there are no records.
+		searchFirst := false
+		if sf, ok := v.Presenter.Record().(model.SearchFirst); ok {
+			searchFirst = sf.ListsOnlyAfterSearch()
+		}
+		waitingForText := func() bool { return searchFirst && v.search.Get() == "" }
+		if searchFirst {
+			asideContent.Child(
+				P().Text(lang.Translate(textTypeToSearch).String()).
+					BindStateFunc(widget.Open, func() bool { return waitingForText() && !v.hasRows.Get() }),
+			)
+		}
 		if emptyMsg := v.Presenter.EmptyMessage(); emptyMsg != "" {
 			asideContent.Child(
 				P().Text(lang.Translate(emptyMsg).String()).
-					BindStateFunc(widget.Open, func() bool { return !v.hasRows.Get() }),
+					BindStateFunc(widget.Open, func() bool { return !waitingForText() && !v.hasRows.Get() }),
 			)
 		}
 
