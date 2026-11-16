@@ -4,7 +4,7 @@ go 1.26.8
 
 require (
 	webtyp.com/calendar v0.1.0
-	webtyp.com/components v0.8.74
+	webtyp.com/components v0.8.75
 	webtyp.com/crud v0.0.15
 	webtyp.com/css v0.4.31
 	webtyp.com/ddl v0.0.49
@@ -12,19 +12,19 @@ require (
 	webtyp.com/erd v0.0.14
 	webtyp.com/fetch v0.1.30
 	webtyp.com/fmt v1.0.2
-	webtyp.com/form v0.4.67
+	webtyp.com/form v0.4.68
 	webtyp.com/html v0.0.30
 	webtyp.com/image v0.1.16
-	webtyp.com/input v0.2.3
+	webtyp.com/input v0.2.4
 	webtyp.com/lang v0.1.16
-	webtyp.com/model v0.2.22
+	webtyp.com/model v0.2.23
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/rpc v0.2.21
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
 	webtyp.com/view v0.6.83
-	webtyp.com/widget v0.6.48
+	webtyp.com/widget v0.6.49
 )
 
 require (

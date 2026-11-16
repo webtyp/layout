@@ -197,3 +197,38 @@ func TestCrudView_UsesNotifier(t *testing.T) {
 		t.Errorf("expected an error toast naming the action and the cause, got %v: %s", n.lastType, n.lastMsg)
 	}
 }
+
+type typingFilter struct {
+	fakeFilter
+	typing func()
+}
+
+func (f *typingFilter) OnFilterTyping(fn func()) { f.typing = fn }
+
+// A bar that searches on Enter says so the first time the person types, and
+// only that once for the screen.
+func TestCrudView_PressEnterHintShownOnce(t *testing.T) {
+	f := &typingFilter{}
+	v, err := New(Config{ParentID: "hint", Presenter: view.New(&conformance.FakeLister{}, &Device{}), IDs: testIDs, Filter: f})
+	if err != nil {
+		t.Fatal(err)
+	}
+	v.Init(&fakeCtx{})
+	n := &countNotifier{}
+	v.UseNotifier(n)
+	f.typing()
+	f.typing()
+	if n.count != 1 || n.last != "Press Enter to search" {
+		t.Fatalf("hint shown %d times (%q), want once", n.count, n.last)
+	}
+}
+
+type countNotifier struct {
+	count int
+	last  string
+}
+
+func (n *countNotifier) Notify(_ msgtype.Type, msg string, _ view.Duration) {
+	n.count++
+	n.last = msg
+}

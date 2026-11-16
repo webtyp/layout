@@ -49,8 +49,9 @@ var (
 const actionNamePrefix = "cv-action-"
 
 const (
-	textShowMore lang.Text = "Show more results"
-	textNoMore   lang.Text = "No more results for this search"
+	textShowMore   lang.Text = "Show more results"
+	textNoMore     lang.Text = "No more results for this search"
+	textPressEnter lang.Text = "Press Enter to search"
 )
 
 const (
@@ -184,6 +185,7 @@ type CrudView struct {
 	confirmDelete *modaldialog.ModalDialog
 	selected      *SignalString
 	search        *SignalString
+	searchHinted  bool // the "Press Enter to search" hint was shown (once per screen)
 	canDelete     *SignalBool
 	deleteID      *SignalString // record pending confirmation (⋮ → Eliminar)
 	deleteLabel   *SignalString // its label, for the confirmation message
@@ -298,6 +300,18 @@ func (v *CrudView) Init(ctx Ctx) {
 		src.OnFilterChange(func(term string) {
 			v.search.Set(term)
 			v.filter()
+		})
+	}
+
+	// A bar that searches on Enter says so once per screen, the first time the
+	// person types. notifier is set after Init, so it is read at typing time.
+	if src, ok := v.Filter.(widget.TypingAware); ok {
+		src.OnFilterTyping(func() {
+			if v.searchHinted || v.notifier == nil {
+				return
+			}
+			v.searchHinted = true
+			v.notifier.Notify(msgtype.Info, lang.Translate(textPressEnter).String(), view.Auto())
 		})
 	}
 
