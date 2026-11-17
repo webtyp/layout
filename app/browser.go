@@ -86,9 +86,9 @@ func (p profileDTO) Can(resource model.Resource, action model.Action) bool {
 	return false
 }
 
-// New is the layout an app hands to appkit.Browser: it draws the Session that appkit built.
+// New is the layout an app hands to browser.Run: it draws the Session that appkit built.
 //
-//	func main() { appkit.Browser(config.App, layoutapp.New(devtools.Menu())) }
+//	func main() { browser.Run(config.App, screens.Browser, layoutapp.New(devtools.Menu())) }
 func New(tools Tools) view.Layout { return appLayout{tools: tools} }
 
 type appLayout struct{ tools Tools }

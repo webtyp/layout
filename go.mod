@@ -23,7 +23,7 @@ require (
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
-	webtyp.com/view v0.6.86
+	webtyp.com/view v0.6.87
 	webtyp.com/widget v0.6.49
 )
 
@@ -50,5 +50,3 @@ require (
 	webtyp.com/json v0.5.40
 	webtyp.com/router v0.5.0
 )
-
-replace webtyp.com/view => ../view
