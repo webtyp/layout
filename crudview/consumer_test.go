@@ -201,6 +201,7 @@ func (f *fakeNoWidgetsSaver) Save(recs []model.Model, done func(error)) { done(n
 func (f *fakeNoWidgetsSaver) Description() lang.Text                    { return "" }
 func (f *fakeNoWidgetsSaver) EmptyMessage() lang.Text                   { return "" }
 func (f *fakeNoWidgetsSaver) FieldOptions() []view.FieldChoices         { return nil }
+func (f *fakeNoWidgetsSaver) NewRecord() view.Record                    { return nil }
 
 func TestConsumer_NewNoWidgets(t *testing.T) {
 	p := &fakeNoWidgetsSaver{&fakeNoWidgetsPresenter{record: &DeviceNoWidgets{}}}
@@ -863,5 +864,23 @@ func TestConsumer_NewRecord_ReturnsFreshInstance(t *testing.T) {
 	v.newAction()
 	if f.Input("name").GetValues()[0] != "Draft 2" {
 		t.Errorf("expected 'Draft 2' for fresh draft, got %v", f.Input("name").GetValues())
+	}
+}
+
+// The module's own start (view.WithNewRecord) seeds the form when the host passes no Config.NewRecord.
+func TestConsumer_NewRecord_FromPresenter(t *testing.T) {
+	p := view.New(&conformance.FakeLister{}, &Device{}, view.WithNewRecord(func() view.Record {
+		return &Device{Name: "From Module"}
+	}))
+	v, err := New(Config{ParentID: "my-id", Presenter: p, IDs: testIDs})
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	v.Init(&fakeCtx{})
+
+	v.newAction()
+
+	if got := v.form.Input("name").GetValues(); len(got) == 0 || got[0] != "From Module" {
+		t.Errorf("expected name 'From Module', got %v", got)
 	}
 }

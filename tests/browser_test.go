@@ -104,7 +104,7 @@ func TestShow_DrawsTheSessionItIsGiven(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := view.Session{
-		Brand:  view.Brand{Name: "acme"},
+		Name:   "acme",
 		Caller: whoAmICaller{profile: `{"id":"u1","name":"Ana","permissions":["demo:r"]}`},
 		Zone:   zone,
 		Screens: []view.Screen{{
@@ -125,7 +125,7 @@ func TestShow_DrawsTheSessionItIsGiven(t *testing.T) {
 func TestShow_AnonymousSessionShowsTheEntry(t *testing.T) {
 	freshAppRoot(t)
 	s := view.Session{
-		Brand:  view.Brand{Name: "acme"},
+		Name:   "acme",
 		Caller: whoAmICaller{},
 		Entry: view.EntryScreens{
 			Login: view.Entry{Subtitle: "Sign in to continue", Form: &loginForm{}, Message: dom.NewString("")},

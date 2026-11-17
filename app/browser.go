@@ -100,18 +100,21 @@ func (l appLayout) Show(s view.Session) {
 	Render("app", st)
 }
 
-func entryScreen(b view.Brand, title lang.Text, e view.Entry) *Element {
+// logoPath is the app's logo as the server serves it: sitec derives it from docs/logo/logo.png.
+const logoPath = "/icon-192.png"
+
+func entryScreen(title lang.Text, e view.Entry) *Element {
 	if e.Form == nil {
 		return Div()
 	}
-	l := &login.Login{Title: title, Subtitle: e.Subtitle, Form: e.Form, Message: e.Message, LogoMark: b.LogoMark}
+	l := &login.Login{Title: title, Subtitle: e.Subtitle, Form: e.Form, Message: e.Message, LogoMark: logoPath}
 	return l.Render()
 }
 
 // session switches between the three exclusive screens.
 type session struct {
 	Element
-	brand           view.Brand
+	name            string
 	needsSetup      *SignalBool // the server has no administrator yet (auth.PathSetup answers 200)
 	showLogin       *SignalBool
 	isAuthenticated *SignalBool
@@ -121,10 +124,10 @@ type session struct {
 
 func (s *session) Render() *Element {
 	setupView := Show(s.needsSetup, func() *Element {
-		return entryScreen(s.brand, lang.Text(s.brand.Name), s.entry.Setup)
+		return entryScreen(lang.Text(s.name), s.entry.Setup)
 	})
 	loginView := Show(s.showLogin, func() *Element {
-		return entryScreen(s.brand, lang.Text(s.brand.Name), s.entry.Login)
+		return entryScreen(lang.Text(s.name), s.entry.Login)
 	})
 	// The chassis is built with the profile already known: platformd filters
 	// the screens during its render, and Show renders its content only once.
@@ -195,7 +198,7 @@ func buildSession(s view.Session, tools Tools) *session {
 		}
 	}
 	p := &platformd.Platform{
-		AppName: s.Brand.Name,
+		AppName: s.Name,
 		Modules: menu.Modules,
 		User:    profileIdentity{profile: profile},
 		UserActions: func() Component {
@@ -209,7 +212,7 @@ func buildSession(s view.Session, tools Tools) *session {
 	}
 
 	return &session{
-		brand: s.Brand, needsSetup: needsSetup, showLogin: showLogin, isAuthenticated: isAuthenticated,
+		name: s.Name, needsSetup: needsSetup, showLogin: showLogin, isAuthenticated: isAuthenticated,
 		platform: p, entry: entry,
 	}
 }

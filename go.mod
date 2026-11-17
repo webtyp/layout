@@ -50,3 +50,5 @@ require (
 	webtyp.com/json v0.5.40
 	webtyp.com/router v0.5.0
 )
+
+replace webtyp.com/view => ../view

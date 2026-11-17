@@ -104,12 +104,18 @@ func New(cfg Config) (*CrudView, error) {
 		filter = &searchbar.SearchBar{Placeholder: cfg.Presenter.SearchPlaceholder()}
 	}
 
+	// The module's own start (view.WithNewRecord) unless the host passed one.
+	newRecord := cfg.NewRecord
+	if newRecord == nil && cfg.Presenter.NewRecord() != nil {
+		newRecord = func() model.Model { return cfg.Presenter.NewRecord() }
+	}
+
 	v := &CrudView{
 		form:      f,
 		Presenter: cfg.Presenter,
 		Filter:    filter,
 		Scope:     cfg.Scope,
-		NewRecord: cfg.NewRecord,
+		NewRecord: newRecord,
 		// List is passed through as-is, nil included: Init resolves the
 		// same targetlist.TargetList default that a nil List would get
 		// here, so there is exactly one place that decision lives.
