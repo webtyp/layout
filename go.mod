@@ -17,13 +17,13 @@ require (
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.2.4
 	webtyp.com/lang v0.1.16
-	webtyp.com/model v0.2.24
+	webtyp.com/model v0.2.25
 	webtyp.com/msgtype v0.1.0
 	webtyp.com/rpc v0.2.21
 	webtyp.com/svg v0.3.30
 	webtyp.com/time v0.6.4
 	webtyp.com/unixid v0.3.1
-	webtyp.com/view v0.6.87
+	webtyp.com/view v0.6.88
 	webtyp.com/widget v0.6.49
 )
 

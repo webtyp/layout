@@ -39,6 +39,7 @@ const (
 type Tools struct {
 	API      *apiexplorer.Config
 	Database *schemaview.Source
+	ViewAs   *ViewAsConfig
 }
 
 // LocalTools builds the tools of a page with no server — a module's demo — with
@@ -169,6 +170,11 @@ func BuildMenu(screens []view.Screen, ids model.IDGenerator, allows func(model.R
 		}
 		devs = append(devs, layout.Describe(schema, helpSchemaView))
 		perms = append(perms, screenPerm{id: schema.ModelName(), permission: erd.ResourceSchema})
+	}
+	if tools.ViewAs != nil && (len(tools.ViewAs.Uses) > 0 || len(tools.ViewAs.Roles) > 0) {
+		va := newViewAsModule(tools.ViewAs)
+		devs = append(devs, layout.Describe(va, helpViewAs))
+		perms = append(perms, screenPerm{id: va.ModelName(), permission: router.ResourceIntrospection})
 	}
 	if len(devs) > 0 {
 		devtools := layout.NewGroupUIModule(idDevTools, lang.Translate(labelDevTools).String(), terminal.Ref, devs)
