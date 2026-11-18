@@ -7,7 +7,7 @@ require (
 	webtyp.com/components v0.8.75
 	webtyp.com/crud v0.0.15
 	webtyp.com/css v0.4.31
-	webtyp.com/ddl v0.0.49
+	webtyp.com/ddl v0.0.59
 	webtyp.com/dom v0.13.29
 	webtyp.com/erd v0.0.14
 	webtyp.com/fetch v0.1.30
@@ -34,7 +34,7 @@ require (
 	webtyp.com/events v0.1.8 // indirect
 	webtyp.com/filepath v0.1.3 // indirect
 	webtyp.com/filetype v0.1.1 // indirect
-	webtyp.com/storage v0.2.3 // indirect
+	webtyp.com/storage v0.2.8 // indirect
 )
 
 // TEMPORAL — solo para probar en el iPhone el fix de Focus(preventScroll) en
