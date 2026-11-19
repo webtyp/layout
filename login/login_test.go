@@ -161,3 +161,21 @@ func TestLogin_RenderHTMLMatchesRenderString(t *testing.T) {
 		}
 	}
 }
+
+func TestLogin_MessageNoInlineStyle(t *testing.T) {
+	emptyHTML := (&Login{Title: "App", Message: NewString("")}).Render().String()
+	if strings.Contains(emptyHTML, "style=") {
+		t.Fatalf("empty message slot must not emit inline style=:\n%s", emptyHTML)
+	}
+	if !strings.Contains(emptyHTML, "hidden") {
+		t.Fatalf("empty message slot must carry hidden attribute:\n%s", emptyHTML)
+	}
+
+	filledHTML := (&Login{Title: "App", Message: NewString("Error")}).Render().String()
+	if strings.Contains(filledHTML, "style=") {
+		t.Fatalf("non-empty message slot must not emit inline style=:\n%s", filledHTML)
+	}
+	if strings.Contains(filledHTML, "hidden") {
+		t.Fatalf("non-empty message slot must not carry hidden attribute:\n%s", filledHTML)
+	}
+}

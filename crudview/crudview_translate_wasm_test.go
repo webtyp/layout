@@ -19,11 +19,8 @@ func (m *mockCtx) OnCleanup(fn func()) {}
 
 func TestMain(m *testing.M) {
 	doc := js.Global().Get("document")
-	el := doc.Call("createElement", "script")
-	el.Set("type", "application/json")
-	el.Set("id", lang.ScriptID)
-	el.Set("textContent", `{"default":"es","languages":["es"],"keys":{"Cancel":["Cancelar"],"Confirm":["Confirmar"],"Delete":["Eliminar"],"This":["Esta"],"action":["acción"],"be":["se"],"cannot":["no"],"undone.":["puede deshacer."]}}`)
-	doc.Get("head").Call("appendChild", el)
+	parsed := js.Global().Get("JSON").Call("parse", `{"default":"es","languages":["es"],"keys":{"Cancel":["Cancelar"],"Confirm":["Confirmar"],"Delete":["Eliminar"],"This":["Esta"],"action":["acción"],"be":["se"],"cannot":["no"],"undone.":["puede deshacer."]}}`)
+	js.Global().Set(lang.GlobalDictKey, parsed)
 	app := doc.Call("createElement", "div")
 	app.Set("id", "app")
 	doc.Get("body").Call("appendChild", app)

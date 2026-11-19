@@ -12,7 +12,8 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	js.Global().Get("document").Get("body").Call("insertAdjacentHTML", "beforeend", `<script id="`+lang.ScriptID+`" type="application/json">{"Database":"Database","Search warnings by table or column":"Search warnings by table or column"}</script>`)
+	parsed := js.Global().Get("JSON").Call("parse", `{"default":"en","languages":["en"],"keys":{"Database":["Database"],"Search warnings by table or column":["Search warnings by table or column"]}}`)
+	js.Global().Set(lang.GlobalDictKey, parsed)
 	m.Run()
 }
 
