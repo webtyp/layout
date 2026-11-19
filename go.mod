@@ -49,5 +49,5 @@ require (
 	webtyp.com/icons v0.0.42
 	webtyp.com/js v0.1.3 // indirect
 	webtyp.com/json v0.5.40
-	webtyp.com/router v0.5.7
+	webtyp.com/router v0.5.9
 )
