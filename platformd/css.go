@@ -300,6 +300,7 @@ func (p *Platform) RenderSheet() *style.Sheet {
 			style.Stack(style.Space1),
 			style.Fill(),
 			style.Scroll(),
+			style.ScrollCue(),
 		).
 		On(css.Mobile, widget.Part("navbar"), style.Stack(style.SpaceNone)).
 		On(css.Mobile, widget.Part("drawer-panel"), style.Pad(style.SpaceNone)).

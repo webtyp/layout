@@ -780,11 +780,19 @@ func (p *Platform) Render() *Element {
 			parentLink.Child(Span().Set(clsLinkText.AsAttr()).Text(gm.Label()))
 			parentLink.Child(iconChevronDown.Render(string(clsChevron)))
 
+			// submenuRef: the group usually sits at the bottom of a rail taller than
+			// the viewport, so opening it reveals its rows below the fold; the click
+			// scrolls them into view (see the OnClick below).
+			var submenuRef interface{ Ref() (Reference, bool) }
+
 			parentLink.OnClick(func(Event) {
 				if p.expandedGroup.Get() == id {
 					p.expandedGroup.Set("")
 				} else {
 					p.expandedGroup.Set(id)
+					if ref, ok := submenuRef.Ref(); ok {
+						ref.ScrollIntoView()
+					}
 					for _, ch := range children {
 						if p.isViewable(ch.ModelName()) {
 							p.Activate(ch.ModelName())
@@ -800,6 +808,7 @@ func (p *Platform) Render() *Element {
 				BindStateFunc(widget.Open, func() bool {
 					return p.expandedGroup.Get() == id
 				})
+			submenuRef = submenu
 
 			for _, ch := range children {
 				ch := ch
