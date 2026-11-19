@@ -42,13 +42,6 @@ func (p *Platform) seeAlert(m UIModule, al ModuleAlert) {
 	}
 }
 
-func (p *Platform) viewAlert(m UIModule, al ModuleAlert) {
-	if al.OnView != nil {
-		al.OnView()
-		p.refreshAlerts(m)
-	}
-}
-
 func TestPlatform_Render(t *testing.T) {
 	p := &Platform{
 		CanView: func(string) bool { return true },

@@ -10,10 +10,6 @@ import (
 	"webtyp.com/dom"
 )
 
-type mockCtx struct{}
-
-func (m *mockCtx) OnCleanup(fn func()) {}
-
 // Fixed UI text is English as written and translated on render; the login card
 // is the one component that still carries a title of its own (a module's title
 // is the platform header's <h1>).

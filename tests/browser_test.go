@@ -9,50 +9,22 @@ import (
 	"time"
 
 	"webtyp.com/dom"
-	"webtyp.com/fmt"
 	"webtyp.com/html"
-	"webtyp.com/json"
 	layoutapp "webtyp.com/layout/app"
 	"webtyp.com/model"
-	"webtyp.com/router"
 	wtime "webtyp.com/time"
 	"webtyp.com/view"
 )
-
-// The operation the layout asks first: who the user is.
-var opWhoAmI = router.Operation{Module: "authority", Entity: "me", Action: model.Read}
-
-// whoAmICaller answers "who am I" with a JSON profile, or with an error when profile is empty (an anonymous visitor).
-type whoAmICaller struct{ profile string }
-
-func (c whoAmICaller) Call(op router.Operation, args model.Encodable, into model.Decodable, done func(error)) {
-	if op != opWhoAmI {
-		done(fmt.Err("unexpected operation: " + op.String()))
-		return
-	}
-	if c.profile == "" {
-		done(fmt.Err("not signed in"))
-		return
-	}
-	done(json.Decode(c.profile, into))
-}
-
-func (c whoAmICaller) Dispatch(op router.Operation, args model.Encodable) {}
 
 // screenBody is the leaf the menu offers: a component that shows a marker text.
 type screenBody struct{ dom.Element }
 
 func (s *screenBody) Render() *dom.Element { return html.Div().Text("screen body marker") }
 
-// loginForm is the form of the entry screen a visitor sees when someone is already set up.
+// loginForm is the form of an entry screen a sign-in mode gives.
 type loginForm struct{ dom.Element }
 
 func (f *loginForm) Render() *dom.Element { return html.Div().Text("login form marker") }
-
-// setupForm is the form of the first-administrator screen, shown when the server says there is no administrator yet.
-type setupForm struct{ dom.Element }
-
-func (f *setupForm) Render() *dom.Element { return html.Div().Text("setup form marker") }
 
 // freshAppRoot puts an empty #app element in the page; the layout renders into it.
 func freshAppRoot(t *testing.T) js.Value {
@@ -104,9 +76,9 @@ func TestShow_DrawsTheSessionItIsGiven(t *testing.T) {
 		t.Fatal(err)
 	}
 	s := view.Session{
-		Name:   "acme",
-		Caller: whoAmICaller{profile: `{"id":"u1","name":"Ana","permissions":["demo:r"]}`},
-		Zone:   zone,
+		Name: "acme",
+		User: view.User{ID: "u1", Name: "Ana", Grants: []model.Grant{{Resource: "demo", Actions: model.Read}}},
+		Zone: zone,
 		Screens: []view.Screen{{
 			ID: "inventory", Label: "Inventario", Icon: "inventory", Help: "Shows the inventory.", Permission: "demo", Component: &screenBody{},
 		}},
@@ -120,20 +92,33 @@ func TestShow_DrawsTheSessionItIsGiven(t *testing.T) {
 	}
 }
 
-// An anonymous visitor gets an entry screen, never the chassis. Which entry screen depends on the server's
-// answer to "is there an administrator?": the layout asks it itself, so the test accepts either.
-func TestShow_AnonymousSessionShowsTheEntry(t *testing.T) {
+// Nobody signed in: the layout draws the entry screens the Session brings (one per sign-in mode open at this
+// door), never the chassis, and never asks the server itself.
+func TestShow_NobodySignedInShowsTheEntryScreens(t *testing.T) {
 	freshAppRoot(t)
 	s := view.Session{
-		Name:   "acme",
-		Caller: whoAmICaller{},
-		Entry: view.EntryScreens{
-			Login: view.Entry{Subtitle: "Sign in to continue", Form: &loginForm{}, Message: dom.NewString("")},
-			Setup: view.Entry{Subtitle: "Create the administrator", Form: &setupForm{}, Message: dom.NewString("")},
-		},
-		Log: func(...any) {},
+		Name:    "acme",
+		Entries: []view.Entry{{Subtitle: "Sign in to continue", Form: &loginForm{}, Message: dom.NewString("")}},
+		Log:     func(...any) {},
 	}
 	go layoutapp.New(layoutapp.Tools{}).Show(s)
 
-	waitForAnyText(t, "login form marker", "setup form marker")
+	waitForText(t, "login form marker")
+}
+
+// The server did not answer who is signed in: the layout says so instead of showing the entry screens (D76).
+func TestShow_ServerDownSaysSo(t *testing.T) {
+	freshAppRoot(t)
+	s := view.Session{
+		Name:       "acme",
+		ServerDown: true,
+		Entries:    []view.Entry{{Subtitle: "Sign in to continue", Form: &loginForm{}, Message: dom.NewString("")}},
+		Log:        func(...any) {},
+	}
+	go layoutapp.New(layoutapp.Tools{}).Show(s)
+
+	text := waitForText(t, "The server did not answer")
+	if strings.Contains(text, "login form marker") {
+		t.Errorf("a server that did not answer must not show the entry screens; text = %q", text)
+	}
 }
