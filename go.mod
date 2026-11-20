@@ -12,7 +12,7 @@ require (
 	webtyp.com/erd v0.0.14
 	webtyp.com/fetch v0.1.30
 	webtyp.com/fmt v1.0.3
-	webtyp.com/form v0.4.68
+	webtyp.com/form v0.4.72
 	webtyp.com/html v0.0.30
 	webtyp.com/image v0.1.16
 	webtyp.com/input v0.2.4
