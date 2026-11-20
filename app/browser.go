@@ -40,11 +40,17 @@ func (l appLayout) Show(s view.Session) {
 // logoPath is the app's logo as the server serves it: sitec derives it from docs/logo/logo.png.
 const logoPath = "/icon-192.png"
 
-func entryScreen(title lang.Text, e view.Entry) *Element {
-	if e.Form == nil {
+func entryScreen(title lang.Text, entries []view.Entry) *Element {
+	var valid []view.Entry
+	for _, e := range entries {
+		if e.Form != nil {
+			valid = append(valid, e)
+		}
+	}
+	if len(valid) == 0 {
 		return Div()
 	}
-	l := &login.Login{Title: title, Subtitle: e.Subtitle, Form: e.Form, Message: e.Message, LogoMark: logoPath}
+	l := &login.Login{Title: title, Entries: valid, LogoMark: logoPath}
 	return l.Render()
 }
 
@@ -63,11 +69,7 @@ func (s *session) Render() *Element {
 	case s.serverDown:
 		return Div().Class("spa-root").Child(P().Text(lang.Translate(textServerDown).String()))
 	case !s.signedIn:
-		root := Div().Class("spa-root")
-		for _, e := range s.entries {
-			root.Child(entryScreen(lang.Text(s.name), e))
-		}
-		return root
+		return Div().Class("spa-root").Child(entryScreen(lang.Text(s.name), s.entries))
 	}
 	return Div().Class("spa-root").Child(s.platform.Render())
 }

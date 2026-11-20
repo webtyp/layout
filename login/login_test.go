@@ -6,7 +6,29 @@ import (
 
 	. "webtyp.com/dom"
 	. "webtyp.com/html"
+	"webtyp.com/view"
 )
+
+func TestLogin_MultipleEntriesRenderInOneCard(t *testing.T) {
+	msg1 := NewString("")
+	msg2 := NewString("Passkey falló")
+	html := (&Login{
+		Title: "MJosefa CMS",
+		Entries: []view.Entry{
+			{Subtitle: "Enter your key to continue", Form: Div().Attr("id", "rut-form"), Message: msg1},
+			{Subtitle: "Unlock your phone or computer to continue", Form: Button().Attr("id", "passkey-btn"), Message: msg2},
+		},
+	}).Render().String()
+
+	if count := strings.Count(html, "login__card"); count != 1 {
+		t.Errorf("expected exactly 1 login__card for multiple entries, got %d\n%s", count, html)
+	}
+	for _, want := range []string{"Enter your key to continue", "rut-form", "login__entry", "login__divider", "Unlock your phone or computer to continue", "Passkey falló", "passkey-btn"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("multi-entry markup missing %q\n%s", want, html)
+		}
+	}
+}
 
 func TestLogin_RendersTitleAndForm(t *testing.T) {
 	form := Div().Attr("id", "the-form")

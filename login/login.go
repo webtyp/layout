@@ -4,21 +4,25 @@ import (
 	. "webtyp.com/dom"
 	. "webtyp.com/html"
 	"webtyp.com/lang"
+	"webtyp.com/view"
 	"webtyp.com/widget"
 )
 
 // NameLogin is the widget identity; it produces the class prefix "login" and
 // the part classes "login__card", "login__header", "login__title",
-// "login__subtitle", "login__mark", "login__message".
+// "login__subtitle", "login__mark", "login__message", "login__entry",
+// "login__divider".
 const NameLogin = widget.Name("login")
 
 const (
-	PartCard     = widget.Part("card")     // the centered card: header + form
-	PartHeader   = widget.Part("header")   // title + subtitle, packed as one block
+	PartCard     = widget.Part("card")     // the centered card: header + entry blocks
+	PartHeader   = widget.Part("header")   // mark + title + primary subtitle, packed as one block
 	PartTitle    = widget.Part("title")    // the app's own name, leading the card
 	PartSubtitle = widget.Part("subtitle") // the one line of orientation under it
-	PartMark     = widget.Part("mark")     // the corner brand mark, independent of the card
+	PartMark     = widget.Part("mark")     // the brand mark at the top of the card
 	PartMessage  = widget.Part("message")  // el resultado del último intento de envío
+	PartEntry    = widget.Part("entry")    // one sign-in mode block (divider + message + form)
+	PartDivider  = widget.Part("divider")  // orientation line above a secondary sign-in mode
 )
 
 var (
@@ -29,26 +33,16 @@ var (
 	clsSubtitle = NameLogin.Class(PartSubtitle)
 	clsMark     = NameLogin.Class(PartMark)
 	clsMessage  = NameLogin.Class(PartMessage)
+	clsEntry    = NameLogin.Class(PartEntry)
+	clsDivider  = NameLogin.Class(PartDivider)
 )
 
-// Login is the pre-authentication screen: an elevated card (title, subtitle,
-// form) centered on the app's own page background, with an optional corner
-// mark pinned independently of that card — the reference this productionizes
-// (a legacy pa100t deployment) keeps its own crest bottom-left regardless of
-// how tall the form above it grows, which a mark living inside the card would
-// not survive.
+// Login is the pre-authentication screen: an elevated card (brand mark, title,
+// subtitle, and the open sign-in modes) centered on a calm neutral backdrop.
 //
-// The backdrop is Primary, not Page: unlike every other screen, this one has
-// no authenticated chrome around it to carry the brand, so the full-bleed
-// gradient does — ColorPrimary's own default (see webtyp.com/css's
-// brandRoot/ColorPrimaryGradient), which every app gets for free until it
-// overrides those tokens. The elevated card stays a neutral, opaque surface
-// (As(Inset)) so the actual credentials form still reads as the thing you
-// interact with, not the backdrop.
-//
-// It owns none of the form's fields or validation — Form is built by the
-// composition root exactly like Platform.Modules are, so this package never
-// assumes a shape for what it centers, only that it Renders.
+// It owns none of the form's fields or validation — each entry's Form is built
+// by the sign-in mode (or the composition root), so this package never assumes
+// a shape for what it centers, only that it Renders.
 type Login struct {
 	Element // value embed — NEVER *dom.Element (TinyGo heap constraint)
 
@@ -58,31 +52,27 @@ type Login struct {
 	Title lang.Text
 
 	// Subtitle is the single line under the title telling the user what this
-	// screen wants from them ("Enter your credentials to continue").
-	// English; translated in Render. Optional — omitted, the title sits alone
-	// and the card is that much tighter.
+	// screen wants from them ("Enter your key to continue"). When empty and
+	// Entries is non-empty, Entries[0].Subtitle is used.
 	Subtitle lang.Text
 
-	// Form is the actual login form, built and validated by the caller.
+	// Form is a single login form, built and validated by the caller. When
+	// Entries is also empty, Form + Subtitle + Message act as a single entry.
 	Form Component
 
-	// Message es el resultado del último intento de envío: vacío mientras no
-	// haya ninguno, el texto a mostrar cuando el servidor rechaza. Es una
-	// señal y no un string porque llega DESPUÉS del render — la respuesta del
-	// servidor es asíncrona y el árbol ya está montado.
-	//
-	// Opcional: nil no renderiza la ranura en absoluto. Una pantalla cuyo
-	// formulario no puede fallar no paga por un nodo que nunca se llena.
-	//
-	// Este paquete no decide el texto. Quién falló y por qué lo sabe la app;
-	// aquí solo se muestra.
+	// Message es el resultado del último intento de envío cuando se usa Form
+	// directamente.
 	Message *SignalString
 
-	// LogoMark is a data-URI or URL for the corner brand mark, mirroring
-	// platformd.Brand.BrandMark's own contract (a string, not an svg.Icon:
-	// a crest or seal is a full-color image, not a currentColor glyph this
-	// package could recolor). Optional — a Login with no mark simply does
-	// not render the corner.
+	// Entries are the sign-in modes open at this door (view.Session.Entries).
+	// When more than one mode is open (e.g. trusted_ip + passkey), all render
+	// inside the same card: the first leads under the header, and each
+	// subsequent mode renders below a subtle divider with its own Subtitle,
+	// Message slot and Form.
+	Entries []view.Entry
+
+	// LogoMark is a data-URI or URL for the brand mark at the top of the card.
+	// Optional — a Login with no mark simply does not render it.
 	LogoMark string
 }
 
@@ -93,37 +83,69 @@ func (l *Login) WidgetName() widget.Name { return NameLogin }
 // piece, and carries its own Kind.
 func (l *Login) WidgetKind() widget.Kind { return widget.Region }
 
+func (l *Login) resolvedEntries() []view.Entry {
+	if len(l.Entries) > 0 {
+		return l.Entries
+	}
+	if l.Form != nil || l.Message != nil || l.Subtitle != "" {
+		return []view.Entry{{Subtitle: l.Subtitle, Form: l.Form, Message: l.Message}}
+	}
+	return nil
+}
+
 func (l *Login) Render() *Element {
+	entries := l.resolvedEntries()
+	leadSubtitle := l.Subtitle
+	if leadSubtitle == "" && len(entries) > 0 {
+		leadSubtitle = entries[0].Subtitle
+	}
+
 	header := Div().Set(clsHeader.AsAttr())
 	if l.LogoMark != "" {
 		header.Child(NewElement("img").NoCloseTag().Set(clsMark.AsAttr()).Attr("src", l.LogoMark).Attr("alt", ""))
 	}
 	header.Child(H1().Set(clsTitle.AsAttr()).Text(lang.Translate(l.Title).String()))
-	if l.Subtitle != "" {
-		header.Child(P().Set(clsSubtitle.AsAttr()).Text(lang.Translate(l.Subtitle).String()))
+	if leadSubtitle != "" {
+		header.Child(P().Set(clsSubtitle.AsAttr()).Text(lang.Translate(leadSubtitle).String()))
 	}
 
 	card := Div().Set(clsCard.AsAttr()).Child(header)
 
-	// Sin señal no hay ranura: nada que mostrar, ningún nodo que mantener.
-	if l.Message != nil {
-		// role="alert" hace que el lector de pantalla lo anuncie cuando
-		// aparece, que es justo el momento en que importa. Show mantiene el
-		// nodo montado y solo alterna display, así que el anuncio se dispara
-		// por el cambio de contenido: el texto entra en un nodo que el
-		// usuario no estaba leyendo.
-		msg := Div().Set(clsMessage.AsAttr()).
-			Attr("role", "alert").
-			BindAttrBoolFunc("hidden", func() bool {
-				return l.Message.Get() == ""
-			}).
-			BindText(l.Message)
-		card.Child(msg)
+	for i, e := range entries {
+		if i == 0 {
+			if e.Message != nil {
+				card.Child(messageNode(e.Message))
+			}
+			if e.Form != nil {
+				card.Child(e.Form)
+			}
+			continue
+		}
+		block := Div().Set(clsEntry.AsAttr())
+		if e.Subtitle != "" {
+			block.Child(P().Set(clsDivider.AsAttr()).Text(lang.Translate(e.Subtitle).String()))
+		}
+		if e.Message != nil {
+			block.Child(messageNode(e.Message))
+		}
+		if e.Form != nil {
+			block.Child(e.Form)
+		}
+		card.Child(block)
 	}
-
-	card.Child(l.Form)
 
 	root := Div().Set(clsLogin.AsAttr())
 	root.Child(card)
 	return root
+}
+
+func messageNode(sig *SignalString) *Element {
+	// role="alert" hace que el lector de pantalla lo anuncie cuando
+	// aparece, que es justo el momento en que importa.
+	return Div().Set(clsMessage.AsAttr()).
+		Attr("role", "alert").
+		BindAttrBoolFunc("hidden", func() bool {
+			return sig.Get() == ""
+		}).
+		BindText(sig)
 }

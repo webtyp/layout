@@ -10,83 +10,67 @@ import (
 // RenderCSS defines the login screen's visual contract using the style DSL.
 func (l *Login) RenderCSS() *css.Stylesheet {
 	return style.For(l).
+		// Calm neutral surface backdrop (Panel): in ui-consistency Primary is
+		// reserved for the brand mark and the primary action button ("Entrar"),
+		// never a full-viewport saturated gradient behind the form.
 		Root(
 			style.Cover(),
 			style.CenterContent(),
-			// As(Primary), not Page: this is the one screen with no
-			// authenticated chrome around it to carry the brand, so the
-			// backdrop itself does — ColorPrimary's own default gradient
-			// (see webtyp.com/css's brandRoot/ColorPrimaryGradient), softened
-			// by Veil()'s translucent ColorSurface wash + blur below so it
-			// reads as ambient color, not a flat saturated fill the earlier
-			// version of this file specifically avoided. Veil's wash paints
-			// AFTER this and wins the background-color property, but never
-			// touches background-image, so the gradient still shows through
-			// it, blurred.
-			style.As(style.Primary),
+			style.As(style.Panel),
 			style.Pad(style.Space4),
 			style.Backdrop(style.Viewport),
-			style.Veil(),
 		).
-		// Inset, not Panel or Page: fieldset's input is a framed Panel now, so
-		// its own hairline is what separates it from whatever it sits on —
-		// contrast against the card behind it no longer has to do that work.
-		// Inset stays because it is the surface crudview already puts its own
-		// field stack on, so a login form and a module form come out of the
-		// same box.
-		//
-		// Space6 twice over: the gap between header and form is the same air
-		// as the card's own inset, which is what keeps a card this small from
-		// reading as cramped. Compact caps it at a single column of controls
-		// — Readable's 65ch is a measure for prose and made the card wider
-		// than most of the screens it fronts.
-		//
-		// No Backdrop/Veil here: those take the element out of flow
-		// (position: absolute; inset: 0), which is what a full-coverage
-		// scrim needs but breaks two-axis centering for a Width-constrained
-		// card — Root's own CenterContent() already centers this card on
-		// both axes as long as it stays a normal flex child. A translucent
-		// card look, if wanted later, needs Root's veil color mixed into
-		// this Part's own background instead of Backdrop(Parent).
+		// Elevated white card (Field = ColorBackground + ColorOnSurface +
+		// 1px ColorOutline) over the Panel backdrop, with Popover shadow and
+		// generous Space8 inset so the credentials form reads as a clean,
+		// focused card.
 		Part(PartCard,
 			style.Stack(style.Space6),
 			style.Width(style.Compact),
-			style.As(style.Inset),
+			style.As(style.Field),
 			style.Round(style.RadiusLg),
-			style.Raise(style.Floating),
-			style.Pad(style.Space6),
+			style.Raise(style.Popover),
+			style.Pad(style.Space8),
 		).
-		// Space1, against the card's Space6: title and subtitle are one block
-		// that happens to be set in two sizes, and spacing them like siblings
-		// of the form would read as three unrelated things stacked up.
 		Part(PartHeader,
-			style.Stack(style.Space3),
+			style.Stack(style.Space2),
 			style.CenterContent(),
 		).
-		// Logo sits inside the header, above the title, centered and constrained.
-		// Width Third (~33% of the Compact card) keeps the falcon crest readable
-		// without covering the form. Stack Space3 separates logo → title → subtitle.
+		// PartMark is the <img> element itself. KeepSize() prevents flexbox from
+		// shrinking the image along the column's main axis (which previously
+		// cropped the top and bottom of the crest when MediaBox emitted
+		// display:flex + overflow:hidden directly on the <img>).
 		Part(PartMark,
-			style.MediaBox(style.AspectSquare),
 			style.Width(style.Third),
+			style.KeepSize(),
 		).
 		Part(PartTitle,
-			style.FontSize(style.Text2xl),
+			style.FontSize(style.TextXl),
 			style.FontWeight(style.WeightBold),
 		).
 		Part(PartSubtitle,
-			style.FontSize(style.TextBase),
-			style.Glyph(style.Primary),
+			style.FontSize(style.TextSm),
+			style.As(style.Subtle),
 		).
 		// DangerWash, no Danger: un error de login es una nota dentro de la
 		// tarjeta, no un bloque de alarma que compita con el formulario que
-		// la persona tiene que volver a usar. El wash tiñe el fondo y deja
-		// el texto legible sobre la superficie Inset de la tarjeta.
+		// la persona tiene que volver a usar.
 		Part(PartMessage,
 			style.As(style.DangerWash),
 			style.Pad(style.Space3),
 			style.Round(style.RadiusMd),
 			style.FontSize(style.TextSm),
+		).
+		// Secondary sign-in modes inside the same card: a top hairline separates
+		// each additional mode from the primary form above it.
+		Part(PartEntry,
+			style.Stack(style.Space4),
+			style.PadEdge(style.EdgeTop, style.Space4),
+		).
+		Part(PartDivider,
+			style.FontSize(style.TextSm),
+			style.As(style.Subtle),
+			style.CenterContent(),
 		).
 		Stylesheet()
 }

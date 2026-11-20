@@ -10,15 +10,10 @@ import (
 // RenderCSS vive en css.go, que es //go:build !wasm: este test tiene que
 // llevar la misma etiqueta o el build de wasm no encuentra el metodo.
 //
-// The check is scoped to the ROOT rule (`.login {`), not the whole stylesheet.
-// This screen deliberately paints its full-bleed backdrop with the brand's
-// own default gradient (As(Primary) — see login.go's doc comment): there is
-// no authenticated chrome around it to carry the brand instead, the way
-// every other screen has. Guards against a future edit silently reverting to
-// a flat/no-family surface (Page, Surface, ...), which would make
-// ColorPrimaryGradient's background-image hookup a no-op again (see
-// emit_surface.go: only a family surface's ImageVarName() is wired).
-func TestLogin_RootUsesPrimaryAsItsBrandBackdrop(t *testing.T) {
+// The login root uses the neutral Panel surface as its ambient backdrop so
+// Primary stays reserved for the primary action button inside the form
+// (ui-consistency: "Primary = brand and actions").
+func TestLogin_RootUsesNeutralPanelBackdrop(t *testing.T) {
 	sheet := (&Login{Title: "App"}).RenderCSS().String()
 
 	rootBlocks := loginRuleBlocks(sheet, ".login {")
@@ -26,17 +21,18 @@ func TestLogin_RootUsesPrimaryAsItsBrandBackdrop(t *testing.T) {
 		t.Fatalf("expected a `.login {` root rule, got:\n%s", sheet)
 	}
 	joined := strings.Join(rootBlocks, "\n---\n")
-	if !strings.Contains(joined, "--color-primary") {
-		t.Errorf("login root must paint the brand's Primary gradient as its full-bleed backdrop, root rule:\n%s", joined)
+	if !strings.Contains(joined, "--color-surface") {
+		t.Errorf("login root must paint the neutral Panel surface (--color-surface) as its backdrop, root rule:\n%s", joined)
+	}
+	if strings.Contains(joined, "--color-primary") {
+		t.Errorf("login root must not paint a full-bleed Primary gradient behind the card, root rule:\n%s", joined)
 	}
 }
 
-// The backdrop being loud (As(Primary)'s gradient) makes the CARD's own
-// neutrality the thing that actually matters: whatever brand color washes
-// the screen, the credentials form itself must stay on a plain, legible,
-// opaque surface — never repaint the card As(Primary) too, or the email/
-// password inputs and the "Ingresar" button lose their contrast anchor.
-func TestLogin_CardStaysNeutralOverBrandBackdrop(t *testing.T) {
+// The card sits on the white Field/Page surface (--color-background) with an
+// outline and Popover elevation so it reads as an elevated card over the
+// Panel backdrop.
+func TestLogin_CardStaysNeutralOverBackdrop(t *testing.T) {
 	sheet := (&Login{Title: "App"}).RenderCSS().String()
 
 	cardBlocks := loginRuleBlocks(sheet, ".login__card {")
@@ -45,7 +41,10 @@ func TestLogin_CardStaysNeutralOverBrandBackdrop(t *testing.T) {
 	}
 	joined := strings.Join(cardBlocks, "\n---\n")
 	if strings.Contains(joined, "--color-primary") {
-		t.Errorf("login__card must stay a neutral surface (As(Inset)), not repaint itself with the brand color, card rule:\n%s", joined)
+		t.Errorf("login__card must stay a neutral surface (As(Field)), not repaint itself with the brand color, card rule:\n%s", joined)
+	}
+	if !strings.Contains(joined, "--color-background") {
+		t.Errorf("login__card must use --color-background (As(Field)), card rule:\n%s", joined)
 	}
 }
 
