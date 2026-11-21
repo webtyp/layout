@@ -91,6 +91,9 @@ type leafView struct {
 // field's Ref/Options model, and keeps it in step: the source's OnChange refills it.
 func wireOptions(leaves []leafView) error {
 	for _, target := range leaves {
+		if target.view == nil {
+			continue
+		}
 		for _, f := range target.pres.Record().Schema() {
 			src := f.Options
 			if src == nil {
@@ -229,6 +232,11 @@ func buildScreen(s view.Screen, ids model.IDGenerator, perms *[]screenPerm, leav
 	}
 
 	*leaves = append(*leaves, leafView{view: v, pres: s.Presenter})
+	for _, optSrc := range s.OptionSources {
+		if optSrc != nil {
+			*leaves = append(*leaves, leafView{pres: optSrc})
+		}
+	}
 
 	activate := func() {
 		for _, f := range s.Presenter.Record().Schema() {

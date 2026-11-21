@@ -50,13 +50,16 @@ func (v *CrudView) RenderSheet() *style.Sheet {
 		Part(widget.Part("list"),
 			style.As(style.Inset),
 			style.Pad(cardInset),
-			style.Scroll(),
+			style.Stack(style.Space1),
+			style.HideOverflow(),
 			style.Round(style.RadiusMd),
 			style.Fill(),
 		).
 		Part(widget.Part("more-btn"),
 			style.Button(style.Secondary),
-			style.Fill(),
+			style.Width(style.Full),
+			style.KeepSize(),
+			style.Row(style.SpaceNone),
 			style.CenterContent(),
 			style.RevealedBy(widget.Open),
 		).

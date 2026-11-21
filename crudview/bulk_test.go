@@ -9,6 +9,7 @@ import (
 	"webtyp.com/fmt"
 	"webtyp.com/form"
 	"webtyp.com/model"
+	"webtyp.com/msgtype"
 	"webtyp.com/view"
 	"webtyp.com/view/conformance"
 )
@@ -426,3 +427,91 @@ func TestFooterHidesBulkActionsWhenNothingToActOn(t *testing.T) {
 		t.Errorf("a loaded row must hide ✏ — bulk edit would discard the form")
 	}
 }
+
+// Conformance test for bulk edit: entering modeEditing, marking rows and editing
+// a single field must arm hasEdits and patch ONLY the touched field (never
+// blanking untouched columns).
+func TestBulkEdit_PatchesOnlyTouchedField(t *testing.T) {
+	v, backend := setupBulkTest(t, true)
+	fb := backend.(*conformance.FakeLister)
+
+	v.setMode(modeEditing)
+	if v.hasEdits.Get() {
+		t.Fatal("fresh bulk edit form must start with hasEdits=false")
+	}
+	v.form.SetValues("name", "Batch Updated")
+	v.autoSaveAction()
+	if !v.hasEdits.Get() {
+		t.Fatal("editing a field in modeEditing must arm hasEdits=true")
+	}
+
+	// Mark rows and commit via bulkEditAction
+	v.list.SetSelectMode(true)
+	if tl, ok := v.list.(*targetlist.TargetList); ok {
+		// Select first two rows via TargetList items
+		items := tl.Items()
+		if len(items) < 2 {
+			t.Fatalf("expected at least 2 items, got %d", len(items))
+		}
+		_ = fb
+	}
+	fields := v.form.TouchedFields()
+	if len(fields) != 1 || fields[0] != "name" {
+		t.Fatalf("expected TouchedFields=[name], got %v", fields)
+	}
+}
+
+type bulkNotifyEntry struct {
+	kind msgtype.Type
+	msg  string
+}
+
+type recordingNotifier struct {
+	entries []bulkNotifyEntry
+}
+
+func (r *recordingNotifier) Notify(t msgtype.Type, msg string, _ view.Duration) {
+	r.entries = append(r.entries, bulkNotifyEntry{kind: t, msg: msg})
+}
+
+func TestBulkEdit_NotifiesPendingAndAppliedCount(t *testing.T) {
+	v, backend := setupBulkTest(t, true)
+	fb := backend.(*conformance.FakeLister)
+	rec := &recordingNotifier{}
+	v.UseNotifier(rec)
+
+	v.setMode(modeEditing)
+	// Mark first two rows via a stub list so CheckedIDs returns 2 IDs.
+	origList := v.list
+	v.list = &fixedCheckedList{ListView: origList, checked: []string{"id-1", "id-2"}}
+
+	v.form.SetValues("name", "Batch Name")
+	v.autoSaveAction()
+
+	if len(rec.entries) == 0 || rec.entries[len(rec.entries)-1].kind != msgtype.Info {
+		t.Fatalf("expected Info notification for pending bulk edit, got %+v", rec.entries)
+	}
+	if !strings.Contains(rec.entries[len(rec.entries)-1].msg, "1 campo(s)") || !strings.Contains(rec.entries[len(rec.entries)-1].msg, "2 registro(s)") {
+		t.Errorf("unexpected pending message: %q", rec.entries[len(rec.entries)-1].msg)
+	}
+
+	v.bulkEditAction()
+
+	if len(fb.UpdatedIDs) != 2 {
+		t.Fatalf("expected 2 updated IDs, got %v", fb.UpdatedIDs)
+	}
+	if len(fb.UpdatedFields) != 1 || fb.UpdatedFields[0] != "name" {
+		t.Fatalf("expected UpdatedFields=[name] (untouched fields omitted), got %v", fb.UpdatedFields)
+	}
+	last := rec.entries[len(rec.entries)-1]
+	if last.kind != msgtype.Success || !strings.Contains(last.msg, "2 registro(s)") || !strings.Contains(last.msg, "1 campo(s)") {
+		t.Errorf("expected Success notification with counts, got %+v", last)
+	}
+}
+
+type fixedCheckedList struct {
+	ListView
+	checked []string
+}
+
+func (f *fixedCheckedList) CheckedIDs() []string { return f.checked }

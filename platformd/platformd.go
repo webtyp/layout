@@ -22,61 +22,61 @@ import (
 const NamePlatform widget.Name = "pd"
 
 var (
-	clsRoot            = NamePlatform.Root()
-	clsHeader          = NamePlatform.Class("header")
-	clsDrawerPanel     = NamePlatform.Class("drawer-panel")
-	clsAppName         = NamePlatform.Class("app-name")
-	clsDrawerIdentity  = NamePlatform.Class("drawer-identity")
-	clsDrawerBrand     = NamePlatform.Class("drawer-brand")
-	clsBrand           = NamePlatform.Class("brand")
-	clsBrandMark       = NamePlatform.Class("brand-mark")
-	clsBrandName       = NamePlatform.Class("brand-name")
-	clsBrandMenu       = NamePlatform.Class("brand-menu")
-	clsBrandTrigger    = NamePlatform.Class("brand-trigger")
-	clsBrandPanel      = NamePlatform.Class("brand-panel")
-	clsBrandPanelName  = NamePlatform.Class("brand-panel-name")
-	clsBrandPanelVer   = NamePlatform.Class("brand-panel-version")
-	clsBrandBackdrop   = NamePlatform.Class("brand-backdrop")
-	clsHeaderTitle     = NamePlatform.Class("header-title")
-	clsHeaderTitleText = NamePlatform.Class("header-title-text")
-	clsMsgSlot         = NamePlatform.Class("msg-slot")
-	clsMsgTrack        = NamePlatform.Class("msg-track")
-	clsMsg             = NamePlatform.Class("msg")
-	clsMsgClose        = NamePlatform.Class("msg-close")
-	clsHeaderRight     = NamePlatform.Class("header-right")
-	clsBody            = NamePlatform.Class("body")
-	clsStage           = NamePlatform.Class("stage")
-	clsPanel           = NamePlatform.Class("panel")
-	clsMenu            = NamePlatform.Class("menu")
-	clsNavbar          = NamePlatform.Class("navbar")
-	clsNavItem         = NamePlatform.Class("nav-item")
-	clsNavLink         = NamePlatform.Class("nav-link")
-	clsLinkText        = NamePlatform.Class("link-text")
-	ClsNavIcon         = NamePlatform.Class("nav-icon")
-	clsHamburger       = NamePlatform.Class("hamburger")
-	clsNavOverlay      = NamePlatform.Class("nav-overlay")
-	clsMsgStack        = NamePlatform.Class("msg-stack")
-	clsMsgSlotMobile   = NamePlatform.Class("msg-slot-mobile")
-	clsSubmenu         = NamePlatform.Class("submenu")
-	clsSubnavItem      = NamePlatform.Class("subnav-item")
-	clsSubnavLink      = NamePlatform.Class("subnav-link")
-	clsSubnavIcon      = NamePlatform.Class("subnav-icon")
-	clsChevron         = NamePlatform.Class("chevron")
-	clsNavParent       = NamePlatform.Class("nav-parent")
-	clsNavGroupIcon    = NamePlatform.Class("nav-group-icon")
-	clsNavActiveIcon   = NamePlatform.Class("nav-active-icon")
-	clsHelpBtn         = NamePlatform.Class("help-btn")
-	clsHelpIcon        = NamePlatform.Class("help-icon")
-	clsHelpPanel       = NamePlatform.Class("help-panel")
-	clsWelcomeSteps    = NamePlatform.Class("welcome-steps")
-	clsWelcomeStep     = NamePlatform.Class("welcome-step")
-	clsWelcomeStepDone = NamePlatform.Class("welcome-step-done")
+	clsRoot             = NamePlatform.Root()
+	clsHeader           = NamePlatform.Class("header")
+	clsDrawerPanel      = NamePlatform.Class("drawer-panel")
+	clsAppName          = NamePlatform.Class("app-name")
+	clsDrawerIdentity   = NamePlatform.Class("drawer-identity")
+	clsDrawerBrand      = NamePlatform.Class("drawer-brand")
+	clsBrand            = NamePlatform.Class("brand")
+	clsBrandMark        = NamePlatform.Class("brand-mark")
+	clsBrandName        = NamePlatform.Class("brand-name")
+	clsBrandMenu        = NamePlatform.Class("brand-menu")
+	clsBrandTrigger     = NamePlatform.Class("brand-trigger")
+	clsBrandPanel       = NamePlatform.Class("brand-panel")
+	clsBrandPanelName   = NamePlatform.Class("brand-panel-name")
+	clsBrandPanelVer    = NamePlatform.Class("brand-panel-version")
+	clsBrandBackdrop    = NamePlatform.Class("brand-backdrop")
+	clsHeaderTitle      = NamePlatform.Class("header-title")
+	clsHeaderTitleText  = NamePlatform.Class("header-title-text")
+	clsMsgSlot          = NamePlatform.Class("msg-slot")
+	clsMsgTrack         = NamePlatform.Class("msg-track")
+	clsMsg              = NamePlatform.Class("msg")
+	clsMsgClose         = NamePlatform.Class("msg-close")
+	clsHeaderRight      = NamePlatform.Class("header-right")
+	clsBody             = NamePlatform.Class("body")
+	clsStage            = NamePlatform.Class("stage")
+	clsPanel            = NamePlatform.Class("panel")
+	clsMenu             = NamePlatform.Class("menu")
+	clsNavbar           = NamePlatform.Class("navbar")
+	ClsNavItem          = NamePlatform.Class("nav-item") // one entry of the menu: what a story counts to see the menu
+	clsNavLink          = NamePlatform.Class("nav-link")
+	clsLinkText         = NamePlatform.Class("link-text")
+	ClsNavIcon          = NamePlatform.Class("nav-icon")
+	clsHamburger        = NamePlatform.Class("hamburger")
+	clsNavOverlay       = NamePlatform.Class("nav-overlay")
+	clsMsgStack         = NamePlatform.Class("msg-stack")
+	clsMsgSlotMobile    = NamePlatform.Class("msg-slot-mobile")
+	clsSubmenu          = NamePlatform.Class("submenu")
+	clsSubnavItem       = NamePlatform.Class("subnav-item")
+	clsSubnavLink       = NamePlatform.Class("subnav-link")
+	clsSubnavIcon       = NamePlatform.Class("subnav-icon")
+	clsChevron          = NamePlatform.Class("chevron")
+	clsNavParent        = NamePlatform.Class("nav-parent")
+	clsNavGroupIcon     = NamePlatform.Class("nav-group-icon")
+	clsNavActiveIcon    = NamePlatform.Class("nav-active-icon")
+	clsHelpBtn          = NamePlatform.Class("help-btn")
+	clsHelpIcon         = NamePlatform.Class("help-icon")
+	clsHelpPanel        = NamePlatform.Class("help-panel")
+	clsWelcomeSteps     = NamePlatform.Class("welcome-steps")
+	clsWelcomeStep      = NamePlatform.Class("welcome-step")
+	clsWelcomeStepDone  = NamePlatform.Class("welcome-step-done")
 	clsWelcomeStepCheck = NamePlatform.Class("welcome-step-check")
-	clsWelcomeDismiss  = NamePlatform.Class("welcome-dismiss")
-	clsAlertStrip      = NamePlatform.Class("alert-strip")
-	clsAlertRow        = NamePlatform.Class("alert-row")
-	clsAlertSubject    = NamePlatform.Class("alert-subject")
-	clsAlertAction     = NamePlatform.Class("alert-action")
+	clsWelcomeDismiss   = NamePlatform.Class("welcome-dismiss")
+	clsAlertStrip       = NamePlatform.Class("alert-strip")
+	clsAlertRow         = NamePlatform.Class("alert-row")
+	clsAlertSubject     = NamePlatform.Class("alert-subject")
+	clsAlertAction      = NamePlatform.Class("alert-action")
 )
 
 const (
@@ -750,7 +750,7 @@ func (p *Platform) Render() *Element {
 
 		if gm, ok := m.(GroupModule); ok {
 			children := gm.Children()
-			navItem := Li().Set(clsNavItem.AsAttr())
+			navItem := Li().Set(ClsNavItem.AsAttr())
 
 			parentLink := A("#"+id).Set(clsNavParent.AsAttr()).
 				Attr("data-id", id).
@@ -853,7 +853,7 @@ func (p *Platform) Render() *Element {
 			}
 		}
 
-		navbar.Child(Li().Set(clsNavItem.AsAttr()).Child(link))
+		navbar.Child(Li().Set(ClsNavItem.AsAttr()).Child(link))
 	}
 
 	// The drawer's head. On a phone this is where the brand rides — there is
@@ -993,6 +993,7 @@ func (p *Platform) notify(t msgtype.Type, msg string, d Duration, closable bool)
 	// report. An explicit For(ms) is the caller's decision and is respected.
 	if t == msgtype.Error && d.IsAuto() {
 		d = Persistent()
+		closable = true
 	}
 	// The same message already on screen is not stacked again — a failing
 	// auto-save would otherwise pile one identical toast per field commit.
@@ -1021,7 +1022,7 @@ func (p *Platform) notify(t msgtype.Type, msg string, d Duration, closable bool)
 		Type:     t,
 		Msg:      msg,
 		closable: closable,
-		ID:   "pd-notification-" + p.GetID() + "-" + Sprint(int64(time.NowNano())),
+		ID:       "pd-notification-" + p.GetID() + "-" + Sprint(int64(time.NowNano())),
 	}
 	if ms > 0 {
 		n.expiryNs = time.NowNano() + time.Nano(ms)*nanosPerMilli
@@ -1105,6 +1106,29 @@ func (p *Platform) notificationCount() int {
 
 // Activate programmatically switches to a module by ID
 // (also updates window.location.hash on wasm builds).
+func (p *Platform) clearErrors() {
+	p.mu.Lock()
+	kept := p.rawNotifications[:0]
+	changed := false
+	for _, n := range p.rawNotifications {
+		if n.Type == msgtype.Error {
+			if n.timer != nil {
+				n.timer.Stop()
+				n.timer = nil
+			}
+			changed = true
+			continue
+		}
+		kept = append(kept, n)
+	}
+	p.rawNotifications = kept
+	p.mu.Unlock()
+	if changed {
+		p.notifications.Set(p.toastNodes(""))
+		p.notificationsMobile.Set(p.toastNodes("-m"))
+	}
+}
+
 func (p *Platform) Activate(moduleID string) {
 	if !p.isViewable(moduleID) {
 		return
@@ -1122,6 +1146,7 @@ func (p *Platform) Activate(moduleID string) {
 		}
 	}
 
+	p.clearErrors()
 	var foundParentID string
 	targetModule := p.moduleByID(moduleID)
 	if targetModule != nil {
@@ -1226,7 +1251,7 @@ func (p *Platform) refreshHelp(m UIModule) {
 		p.openHelp(text, hasSteps)
 	}
 
-	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-" + m.ModelName()).
+	button := Button().Set(clsHelpBtn.AsAttr()).Key("help-"+m.ModelName()).
 		Attr("aria-label", lang.Translate(textHelp).String()).
 		Child(circleinfo.Ref.Render(string(clsHelpIcon))).
 		OnClick(func(e Event) {

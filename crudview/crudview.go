@@ -49,10 +49,9 @@ var (
 const actionNamePrefix = "cv-action-"
 
 const (
-	textShowMore     lang.Text = "Show more results"
-	textNoMore       lang.Text = "No more results for this search"
-	textTypeToSearch lang.Text = "Type to search"
-	textPressEnter   lang.Text = "Press Enter to search"
+	textShowMore   lang.Text = "Show more results"
+	textNoMore     lang.Text = "No more results for this search"
+	textPressEnter lang.Text = "Press Enter to search"
 )
 
 const (
@@ -777,6 +776,33 @@ func (v *CrudView) saveAction(saver view.Saver) {
 // ("tenant_id required") names a field and no action, so it is prefixed with
 // the action that did not happen. Errors stay on screen until dismissed
 // (platformd.Notify), and an identical one is not stacked again.
+func (v *CrudView) updateOneAction(updater view.Updater, id string) {
+	dirty := v.form.DirtyFields()
+	if len(dirty) == 0 {
+		return
+	}
+	if err := v.form.Validate(); err != nil {
+		if v.OnSaved != nil {
+			v.OnSaved(err)
+		}
+		return
+	}
+	record := v.Presenter.Record()
+	if err := v.form.SyncValues(record); err != nil {
+		v.reportSave(err)
+		return
+	}
+	updater.Update([]string{id}, record, dirty, func(err error) {
+		if err != nil {
+			v.reportSave(err)
+			return
+		}
+		v.form.MarkPristine()
+		v.Presenter.Reload(func(error) {})
+		v.reportSave(nil)
+	})
+}
+
 func (v *CrudView) notifyError(action lang.Text, err error) {
 	if v.notifier == nil {
 		return
@@ -817,14 +843,30 @@ func (v *CrudView) autoSaveAction() {
 	if v.mode != nil && v.mode.Get() == string(modeEditing) {
 		// Bulk edit: nothing is persisted per field. What a commit DOES change
 		// is whether there is anything to apply, so the apply button can be
-		// dead until the user actually edits something. Tracked here because
-		// this is the one hook the form already fires on every commit.
+		// dead until the user actually edits something. TouchedFields includes
+		// one-tap controls toggled back to false (e.g. bulk-deactivating active rows).
 		if v.form != nil && v.hasEdits != nil {
-			v.hasEdits.Set(len(v.form.DirtyFields()) > 0)
+			touched := v.form.TouchedFields()
+			v.hasEdits.Set(len(touched) > 0)
+			if len(touched) > 0 && v.notifier != nil && v.list != nil {
+				n := len(v.list.CheckedIDs())
+				if n > 0 {
+					v.notifier.Notify(msgtype.Info, fmt.Sprintf("%d campo(s) listo(s) para aplicar a %d registro(s) — pulsa ✏ para guardar", len(touched), n), view.Auto())
+				}
+			}
 		}
 		return
 	}
-	if saver, ok := v.Presenter.(view.Saver); ok && v.form != nil {
+	if v.form == nil {
+		return
+	}
+	if id := v.selected.Get(); id != "" && !v.composing.Get() {
+		if updater, ok := v.Presenter.(view.Updater); ok {
+			v.updateOneAction(updater, id)
+			return
+		}
+	}
+	if saver, ok := v.Presenter.(view.Saver); ok {
 		v.saveAction(saver)
 	}
 }
@@ -852,8 +894,31 @@ func (v *CrudView) deleteAction(deleter view.Deleter, id string) {
 	})
 }
 
-// filter asks the server for the current term; paint shows the result.
+func (v *CrudView) isSearchFirst() bool {
+	if v.Presenter == nil || v.Presenter.Record() == nil {
+		return false
+	}
+	sf, ok := v.Presenter.Record().(model.SearchFirst)
+	return ok && sf.ListsOnlyAfterSearch()
+}
+
+func itemMatches(it model.Item, needle string) bool {
+	if needle == "" {
+		return true
+	}
+	return fmt.Contains(fmt.Convert(it.Label).ToLower().String(), needle) ||
+		fmt.Contains(fmt.Convert(it.Description).ToLower().String(), needle) ||
+		fmt.Contains(fmt.Convert(it.Badge).ToLower().String(), needle)
+}
+
+// filter narrows the list: when the full dataset is already loaded in memory
+// (not search-first and no more server pages), filter locally on every keystroke;
+// otherwise ask the server via Presenter.Search.
 func (v *CrudView) filter() {
+	if !v.isSearchFirst() && !v.Presenter.HasMore() && v.itemsLoaded != nil && v.itemsLoaded.Get() {
+		v.paint()
+		return
+	}
 	v.Presenter.Search(v.search.Get(), func(err error) {
 		if err != nil {
 			Log(err.Error())
@@ -868,7 +933,25 @@ func (v *CrudView) filter() {
 
 // paint repopulates the list from the presenter and keeps the invariants filter() kept before.
 func (v *CrudView) paint() {
-	v.list.SetItems(v.Presenter.Items())
+	items := v.Presenter.Items()
+	term := ""
+	if v.search != nil {
+		term = v.search.Get()
+	}
+	if term != "" && !v.isSearchFirst() && !v.Presenter.HasMore() {
+		needle := fmt.Convert(term).ToLower().String()
+		filtered := make([]model.Item, 0, len(items))
+		for _, it := range items {
+			if itemMatches(it, needle) {
+				filtered = append(filtered, it)
+			}
+		}
+		items = filtered
+	}
+	v.list.SetItems(items)
+	if v.hasMore != nil {
+		v.hasMore.Set(v.Presenter.HasMore())
+	}
 	if v.hasRows != nil {
 		v.hasRows.Set(v.list.Count() > 0)
 	}
@@ -879,9 +962,6 @@ func (v *CrudView) paint() {
 		v.itemsLoaded.Set(len(v.Presenter.Items()) > 0)
 	}
 	v.dropSelectionOutOfScope()
-	if v.hasMore != nil {
-		v.hasMore.Set(v.Presenter.HasMore())
-	}
 }
 
 // deleteEntryAction: the 🗑 button's click handler. A loaded record deletes
@@ -943,7 +1023,7 @@ func (v *CrudView) bulkEditAction() {
 	if len(ids) == 0 {
 		return
 	}
-	fields := v.form.DirtyFields()
+	fields := v.form.TouchedFields()
 	if len(fields) == 0 {
 		// Unreachable through the UI — the apply button is disabled until
 		// hasEdits is true — so this is a belt, not a mode. Loud rather than
@@ -958,6 +1038,9 @@ func (v *CrudView) bulkEditAction() {
 	record := v.Presenter.Record()
 	if err := v.form.SyncValues(record); err != nil {
 		Log(err.Error())
+		if v.notifier != nil {
+			v.notifyError(lang.Text("update"), err)
+		}
 		return
 	}
 	updater.Update(ids, record, fields, func(err error) {
@@ -971,7 +1054,7 @@ func (v *CrudView) bulkEditAction() {
 			v.form.Reset()
 			v.Reload(nil)
 			if v.notifier != nil {
-				v.notifier.Notify(msgtype.Success, "Actualizado con éxito", view.Auto())
+				v.notifier.Notify(msgtype.Success, fmt.Sprintf("Actualizados %d registro(s) (%d campo(s))", len(ids), len(fields)), view.Auto())
 			}
 		}
 		if v.OnUpdated != nil {
@@ -1026,23 +1109,22 @@ func (v *CrudView) Render() *Element {
 		asideContent := Div().Set(clsListaBox.AsAttr()).
 			Child(v.list)
 
-		// A search-first record (model.SearchFirst) opens with nothing listed: until the person types, say so
-		// instead of the empty message, which would claim there are no records.
+		// A search-first record (model.SearchFirst) opens with nothing listed: until the person searches,
+		// suppress the empty message so it does not falsely claim there are no records. The search bar
+		// itself already invites typing.
 		searchFirst := false
 		if sf, ok := v.Presenter.Record().(model.SearchFirst); ok {
 			searchFirst = sf.ListsOnlyAfterSearch()
 		}
 		waitingForText := func() bool { return searchFirst && v.search.Get() == "" }
-		if searchFirst {
-			asideContent.Child(
-				P().Text(lang.Translate(textTypeToSearch).String()).
-					BindStateFunc(widget.Open, func() bool { return waitingForText() && !v.hasRows.Get() }),
-			)
-		}
 		if emptyMsg := v.Presenter.EmptyMessage(); emptyMsg != "" {
 			asideContent.Child(
-				P().Text(lang.Translate(emptyMsg).String()).
-					BindStateFunc(widget.Open, func() bool { return !waitingForText() && !v.hasRows.Get() }),
+				P().Set(clsNoMoreText.AsAttr()).Text(lang.Translate(emptyMsg).String()).
+					BindStateFunc(widget.Open, func() bool {
+						waiting := waitingForText()
+						hasRows := v.hasRows.Get()
+						return !waiting && !hasRows
+					}),
 			)
 		}
 
@@ -1062,7 +1144,10 @@ func (v *CrudView) Render() *Element {
 		asideContent.Child(
 			P().Set(clsNoMoreText.AsAttr()).Text(lang.Translate(textNoMore).String()).
 				BindStateFunc(widget.Open, func() bool {
-					return v.search.Get() != "" && v.hasRows.Get() && !v.hasMore.Get()
+					term := v.search.Get()
+					hasRows := v.hasRows.Get()
+					hasMore := v.hasMore.Get()
+					return term != "" && hasRows && !hasMore
 				}),
 		)
 
@@ -1099,6 +1184,9 @@ func (v *CrudView) Render() *Element {
 		// Saver (see its disabled bind). Editing ONE loaded record is not
 		// gated: it rides Saver via autoSaveAction.
 		_, hasSaver := v.Presenter.(view.Saver)
+		_, hasDeleter := v.Presenter.(view.Deleter)
+		_, hasUpdater := v.Presenter.(view.Updater)
+		readOnly := !hasSaver && !hasDeleter && !hasUpdater
 
 		toggle := Button().Set(clsBtnCrud.AsAttr()).
 			Attr("name", "cv-crudtoggle").
@@ -1142,10 +1230,13 @@ func (v *CrudView) Render() *Element {
 				// the two selection modes, which already hide the button they
 				// are not.
 				BindStateFunc(widget.Open, func() bool {
-					if v.mode.Get() == string(modeDeleting) {
+					mode := v.mode.Get()
+					composing := v.composing.Get()
+					hasRows := v.hasRows.Get()
+					if mode == string(modeDeleting) {
 						return true
 					}
-					return v.mode.Get() == string(modeNormal) && !v.composing.Get() && v.hasRows.Get()
+					return mode == string(modeNormal) && !composing && hasRows
 				}).
 				// In delete mode the button leans red with the rows it will
 				// act on (see css.go); everywhere else it stays Primary.
@@ -1154,13 +1245,16 @@ func (v *CrudView) Render() *Element {
 				// the button's own Open already means "visible", which is
 				// true in normal mode too.
 				BindAttrBool("disabled", DeriveBool(func() bool {
-					if v.mode.Get() == string(modeNormal) {
+					mode := v.mode.Get()
+					composing := v.composing.Get()
+					hasChecked := v.hasChecked.Get()
+					if mode == string(modeNormal) {
 						// A loaded record deletes directly (its own confirm
 						// dialog); only an unsaved draft — nothing to name
 						// in the dialog — keeps the button dead.
-						return v.composing.Get()
+						return composing
 					}
-					return !v.hasChecked.Get()
+					return !hasChecked
 				})).
 				// No count badge here: listselect.Header's "k / N" strip
 				// already shows how many are marked, right above the list —
@@ -1170,7 +1264,9 @@ func (v *CrudView) Render() *Element {
 			footer.Child(btnDelete)
 		}
 
-		footer.Child(toggle)
+		if !readOnly {
+			footer.Child(toggle)
+		}
 
 		if _, ok := v.Presenter.(view.Updater); ok {
 			btnEdit := Button().Set(clsBtnCrudEdit.AsAttr()).
@@ -1182,22 +1278,29 @@ func (v *CrudView) Render() *Element {
 				// patch); composing/loaded → hidden (was a dead disabled
 				// button).
 				BindStateFunc(widget.Open, func() bool {
-					if v.mode.Get() == string(modeEditing) {
+					mode := v.mode.Get()
+					active := v.active()
+					hasMulti := v.hasMultiRows.Get()
+					if mode == string(modeEditing) {
 						return true
 					}
 					// ✏ is always a bulk patch — hidden below 2 rows (a single
 					// row is edited by tapping it + the form, master plan §4).
-					return v.mode.Get() == string(modeNormal) && !v.active() && v.hasMultiRows.Get()
+					return mode == string(modeNormal) && !active && hasMulti
 				}).
 				BindAttrBool("disabled", DeriveBool(func() bool {
-					if v.mode.Get() == string(modeNormal) {
-						return v.active()
+					mode := v.mode.Get()
+					active := v.active()
+					hasChecked := v.hasChecked.Get()
+					hasEdits := v.hasEdits.Get()
+					if mode == string(modeNormal) {
+						return active
 					}
 					// Marked rows AND something to write. Without the second
 					// half, pressing apply with an untouched form called
 					// nothing and reported nothing — a dead button that looked
 					// alive. An unpressable button needs no error message.
-					return !v.hasChecked.Get() || !v.hasEdits.Get()
+					return !hasChecked || !hasEdits
 				})).
 				// No count badge here either — see btnDelete above.
 				Child(pencil.Ref.Render(string(clsBtnCrudEditIcon)))

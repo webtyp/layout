@@ -36,6 +36,10 @@ type Config struct {
 	// form field, never a Scope.
 	Scope dom.Component
 
+	// HideSearch drops the search bar New would install when Filter is nil: the list is short and already reached
+	// by picking in Scope (one patient's records), so a search over it only takes room.
+	HideSearch bool
+
 	// List builds the row-rendering widget. Optional: nil installs a
 	// targetlist.TargetList factory — the ergonomic default, not a decision
 	// imposed: pass a targetdate.TargetDate (or anything satisfying
@@ -100,8 +104,15 @@ func New(cfg Config) (*CrudView, error) {
 	// does not care which control it gets still gets a working search bar with
 	// the presenter's placeholder. The demo injects its own — see platformd.
 	filter := cfg.Filter
-	if filter == nil {
-		filter = &searchbar.SearchBar{Placeholder: cfg.Presenter.SearchPlaceholder()}
+	if filter == nil && !cfg.HideSearch {
+		searchFirst := false
+		if sf, ok := cfg.Presenter.Record().(model.SearchFirst); ok {
+			searchFirst = sf.ListsOnlyAfterSearch()
+		}
+		filter = &searchbar.SearchBar{
+			Placeholder: cfg.Presenter.SearchPlaceholder(),
+			Live:        !searchFirst,
+		}
 	}
 
 	// The module's own start (view.WithNewRecord) unless the host passed one.
